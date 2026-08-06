@@ -13,6 +13,11 @@ export default function LocaleLayout({
   params: { locale: string }
 }) {
   if (!isLocale(params.locale)) notFound()
-
-  return <div className="min-h-screen manuscript-ground">{children}</div>
+  // The root <html lang> is static in a shared layout, so the locale is
+  // declared here instead — the Indonesian pages must not claim to be English.
+  return (
+    <div lang={params.locale} className="manuscript-ground min-h-screen">
+      {children}
+    </div>
+  )
 }
