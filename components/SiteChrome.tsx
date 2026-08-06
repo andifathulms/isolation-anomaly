@@ -1,10 +1,17 @@
 import Link from 'next/link'
 import { LOCALES, LOCALE_LABELS, type Locale } from '@/lib/i18n/locales'
 import { dictionary } from '@/lib/i18n/dictionaries'
+import { ThemeToggle } from './ThemeToggle'
 
 /**
  * Header, navigation and the standing statement about what this is — every page
  * says plainly that it models documented behaviour rather than being a database.
+ *
+ * The header is two rows rather than one wrapping row: identity and settings on
+ * top, sections beneath. At the old single-row arrangement the six section links
+ * wrapped into the title on a phone and the whole thing read as a word soup.
+ * The section row scrolls sideways instead of wrapping, so the header keeps a
+ * fixed height and the page below it never jumps.
  */
 export function SiteChrome({
   locale,
@@ -27,49 +34,82 @@ export function SiteChrome({
   ]
 
   return (
-    <div className="min-h-screen">
-      <header className="border-b border-staff-faint bg-manuscript-raised/70">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-baseline gap-x-6 gap-y-2 px-6 py-4">
-          <Link href={`${base}/`} className="font-prose text-xl">
+    <div className="flex min-h-screen flex-col">
+      <a
+        href="#content"
+        className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:left-4 focus-visible:top-4
+          focus-visible:z-50 focus-visible:rounded-md focus-visible:bg-manuscript-raised focus-visible:px-4
+          focus-visible:py-2 focus-visible:font-control focus-visible:text-sm"
+      >
+        {dict.site.skipToContent}
+      </a>
+
+      {/* Opaque rather than translucent: at 90% the page's ruled ground and the
+          score's own marks ghosted through the header as it scrolled past. */}
+      <header className="sticky top-0 z-30 border-b border-staff-faint bg-manuscript">
+        <div className="mx-auto flex max-w-6xl items-center gap-x-4 px-4 pt-3 sm:px-6">
+          <Link href={`${base}/`} className="whitespace-nowrap font-prose text-xl leading-none tracking-tight">
             {dict.site.title}
           </Link>
-          <nav aria-label="Sections" className="flex flex-wrap gap-x-4 gap-y-1">
-            {links.map((link) => (
-              <Link
-                key={link.key}
-                href={link.href}
-                aria-current={link.key === active ? 'page' : undefined}
-                className={`font-control text-sm ${
-                  link.key === active ? 'text-ink underline decoration-conductor underline-offset-4' : 'text-ink-muted'
-                }`}
-              >
-                {dict.nav[link.key]}
-              </Link>
-            ))}
-          </nav>
-          <div className="ml-auto flex items-baseline gap-2">
-            <span className="font-control text-xs uppercase tracking-wide text-ink-muted">
-              {dict.site.language}
-            </span>
-            {LOCALES.map((candidate) => (
-              <Link
-                key={candidate}
-                href={`/${candidate}/`}
-                hrefLang={candidate}
-                className={`font-control text-sm ${candidate === locale ? 'text-ink' : 'text-ink-muted'}`}
-              >
-                {LOCALE_LABELS[candidate]}
-              </Link>
-            ))}
+
+          <div className="ml-auto flex items-center gap-3">
+            <div className="flex items-baseline gap-1.5">
+              <span className="sr-only">{dict.site.language}</span>
+              {LOCALES.map((candidate) => (
+                <Link
+                  key={candidate}
+                  href={`/${candidate}/`}
+                  hrefLang={candidate}
+                  aria-label={LOCALE_LABELS[candidate]}
+                  aria-current={candidate === locale ? 'true' : undefined}
+                  className={`whitespace-nowrap rounded px-1.5 py-0.5 font-control text-xs uppercase tracking-wider
+                    transition-colors ${
+                      candidate === locale
+                        ? 'bg-manuscript-sunk text-ink'
+                        : 'text-ink-soft hover:text-ink'
+                    }`}
+                >
+                  {/* "Bahasa Indonesia" wraps a phone header onto three lines,
+                      so narrow screens get the code and the full name stays in
+                      the accessible name. */}
+                  <span className="md:hidden">{candidate}</span>
+                  <span className="hidden md:inline">{LOCALE_LABELS[candidate]}</span>
+                </Link>
+              ))}
+            </div>
+            <ThemeToggle dict={dict} />
           </div>
         </div>
+
+        <nav aria-label={dict.site.menu} className="mx-auto max-w-6xl px-4 sm:px-6">
+          <ul className="-mb-px flex gap-x-5 overflow-x-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {links.map((link) => (
+              <li key={link.key} className="shrink-0">
+                <Link
+                  href={link.href}
+                  aria-current={link.key === active ? 'page' : undefined}
+                  className={`block border-b-2 pb-1.5 font-control text-sm transition-colors ${
+                    link.key === active
+                      ? 'border-conductor text-ink'
+                      : 'border-transparent text-ink-muted hover:border-staff hover:text-ink'
+                  }`}
+                >
+                  {dict.nav[link.key]}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
       </header>
 
-      <main className="mx-auto max-w-6xl px-6 py-10">{children}</main>
+      <main id="content" className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6 sm:py-14">
+        {children}
+      </main>
 
-      <footer className="border-t border-staff-faint">
-        <div className="mx-auto max-w-6xl px-6 py-8">
-          <p className="max-w-prose text-sm text-ink-muted">{dict.site.disclaimer}</p>
+      <footer className="mt-8 border-t border-staff-faint bg-manuscript-raised">
+        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+          <h2 className="eyebrow">{dict.site.disclaimerHeading}</h2>
+          <p className="mt-2 max-w-reading text-sm leading-relaxed text-ink-muted">{dict.site.disclaimer}</p>
         </div>
       </footer>
     </div>
