@@ -1,5 +1,7 @@
 # Isolation Anomaly
 
+**[andifathulms.github.io/isolation-anomaly](https://andifathulms.github.io/isolation-anomaly/)**
+
 **Interleave two transactions by hand, watch the anomaly happen, then switch database engine and isolation level and watch the same schedule behave completely differently.**
 
 Hand-built transaction schedules executed against modelled database engines, with anomalies named and cited, and the same schedule compared across engines and isolation levels. Static site, no backend.
@@ -9,6 +11,8 @@ This models **documented behaviour for a fixed operation set at specific engine 
 > Previously named *Sekat* (Indonesian: a partition, a divider) in `PRD.md`. The slug is now `isolation-anomaly`.
 
 ## What is here
+
+Start with [the on-call roster emptying at REPEATABLE READ](https://andifathulms.github.io/isolation-anomaly/en/schedule/#s=write-skew&p=postgres-16&l=RR&i=5) — two doctors, each checking that the other is on call, both going off call, both committing. Then switch the level to SERIALIZABLE and watch the same schedule get refused, or switch the engine to MySQL and watch it deadlock instead.
 
 Ten scenarios, each with the framing that makes the stakes obvious, executed against two engine packs at every isolation level. Six pages: an overview, the score with stepping and state panels, the scenario library, the cross-engine matrix, the conflict graph, and the engine packs with every citation printed beside the rule it justifies.
 

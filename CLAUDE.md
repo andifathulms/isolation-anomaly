@@ -149,6 +149,8 @@ The site states plainly that this models documented behaviour for a fixed operat
 
 ## Current state
 
+**Live at https://andifathulms.github.io/isolation-anomaly/** — `main` deploys through Actions, gated on pack validation, typecheck, lint and the full suite.
+
 M0–M6 built, PostgreSQL and MySQL InnoDB shipping.
 
 - Oracle harness records against PostgreSQL 16.14 and MySQL 8.4.11 in containers. 80 fixtures under `tests/oracle/`. Waits are read from `pg_stat_activity` and `performance_schema.data_lock_waits` rather than inferred from a slow statement.
