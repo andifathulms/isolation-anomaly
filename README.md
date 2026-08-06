@@ -81,6 +81,20 @@ pnpm lint
 
 Real databases are the oracle. When the simulator disagrees with a recorded fixture, the simulator is wrong. Anomaly detection is asserted in both directions — the anomaly must appear at levels that permit it and must not appear at levels that prevent it — and conflict-graph cycle detection is cross-checked against brute-force serializability on small schedules.
 
+## Upgrading an engine
+
+Vendor behaviour changes across versions, so a pack is a claim about a specific one. Bumping is a checked operation, not a hopeful one:
+
+1. Change the image tag in `docker-compose.oracle.yml` and the `version` and `verifiedOn` fields in the pack.
+2. Re-read the vendor documentation for anything the new release changed, and update the quotes — a citation that no longer says what the pack claims is worse than no citation.
+3. `pnpm oracle:record --pack=<id>` to re-record that engine's fixtures.
+4. `pnpm test:run`. Three things will tell you what happened:
+   - `tests/oracle/versions.test.ts` fails if the pack and its fixtures disagree about which engine answered, or if fixtures mix two builds.
+   - `tests/oracle/simulator.test.ts` fails wherever the new release behaves differently from the model. **That failure is the interesting output** — it is the engine telling you a rule changed.
+   - `tests/anomalies` fails if a scenario's documented levels no longer match.
+
+When the simulator and a fresh recording disagree, the recording is right. Fix the pack, and cite the release note or documentation change that explains it.
+
 ## Documents
 
 - [`PRD.md`](PRD.md) — scope, binding.

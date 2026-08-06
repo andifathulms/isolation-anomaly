@@ -139,6 +139,10 @@ tests/
 - Trace well-formedness asserted on every test: consistent version chains, no visibility of post-snapshot versions, every lock released at commit or rollback.
 - Bug fix → failing test first.
 
+## Upgrading an engine pack
+
+Bump the image tag and the pack's `version`/`verifiedOn`, re-read the docs for anything that changed, `pnpm oracle:record --pack=<id>`, then `pnpm test:run`. `tests/oracle/versions.test.ts` catches a pack whose evidence came from a different build or whose fixtures mix builds; the simulator comparison catches the behaviour change itself. A disagreement between the model and a fresh recording is the recording's win — fix the pack and cite what changed.
+
 ## Deployment
 
 `main` builds and deploys via Actions; pack validation gates it. `basePath` must match the repository name; `.nojekyll` must exist in `out/`. Verify with `pnpm preview` before pushing.
