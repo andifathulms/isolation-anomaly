@@ -5,7 +5,7 @@
   "description": "Isolation Anomaly — hand-built transaction schedules executed against modelled database engines, with anomalies named and cited.",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "pnpm packs:validate && next build",
     "preview": "node scripts/preview.mjs",
     "test": "vitest",
     "test:run": "vitest run",

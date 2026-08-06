@@ -1,0 +1,280 @@
+{
+  "id": "postgres-16",
+  "engine": "PostgreSQL",
+  "version": "16",
+  "verifiedOn": "2026-08-06",
+  "docsUrl": "https://www.postgresql.org/docs/16/transaction-iso.html",
+  "defaultLevel": "READ COMMITTED",
+  "summary": "MVCC throughout. Readers never block writers. REPEATABLE READ is snapshot isolation and permits write skew; READ UNCOMMITTED is an alias for READ COMMITTED; SERIALIZABLE adds Serializable Snapshot Isolation on top of REPEATABLE READ and aborts rather than blocks.",
+  "errors": {
+    "serializationFailure": {
+      "code": "40001",
+      "message": "could not serialize access due to concurrent update",
+      "citation": {
+        "source": "PostgreSQL 16 — 13.2.2. Repeatable Read Isolation Level",
+        "url": "https://www.postgresql.org/docs/16/transaction-iso.html#XACT-REPEATABLE-READ",
+        "quote": "ERROR:  could not serialize access due to concurrent update"
+      }
+    },
+    "readWriteDependencies": {
+      "code": "40001",
+      "message": "could not serialize access due to read/write dependencies among transactions",
+      "citation": {
+        "source": "PostgreSQL 16 — 13.2.3. Serializable Isolation Level",
+        "url": "https://www.postgresql.org/docs/16/transaction-iso.html#XACT-SERIALIZABLE",
+        "quote": "ERROR:  could not serialize access due to read/write dependencies among transactions"
+      }
+    },
+    "deadlock": {
+      "code": "40P01",
+      "message": "deadlock detected",
+      "citation": {
+        "source": "PostgreSQL 16 — 13.3.5. Deadlocks",
+        "url": "https://www.postgresql.org/docs/16/explicit-locking.html#LOCKING-DEADLOCKS",
+        "quote": "PostgreSQL automatically detects deadlock situations and resolves them by aborting one of the transactions involved, allowing the other(s) to complete."
+      }
+    }
+  },
+  "levels": {
+    "READ UNCOMMITTED": {
+      "kind": "alias",
+      "displayName": "READ UNCOMMITTED (behaves as READ COMMITTED)",
+      "of": "READ COMMITTED",
+      "summary": "PostgreSQL accepts the level name and gives you READ COMMITTED. Dirty reads are not possible in PostgreSQL at any level — the alias is the lesson, not a limitation of this model.",
+      "citation": {
+        "source": "PostgreSQL 16 — 13.2. Transaction Isolation",
+        "url": "https://www.postgresql.org/docs/16/transaction-iso.html",
+        "quote": "In PostgreSQL, you can request any of the four standard transaction isolation levels, but internally only three distinct isolation levels are implemented, i.e., PostgreSQL's Read Uncommitted mode behaves like Read Committed."
+      }
+    },
+    "READ COMMITTED": {
+      "kind": "modelled",
+      "displayName": "READ COMMITTED",
+      "summary": "The default. Every statement takes a fresh snapshot, so two reads in one transaction can disagree. A write to a row a concurrent transaction has just committed is re-applied to the new version rather than aborted.",
+      "semantics": {
+        "visibility": {
+          "value": {
+            "snapshot": "statement",
+            "readsUncommitted": false,
+            "lockingReadsSeeLatestCommitted": true
+          },
+          "citation": {
+            "source": "PostgreSQL 16 — 13.2.1. Read Committed Isolation Level",
+            "url": "https://www.postgresql.org/docs/16/transaction-iso.html#XACT-READ-COMMITTED",
+            "quote": "When a transaction uses this isolation level, a SELECT query (without a FOR UPDATE/SHARE clause) sees only data committed before the query began; it never sees either uncommitted data or changes committed by concurrent transactions during the query's execution. In effect, a SELECT query sees a snapshot of the database as of the instant the query begins to run."
+          }
+        },
+        "conflicts": {
+          "value": {
+            "writeOnStaleRow": "applyToLatest",
+            "lockingReadOnStaleRow": "readLatest",
+            "writeWriteBlocks": true
+          },
+          "citation": {
+            "source": "PostgreSQL 16 — 13.2.1. Read Committed Isolation Level",
+            "url": "https://www.postgresql.org/docs/16/transaction-iso.html#XACT-READ-COMMITTED",
+            "quote": "In this case, the would-be updater will wait for the first updating transaction to commit or roll back (if it is still in progress). If the first updater rolls back, then its effects are negated and the second updater can proceed with updating the originally found row. If the first updater commits, the second updater will ignore the row if the first updater deleted it, otherwise it will attempt to apply its operation to the updated version of the row."
+          }
+        },
+        "locks": {
+          "plainRead": {
+            "value": { "record": "none", "gap": "none", "duration": "statement" },
+            "citation": {
+              "source": "PostgreSQL 16 — 13.1. Introduction to MVCC",
+              "url": "https://www.postgresql.org/docs/16/mvcc-intro.html",
+              "quote": "The main advantage of using the MVCC model of concurrency control rather than locking is that in MVCC locks acquired for querying (reading) data do not conflict with locks acquired for writing data, and so reading never blocks writing and writing never blocks reading."
+            }
+          },
+          "lockingRead": {
+            "value": { "record": "exclusive", "gap": "none", "duration": "transaction" },
+            "citation": {
+              "source": "PostgreSQL 16 — 13.3.2. Row-Level Locks",
+              "url": "https://www.postgresql.org/docs/16/explicit-locking.html#LOCKING-ROWS",
+              "quote": "FOR UPDATE causes the rows retrieved by the SELECT statement to be locked as though for update. This prevents them from being locked, modified or deleted by other transactions until the current transaction ends."
+            }
+          },
+          "write": {
+            "value": { "record": "exclusive", "gap": "none", "duration": "transaction" },
+            "citation": {
+              "source": "PostgreSQL 16 — 13.3.2. Row-Level Locks",
+              "url": "https://www.postgresql.org/docs/16/explicit-locking.html#LOCKING-ROWS",
+              "quote": "Row-level locks are released at transaction end or during savepoint rollback, just like table-level locks."
+            }
+          },
+          "insert": {
+            "value": { "record": "exclusive", "gap": "none", "duration": "transaction" },
+            "citation": {
+              "source": "PostgreSQL 16 — 13.3.2. Row-Level Locks",
+              "url": "https://www.postgresql.org/docs/16/explicit-locking.html#LOCKING-ROWS",
+              "quote": "Row-level locks do not affect data querying; they block only writers and lockers to the same row."
+            }
+          }
+        },
+        "serializationCheck": {
+          "value": "none",
+          "citation": {
+            "source": "PostgreSQL 16 — 13.2.3. Serializable Isolation Level",
+            "url": "https://www.postgresql.org/docs/16/transaction-iso.html#XACT-SERIALIZABLE",
+            "quote": "In fact, this isolation level works exactly the same as Repeatable Read except that it also monitors for conditions which could make execution of a concurrent set of serializable transactions behave in a manner inconsistent with all possible serial (one at a time) executions of those transactions."
+          }
+        }
+      }
+    },
+    "REPEATABLE READ": {
+      "kind": "modelled",
+      "displayName": "REPEATABLE READ (Snapshot Isolation)",
+      "summary": "Snapshot isolation, not the ANSI level of the same name. One snapshot for the whole transaction, so phantoms are prevented — more than ANSI requires — while write skew is permitted, which ANSI never mentions. A write to a row committed by a concurrent transaction aborts with 40001.",
+      "semantics": {
+        "visibility": {
+          "value": {
+            "snapshot": "transaction",
+            "readsUncommitted": false,
+            "lockingReadsSeeLatestCommitted": true
+          },
+          "citation": {
+            "source": "PostgreSQL 16 — 13.2.2. Repeatable Read Isolation Level",
+            "url": "https://www.postgresql.org/docs/16/transaction-iso.html#XACT-REPEATABLE-READ",
+            "quote": "The Repeatable Read isolation level only sees data committed before the transaction began; it never sees either uncommitted data or changes committed by concurrent transactions during the transaction's execution."
+          }
+        },
+        "conflicts": {
+          "value": {
+            "writeOnStaleRow": "abort",
+            "lockingReadOnStaleRow": "abort",
+            "writeWriteBlocks": true
+          },
+          "citation": {
+            "source": "PostgreSQL 16 — 13.2.2. Repeatable Read Isolation Level",
+            "url": "https://www.postgresql.org/docs/16/transaction-iso.html#XACT-REPEATABLE-READ",
+            "quote": "In this case, the repeatable read transaction will wait for the first updating transaction to commit or roll back (if it is still in progress). If the first updater rolls back, then its effects are negated and the repeatable read transaction can proceed with updating the originally found row. But if the first updater commits (and actually updated or deleted the row, not just locked it) then the repeatable read transaction will be rolled back with the message ERROR:  could not serialize access due to concurrent update"
+          }
+        },
+        "locks": {
+          "plainRead": {
+            "value": { "record": "none", "gap": "none", "duration": "statement" },
+            "citation": {
+              "source": "PostgreSQL 16 — 13.1. Introduction to MVCC",
+              "url": "https://www.postgresql.org/docs/16/mvcc-intro.html",
+              "quote": "This means that each SQL statement sees a snapshot of data (a database version) as it was some time ago, regardless of the current state of the underlying data."
+            }
+          },
+          "lockingRead": {
+            "value": { "record": "exclusive", "gap": "none", "duration": "transaction" },
+            "citation": {
+              "source": "PostgreSQL 16 — 13.3.2. Row-Level Locks",
+              "url": "https://www.postgresql.org/docs/16/explicit-locking.html#LOCKING-ROWS",
+              "quote": "FOR UPDATE causes the rows retrieved by the SELECT statement to be locked as though for update. This prevents them from being locked, modified or deleted by other transactions until the current transaction ends."
+            }
+          },
+          "write": {
+            "value": { "record": "exclusive", "gap": "none", "duration": "transaction" },
+            "citation": {
+              "source": "PostgreSQL 16 — 13.3.2. Row-Level Locks",
+              "url": "https://www.postgresql.org/docs/16/explicit-locking.html#LOCKING-ROWS",
+              "quote": "Row-level locks are released at transaction end or during savepoint rollback, just like table-level locks."
+            }
+          },
+          "insert": {
+            "value": { "record": "exclusive", "gap": "none", "duration": "transaction" },
+            "citation": {
+              "source": "PostgreSQL 16 — 13.2.2. Repeatable Read Isolation Level",
+              "url": "https://www.postgresql.org/docs/16/transaction-iso.html#XACT-REPEATABLE-READ",
+              "quote": "The table also shows that PostgreSQL's Repeatable Read implementation does not allow phantom reads."
+            }
+          }
+        },
+        "serializationCheck": {
+          "value": "none",
+          "citation": {
+            "source": "PostgreSQL 16 — 13.2.2. Repeatable Read Isolation Level",
+            "url": "https://www.postgresql.org/docs/16/transaction-iso.html#XACT-REPEATABLE-READ",
+            "quote": "This is a stronger guarantee than is required by the SQL standard for this isolation level, and prevents all of the phenomena described in Table 13.1 except for serialization anomalies."
+          }
+        }
+      }
+    },
+    "SNAPSHOT": {
+      "kind": "unsupported",
+      "displayName": "SNAPSHOT (no such level name)",
+      "summary": "PostgreSQL accepts only the four standard level names, so there is nothing to select here. What other engines call SNAPSHOT is what PostgreSQL calls REPEATABLE READ — select that instead.",
+      "citation": {
+        "source": "PostgreSQL 16 — 13.2.2. Repeatable Read Isolation Level",
+        "url": "https://www.postgresql.org/docs/16/transaction-iso.html#XACT-REPEATABLE-READ",
+        "quote": "The Repeatable Read isolation level is implemented using a technique known in academic database literature and in some other database products as Snapshot Isolation."
+      }
+    },
+    "SERIALIZABLE": {
+      "kind": "modelled",
+      "displayName": "SERIALIZABLE (Serializable Snapshot Isolation)",
+      "summary": "REPEATABLE READ plus monitoring of read/write dependencies. Write skew is caught and one transaction is aborted with 40001 — no extra blocking, so the cost is retries rather than waits.",
+      "semantics": {
+        "visibility": {
+          "value": {
+            "snapshot": "transaction",
+            "readsUncommitted": false,
+            "lockingReadsSeeLatestCommitted": true
+          },
+          "citation": {
+            "source": "PostgreSQL 16 — 13.2.3. Serializable Isolation Level",
+            "url": "https://www.postgresql.org/docs/16/transaction-iso.html#XACT-SERIALIZABLE",
+            "quote": "In fact, this isolation level works exactly the same as Repeatable Read except that it also monitors for conditions which could make execution of a concurrent set of serializable transactions behave in a manner inconsistent with all possible serial (one at a time) executions of those transactions."
+          }
+        },
+        "conflicts": {
+          "value": {
+            "writeOnStaleRow": "abort",
+            "lockingReadOnStaleRow": "abort",
+            "writeWriteBlocks": true
+          },
+          "citation": {
+            "source": "PostgreSQL 16 — 13.2.2. Repeatable Read Isolation Level",
+            "url": "https://www.postgresql.org/docs/16/transaction-iso.html#XACT-REPEATABLE-READ",
+            "quote": "But if the first updater commits (and actually updated or deleted the row, not just locked it) then the repeatable read transaction will be rolled back with the message ERROR:  could not serialize access due to concurrent update"
+          }
+        },
+        "locks": {
+          "plainRead": {
+            "value": { "record": "none", "gap": "none", "duration": "statement" },
+            "citation": {
+              "source": "PostgreSQL 16 — 13.2.3. Serializable Isolation Level",
+              "url": "https://www.postgresql.org/docs/16/transaction-iso.html#XACT-SERIALIZABLE",
+              "quote": "This monitoring does not introduce any blocking beyond that present in repeatable read, but there is some overhead to the monitoring, and detection of the conditions which could cause a serialization anomaly will trigger a serialization failure."
+            }
+          },
+          "lockingRead": {
+            "value": { "record": "exclusive", "gap": "none", "duration": "transaction" },
+            "citation": {
+              "source": "PostgreSQL 16 — 13.3.2. Row-Level Locks",
+              "url": "https://www.postgresql.org/docs/16/explicit-locking.html#LOCKING-ROWS",
+              "quote": "FOR UPDATE causes the rows retrieved by the SELECT statement to be locked as though for update. This prevents them from being locked, modified or deleted by other transactions until the current transaction ends."
+            }
+          },
+          "write": {
+            "value": { "record": "exclusive", "gap": "none", "duration": "transaction" },
+            "citation": {
+              "source": "PostgreSQL 16 — 13.3.2. Row-Level Locks",
+              "url": "https://www.postgresql.org/docs/16/explicit-locking.html#LOCKING-ROWS",
+              "quote": "Row-level locks are released at transaction end or during savepoint rollback, just like table-level locks."
+            }
+          },
+          "insert": {
+            "value": { "record": "exclusive", "gap": "none", "duration": "transaction" },
+            "citation": {
+              "source": "PostgreSQL 16 — 13.2.3. Serializable Isolation Level",
+              "url": "https://www.postgresql.org/docs/16/transaction-iso.html#XACT-SERIALIZABLE",
+              "quote": "To guarantee true serializability PostgreSQL uses predicate locking, which means that it keeps locks which allow it to determine when a write would have had an impact on the result of a previous read from a concurrent transaction, had it run first."
+            }
+          }
+        },
+        "serializationCheck": {
+          "value": "ssi",
+          "citation": {
+            "source": "PostgreSQL 16 — 13.2.3. Serializable Isolation Level",
+            "url": "https://www.postgresql.org/docs/16/transaction-iso.html#XACT-SERIALIZABLE",
+            "quote": "This level emulates serial transaction execution for all committed transactions; as if transactions had been executed one after another, serially, rather than concurrently."
+          }
+        }
+      }
+    }
+  }
+}
