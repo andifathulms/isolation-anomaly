@@ -10,9 +10,39 @@ import type { Locale } from './locales'
  */
 export type Dictionary = {
   readonly nav: Record<'home' | 'schedule' | 'scenarios' | 'matrix' | 'graph' | 'engines', string>
-  readonly site: Record<'title' | 'tagline' | 'disclaimer' | 'language', string>
+  readonly site: Record<
+    | 'title'
+    | 'tagline'
+    | 'standfirst'
+    | 'disclaimer'
+    | 'disclaimerHeading'
+    | 'language'
+    | 'theme'
+    | 'themeToDark'
+    | 'themeToLight'
+    | 'skipToContent'
+    | 'menu',
+    string
+  >
   readonly home: Record<
+    | 'eyebrow'
     | 'lead'
+    | 'plainHeading'
+    | 'plainBody'
+    | 'storyHeading'
+    | 'storyIntro'
+    | 'storyStep1'
+    | 'storyStep2'
+    | 'storyStep3'
+    | 'storyStep4'
+    | 'storyPunchline'
+    | 'howHeading'
+    | 'how1Heading'
+    | 'how1Body'
+    | 'how2Heading'
+    | 'how2Body'
+    | 'how3Heading'
+    | 'how3Body'
     | 'skewHeading'
     | 'skewBody'
     | 'namesHeading'
@@ -20,7 +50,9 @@ export type Dictionary = {
     | 'oracleHeading'
     | 'oracleBody'
     | 'ctaSchedule'
-    | 'ctaScenarios',
+    | 'ctaScenarios'
+    | 'anomalyListHeading'
+    | 'notationHint',
     string
   >
   readonly controls: Record<
@@ -36,10 +68,59 @@ export type Dictionary = {
     | 'alias'
     | 'aliasNote'
     | 'copyLink'
-    | 'copied',
+    | 'copied'
+    | 'setup'
+    | 'playback'
+    | 'play'
+    | 'pause'
+    | 'replay'
+    | 'keyboardHint',
+    string
+  >
+  /** The notation key for the score — the single biggest comprehension gap. */
+  readonly legend: Record<
+    | 'heading'
+    | 'show'
+    | 'hide'
+    | 'intro'
+    | 'voices'
+    | 'voicesBody'
+    | 'read'
+    | 'readBody'
+    | 'write'
+    | 'writeBody'
+    | 'commit'
+    | 'commitBody'
+    | 'rollback'
+    | 'rollbackBody'
+    | 'wait'
+    | 'waitBody'
+    | 'playhead'
+    | 'playheadBody'
+    | 'mark'
+    | 'markBody'
+    | 'notation'
+    | 'notationBody',
+    string
+  >
+  /** The dismissible first-run walkthrough on the schedule page. */
+  readonly tour: Record<
+    | 'step1Heading'
+    | 'step1Body'
+    | 'step2Heading'
+    | 'step2Body'
+    | 'step3Heading'
+    | 'step3Body'
+    | 'next'
+    | 'back'
+    | 'skip'
+    | 'done'
+    | 'progress',
     string
   >
   readonly panels: Record<
+    | 'heading'
+    | 'headingHint'
     | 'versions'
     | 'versionsHint'
     | 'locks'
@@ -76,6 +157,9 @@ export type Dictionary = {
   readonly anomaly: Record<
     | 'none'
     | 'noneBody'
+    | 'noneHeadline'
+    | 'foundHeadline'
+    | 'permittedHere'
     | 'found'
     | 'definition'
     | 'formal'
@@ -132,15 +216,45 @@ const en: Dictionary = {
   },
   site: {
     title: 'Isolation Anomaly',
-    tagline:
-      'Interleave two transactions by hand, watch the anomaly happen, then switch engine and isolation level and watch the same schedule behave completely differently.',
+    tagline: 'Watch two transactions quietly corrupt each other.',
+    standfirst:
+      'Run them side by side, one step at a time, and see exactly where the database gave a wrong answer — then change the engine or the isolation level and watch the same steps come out differently.',
     disclaimer:
       'This models documented behaviour for a fixed set of operations at specific engine versions. It is not a database. Anything outside the modelled set is refused rather than approximated, and every engine claim links to the vendor documentation behind it.',
+    disclaimerHeading: 'What this is, precisely',
     language: 'Language',
+    theme: 'Theme',
+    themeToDark: 'Switch to the dark manuscript',
+    themeToLight: 'Switch to the light manuscript',
+    skipToContent: 'Skip to content',
+    menu: 'Sections',
   },
   home: {
+    eyebrow: 'Start here',
     lead:
       'Every application developer picks an isolation level, usually by accepting the default, and almost none can say what it protects them from.',
+    plainHeading: 'In plain terms',
+    plainBody:
+      'Your database runs many transactions at the same time. To stay fast, it lets them see slightly stale or half-finished versions of each other’s work. Usually that is invisible. Sometimes two transactions overlap in just the wrong order and the result is an answer that is simply wrong — money counted twice, a rule enforced by nobody, a row that vanishes mid-read. The setting that decides how much overlap is allowed is called the isolation level. This site lets you cause those failures on purpose and watch them happen.',
+    storyHeading: 'A failure you can hold in your head',
+    storyIntro:
+      'A hospital rule says at least one doctor must stay on call. Two are on call right now. Both decide to go home at the same moment.',
+    storyStep1: 'Dr A checks how many doctors are on call. The answer is two.',
+    storyStep2: 'Dr B checks at the same instant. Also two.',
+    storyStep3: 'A sees that one other doctor remains, so A takes themselves off call.',
+    storyStep4: 'B sees that one other doctor remains, so B takes themselves off call.',
+    storyPunchline:
+      'Nobody is on call. Neither transaction touched the other’s row, nothing was locked, no error was raised, and both committed successfully. This is write skew, and most databases permit it at the level you are probably running right now.',
+    howHeading: 'How to use this',
+    how1Heading: 'Pick a failure',
+    how1Body:
+      'Each scenario is a real, classic failure written out as two or three transactions with their statements interleaved in a specific order.',
+    how2Heading: 'Step through it',
+    how2Body:
+      'Press Next to advance one statement at a time. The score shows who did what and when; the panels below show the state of the engine at that exact moment.',
+    how3Heading: 'Change one thing',
+    how3Body:
+      'Swap the engine or raise the isolation level and the same steps re-run instantly. What changes — and what stubbornly does not — is the whole lesson.',
     skewHeading: 'Write skew is the point',
     skewBody:
       'Two transactions read the same data, each verify a constraint, each write a different row, and both commit. No shared row, no lock contention, no version clash — and the constraint is violated by the combination. It is absent from the ANSI list, permitted by snapshot isolation, and it is the anomaly most likely to hurt a real application.',
@@ -150,8 +264,11 @@ const en: Dictionary = {
     oracleHeading: 'Checked against real databases',
     oracleBody:
       'Every schedule here has been executed against the real engine in a container, and what it did — values read, waits, error codes, which transaction was aborted, the final table — is committed as a fixture the model is tested against. When the model and the database disagree, the model is wrong.',
-    ctaSchedule: 'Open the score',
-    ctaScenarios: 'Browse the scenarios',
+    ctaSchedule: 'Run the doctors failure',
+    ctaScenarios: 'Browse all the failures',
+    anomalyListHeading: 'The failures this site can name',
+    notationHint:
+      'The formula beside each name is the standard shorthand for a schedule: r is a read, w is a write, c a commit; the number is which transaction did it, and the letter in brackets is which row. So w1[x] r2[x] reads “transaction 1 writes row x, then transaction 2 reads row x”.',
   },
   controls: {
     engine: 'Engine',
@@ -167,8 +284,62 @@ const en: Dictionary = {
     aliasNote: 'This engine accepts the level name and runs',
     copyLink: 'Copy link to this run',
     copied: 'Link copied',
+    setup: 'What to run',
+    playback: 'Step through it',
+    play: 'Play',
+    pause: 'Pause',
+    replay: 'Replay from the start',
+    keyboardHint: 'The left and right arrow keys step too.',
+  },
+  legend: {
+    heading: 'How to read the score',
+    show: 'How do I read this?',
+    hide: 'Hide the key',
+    intro:
+      'Each horizontal line is one transaction — one database session, issuing its statements left to right. Everything in the same vertical column happened at the same point in the run, so reading straight down tells you what the two sessions were doing to each other.',
+    voices: 'One line per transaction',
+    voicesBody:
+      'Each transaction gets its own colour and its own marker shape, so the two never depend on colour alone to be told apart.',
+    read: 'Hollow marker — a read',
+    readBody: 'The value it saw is printed above the marker. That value is the whole story in most anomalies.',
+    write: 'Filled marker — a write',
+    writeBody: 'An insert, update or delete. The row it touched is named underneath.',
+    commit: 'One bar line — commit',
+    commitBody: 'The transaction finished and its work became permanent and visible to everyone.',
+    rollback: 'Two bar lines — rollback',
+    rollbackBody: 'The transaction was undone, either because it asked to be or because the engine killed it.',
+    wait: 'Dashed arc — a wait',
+    waitBody:
+      'The statement could not proceed and blocked on a lock. The arc lands on the step that finally released it.',
+    playhead: 'Solid line with a triangle — where you are',
+    playheadBody: 'The step currently shown in the panels below. Stepping moves it.',
+    mark: 'Red bracket — the moment it went wrong',
+    markBody:
+      'It sits above the step where the anomaly became unavoidable. Red is used for nothing else on this site.',
+    notation: 'The labels, e.g. w1[x]',
+    notationBody:
+      'Standard schedule shorthand: r is a read, w a write, c a commit, a an abort. The digit is the transaction and the letter in brackets is the row.',
+  },
+  tour: {
+    step1Heading: 'These lines are transactions running at once',
+    step1Body:
+      'Two database sessions, one line each, both live at the same time. Anything sharing a vertical column happened at the same moment — that overlap is what causes everything else here.',
+    step2Heading: 'Step through it one statement at a time',
+    step2Body:
+      'Next advances a single statement and freezes the engine right there, so the panels underneath show exactly what was true at that instant. Nothing is being re-run; you are scrubbing a recording.',
+    step3Heading: 'Then change the engine or the level',
+    step3Body:
+      'The same statements in the same order, re-executed against a different database or a stricter isolation level. When the outcome changes, you have found what that setting actually buys you.',
+    next: 'Next',
+    back: 'Back',
+    skip: 'Skip',
+    done: 'Got it',
+    progress: 'of',
   },
   panels: {
+    heading: 'Inside the engine at this step',
+    headingHint:
+      'The state of the database at the exact statement above — not the end of the run. Step backwards and forwards to watch these change.',
     versions: 'Version chains',
     versionsHint:
       'Every write creates a version rather than replacing one. xmin is the transaction that created it, xmax the transaction that superseded or deleted it.',
@@ -213,6 +384,9 @@ const en: Dictionary = {
   anomaly: {
     none: 'No anomaly',
     noneBody: 'Nothing in the published definitions occurred in this run.',
+    noneHeadline: 'This run came out clean',
+    foundHeadline: 'The database gave a wrong answer',
+    permittedHere: 'permitted at this engine and level',
     found: 'Anomaly',
     definition: 'Definition',
     formal: 'Phenomenon',
@@ -303,15 +477,45 @@ const id: Dictionary = {
   },
   site: {
     title: 'Isolation Anomaly',
-    tagline:
-      'Susun sendiri urutan dua transaksi, lihat anomalinya terjadi, lalu ganti mesin basis data dan isolation level — dan lihat jadwal yang sama berperilaku sama sekali berbeda.',
+    tagline: 'Lihat dua transaksi diam-diam saling merusak.',
+    standfirst:
+      'Jalankan keduanya berdampingan, selangkah demi selangkah, dan lihat persis di mana basis data memberi jawaban yang salah — lalu ganti mesin atau isolation level-nya dan lihat langkah yang sama berakhir berbeda.',
     disclaimer:
       'Ini memodelkan perilaku yang terdokumentasi untuk sekumpulan operasi tetap pada versi mesin tertentu. Ini bukan basis data. Apa pun di luar himpunan yang dimodelkan ditolak, bukan didekati, dan setiap klaim tentang mesin tertaut ke dokumentasi vendornya.',
+    disclaimerHeading: 'Apa ini, tepatnya',
     language: 'Bahasa',
+    theme: 'Tampilan',
+    themeToDark: 'Ganti ke manuskrip gelap',
+    themeToLight: 'Ganti ke manuskrip terang',
+    skipToContent: 'Lompat ke konten',
+    menu: 'Bagian',
   },
   home: {
+    eyebrow: 'Mulai di sini',
     lead:
       'Setiap pengembang aplikasi memilih isolation level, biasanya dengan menerima nilai bawaan, dan hampir tidak ada yang bisa menjelaskan dari apa level itu melindunginya.',
+    plainHeading: 'Dengan bahasa sederhana',
+    plainBody:
+      'Basis data Anda menjalankan banyak transaksi sekaligus. Agar tetap cepat, ia membiarkan tiap transaksi melihat versi pekerjaan transaksi lain yang sedikit basi atau setengah jadi. Biasanya itu tidak terasa. Kadang dua transaksi bertumpang tindih pada urutan yang pas salahnya, dan hasilnya jawaban yang memang keliru — uang terhitung dua kali, aturan yang ternyata tidak dijaga siapa pun, baris yang lenyap di tengah pembacaan. Setelan yang menentukan seberapa banyak tumpang tindih yang diizinkan itulah isolation level. Situs ini membuat Anda bisa sengaja memicu kegagalan itu dan menyaksikannya terjadi.',
+    storyHeading: 'Satu kegagalan yang mudah dibayangkan',
+    storyIntro:
+      'Aturan rumah sakit: minimal satu dokter harus tetap berjaga. Saat ini ada dua yang berjaga. Keduanya memutuskan pulang pada saat yang sama.',
+    storyStep1: 'Dokter A memeriksa berapa dokter yang sedang berjaga. Jawabannya dua.',
+    storyStep2: 'Dokter B memeriksa pada detik yang sama. Dua juga.',
+    storyStep3: 'A melihat masih ada satu dokter lain, jadi A berhenti berjaga.',
+    storyStep4: 'B melihat masih ada satu dokter lain, jadi B berhenti berjaga.',
+    storyPunchline:
+      'Tidak ada yang berjaga. Tak satu pun transaksi menyentuh baris milik yang lain, tidak ada yang terkunci, tidak ada kesalahan yang muncul, dan keduanya berhasil commit. Inilah write skew, dan sebagian besar basis data mengizinkannya pada level yang kemungkinan besar Anda pakai sekarang.',
+    howHeading: 'Cara memakainya',
+    how1Heading: 'Pilih satu kegagalan',
+    how1Body:
+      'Tiap skenario adalah kegagalan klasik yang nyata, ditulis sebagai dua atau tiga transaksi dengan statement-nya disisipkan dalam urutan tertentu.',
+    how2Heading: 'Telusuri langkah demi langkah',
+    how2Body:
+      'Tekan Berikutnya untuk maju satu statement. Partitur menunjukkan siapa melakukan apa dan kapan; panel di bawahnya menunjukkan keadaan mesin pada saat itu juga.',
+    how3Heading: 'Ubah satu hal',
+    how3Body:
+      'Ganti mesinnya atau naikkan isolation level-nya, dan langkah yang sama langsung dijalankan ulang. Apa yang berubah — dan apa yang keras kepala tidak berubah — itulah seluruh pelajarannya.',
     skewHeading: 'Write skew adalah intinya',
     skewBody:
       'Dua transaksi membaca data yang sama, masing-masing memverifikasi sebuah constraint, masing-masing menulis baris yang berbeda, dan keduanya commit. Tidak ada baris yang sama, tidak ada perebutan lock, tidak ada bentrokan versi — dan constraint itu dilanggar oleh gabungannya. Anomali ini tidak ada dalam daftar ANSI, diizinkan oleh snapshot isolation, dan paling mungkin merugikan aplikasi nyata.',
@@ -321,8 +525,11 @@ const id: Dictionary = {
     oracleHeading: 'Diuji terhadap basis data sungguhan',
     oracleBody:
       'Setiap jadwal di sini telah dijalankan terhadap mesin sungguhan di dalam container, dan apa yang dilakukannya — nilai yang dibaca, penungguan, kode kesalahan, transaksi mana yang dibatalkan, tabel akhirnya — disimpan sebagai fixture yang menguji model ini. Bila model dan basis data berbeda, modelnya yang salah.',
-    ctaSchedule: 'Buka partiturnya',
-    ctaScenarios: 'Telusuri skenario',
+    ctaSchedule: 'Jalankan kasus dua dokter',
+    ctaScenarios: 'Telusuri semua kegagalannya',
+    anomalyListHeading: 'Kegagalan yang bisa disebut namanya di sini',
+    notationHint:
+      'Rumus di samping tiap nama adalah notasi baku untuk sebuah jadwal: r berarti baca, w berarti tulis, c berarti commit; angkanya menunjukkan transaksi mana yang melakukannya, dan huruf dalam kurung siku menunjukkan barisnya. Jadi w1[x] r2[x] dibaca “transaksi 1 menulis baris x, lalu transaksi 2 membaca baris x”.',
   },
   controls: {
     engine: 'Mesin',
@@ -338,8 +545,63 @@ const id: Dictionary = {
     aliasNote: 'Mesin ini menerima nama level itu lalu menjalankan',
     copyLink: 'Salin tautan ke tampilan ini',
     copied: 'Tautan disalin',
+    setup: 'Yang dijalankan',
+    playback: 'Telusuri langkahnya',
+    play: 'Jalankan',
+    pause: 'Jeda',
+    replay: 'Ulangi dari awal',
+    keyboardHint: 'Tombol panah kiri dan kanan juga bisa dipakai.',
+  },
+  legend: {
+    heading: 'Cara membaca partitur',
+    show: 'Bagaimana cara membacanya?',
+    hide: 'Sembunyikan keterangan',
+    intro:
+      'Tiap garis mendatar adalah satu transaksi — satu session basis data yang mengirim statement-nya dari kiri ke kanan. Segala sesuatu pada kolom tegak yang sama terjadi pada titik yang sama dalam eksekusi, jadi membaca lurus ke bawah memberi tahu Anda apa yang sedang kedua session lakukan terhadap satu sama lain.',
+    voices: 'Satu garis per transaksi',
+    voicesBody:
+      'Tiap transaksi punya warna dan bentuk penanda sendiri, jadi keduanya tidak pernah hanya dibedakan lewat warna.',
+    read: 'Penanda kosong — sebuah pembacaan',
+    readBody:
+      'Nilai yang dilihatnya dicetak di atas penanda. Nilai itulah inti cerita pada hampir semua anomali.',
+    write: 'Penanda terisi — sebuah penulisan',
+    writeBody: 'Insert, update, atau delete. Baris yang disentuhnya disebut di bawahnya.',
+    commit: 'Satu garis tegak — commit',
+    commitBody: 'Transaksi selesai dan pekerjaannya menjadi permanen serta terlihat oleh semua orang.',
+    rollback: 'Dua garis tegak — rollback',
+    rollbackBody: 'Transaksi dibatalkan, entah atas permintaannya sendiri atau karena dimatikan oleh mesin.',
+    wait: 'Busur putus-putus — sebuah penungguan',
+    waitBody:
+      'Statement tidak bisa lanjut dan terhalang oleh lock. Ujung busurnya jatuh pada langkah yang akhirnya melepaskannya.',
+    playhead: 'Garis tegas dengan segitiga — posisi Anda',
+    playheadBody: 'Langkah yang sedang ditampilkan pada panel di bawah. Menelusuri langkah menggeserkannya.',
+    mark: 'Kurung merah — saat semuanya menjadi salah',
+    markBody:
+      'Letaknya di atas langkah ketika anomali menjadi tak terhindarkan. Merah tidak dipakai untuk hal lain di situs ini.',
+    notation: 'Labelnya, misalnya w1[x]',
+    notationBody:
+      'Notasi baku untuk jadwal: r berarti baca, w tulis, c commit, a abort. Angkanya adalah transaksinya, huruf dalam kurung siku adalah barisnya.',
+  },
+  tour: {
+    step1Heading: 'Garis-garis ini adalah transaksi yang berjalan bersamaan',
+    step1Body:
+      'Dua session basis data, masing-masing satu garis, keduanya hidup pada saat yang sama. Apa pun yang berbagi kolom tegak terjadi pada saat yang sama — tumpang tindih itulah penyebab segala hal lain di sini.',
+    step2Heading: 'Telusuri satu statement setiap kali',
+    step2Body:
+      'Berikutnya memajukan satu statement dan membekukan mesin tepat di situ, sehingga panel di bawah menunjukkan persis apa yang berlaku pada saat itu. Tidak ada yang dijalankan ulang; Anda sedang menggeser rekaman.',
+    step3Heading: 'Lalu ganti mesin atau levelnya',
+    step3Body:
+      'Statement yang sama dalam urutan yang sama, dieksekusi ulang terhadap basis data lain atau isolation level yang lebih ketat. Ketika hasilnya berubah, Anda menemukan apa yang sebenarnya Anda dapat dari setelan itu.',
+    next: 'Berikutnya',
+    back: 'Kembali',
+    skip: 'Lewati',
+    done: 'Paham',
+    progress: 'dari',
   },
   panels: {
+    heading: 'Isi mesin pada langkah ini',
+    headingHint:
+      'Keadaan basis data pada statement di atas — bukan pada akhir eksekusi. Majukan dan mundurkan langkahnya untuk melihat semua ini berubah.',
     versions: 'Rantai versi',
     versionsHint:
       'Setiap penulisan membuat versi baru, bukan menggantikan yang lama. xmin adalah transaksi yang membuatnya, xmax transaksi yang menggantikan atau menghapusnya.',
@@ -384,6 +646,9 @@ const id: Dictionary = {
   anomaly: {
     none: 'Tidak ada anomali',
     noneBody: 'Tidak ada satu pun definisi terbitan yang terjadi pada eksekusi ini.',
+    noneHeadline: 'Eksekusi ini bersih',
+    foundHeadline: 'Basis data memberi jawaban yang salah',
+    permittedHere: 'diizinkan pada mesin dan level ini',
     found: 'Anomali',
     definition: 'Definisi',
     formal: 'Fenomena',
