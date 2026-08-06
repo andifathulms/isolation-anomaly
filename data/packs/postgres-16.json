@@ -33,6 +33,15 @@
         "url": "https://www.postgresql.org/docs/16/explicit-locking.html#LOCKING-DEADLOCKS",
         "quote": "PostgreSQL automatically detects deadlock situations and resolves them by aborting one of the transactions involved, allowing the other(s) to complete."
       }
+    },
+    "abortedTransaction": {
+      "code": "25P02",
+      "message": "current transaction is aborted, commands ignored until end of transaction block",
+      "citation": {
+        "source": "PostgreSQL 16 — Appendix A. PostgreSQL Error Codes",
+        "url": "https://www.postgresql.org/docs/16/errcodes-appendix.html",
+        "quote": "Class 25 — Invalid Transaction State ... 25P02  in_failed_sql_transaction"
+      }
     }
   },
   "levels": {
@@ -78,7 +87,11 @@
         },
         "locks": {
           "plainRead": {
-            "value": { "record": "none", "gap": "none", "duration": "statement" },
+            "value": {
+              "record": "none",
+              "gap": "none",
+              "duration": "statement"
+            },
             "citation": {
               "source": "PostgreSQL 16 — 13.1. Introduction to MVCC",
               "url": "https://www.postgresql.org/docs/16/mvcc-intro.html",
@@ -86,7 +99,11 @@
             }
           },
           "lockingRead": {
-            "value": { "record": "exclusive", "gap": "none", "duration": "transaction" },
+            "value": {
+              "record": "exclusive",
+              "gap": "none",
+              "duration": "transaction"
+            },
             "citation": {
               "source": "PostgreSQL 16 — 13.3.2. Row-Level Locks",
               "url": "https://www.postgresql.org/docs/16/explicit-locking.html#LOCKING-ROWS",
@@ -94,7 +111,11 @@
             }
           },
           "write": {
-            "value": { "record": "exclusive", "gap": "none", "duration": "transaction" },
+            "value": {
+              "record": "exclusive",
+              "gap": "none",
+              "duration": "transaction"
+            },
             "citation": {
               "source": "PostgreSQL 16 — 13.3.2. Row-Level Locks",
               "url": "https://www.postgresql.org/docs/16/explicit-locking.html#LOCKING-ROWS",
@@ -102,7 +123,11 @@
             }
           },
           "insert": {
-            "value": { "record": "exclusive", "gap": "none", "duration": "transaction" },
+            "value": {
+              "record": "exclusive",
+              "gap": "none",
+              "duration": "transaction"
+            },
             "citation": {
               "source": "PostgreSQL 16 — 13.3.2. Row-Level Locks",
               "url": "https://www.postgresql.org/docs/16/explicit-locking.html#LOCKING-ROWS",
@@ -151,7 +176,11 @@
         },
         "locks": {
           "plainRead": {
-            "value": { "record": "none", "gap": "none", "duration": "statement" },
+            "value": {
+              "record": "none",
+              "gap": "none",
+              "duration": "statement"
+            },
             "citation": {
               "source": "PostgreSQL 16 — 13.1. Introduction to MVCC",
               "url": "https://www.postgresql.org/docs/16/mvcc-intro.html",
@@ -159,7 +188,11 @@
             }
           },
           "lockingRead": {
-            "value": { "record": "exclusive", "gap": "none", "duration": "transaction" },
+            "value": {
+              "record": "exclusive",
+              "gap": "none",
+              "duration": "transaction"
+            },
             "citation": {
               "source": "PostgreSQL 16 — 13.3.2. Row-Level Locks",
               "url": "https://www.postgresql.org/docs/16/explicit-locking.html#LOCKING-ROWS",
@@ -167,7 +200,11 @@
             }
           },
           "write": {
-            "value": { "record": "exclusive", "gap": "none", "duration": "transaction" },
+            "value": {
+              "record": "exclusive",
+              "gap": "none",
+              "duration": "transaction"
+            },
             "citation": {
               "source": "PostgreSQL 16 — 13.3.2. Row-Level Locks",
               "url": "https://www.postgresql.org/docs/16/explicit-locking.html#LOCKING-ROWS",
@@ -175,7 +212,11 @@
             }
           },
           "insert": {
-            "value": { "record": "exclusive", "gap": "none", "duration": "transaction" },
+            "value": {
+              "record": "exclusive",
+              "gap": "none",
+              "duration": "transaction"
+            },
             "citation": {
               "source": "PostgreSQL 16 — 13.2.2. Repeatable Read Isolation Level",
               "url": "https://www.postgresql.org/docs/16/transaction-iso.html#XACT-REPEATABLE-READ",
@@ -234,7 +275,11 @@
         },
         "locks": {
           "plainRead": {
-            "value": { "record": "none", "gap": "none", "duration": "statement" },
+            "value": {
+              "record": "none",
+              "gap": "none",
+              "duration": "statement"
+            },
             "citation": {
               "source": "PostgreSQL 16 — 13.2.3. Serializable Isolation Level",
               "url": "https://www.postgresql.org/docs/16/transaction-iso.html#XACT-SERIALIZABLE",
@@ -242,7 +287,11 @@
             }
           },
           "lockingRead": {
-            "value": { "record": "exclusive", "gap": "none", "duration": "transaction" },
+            "value": {
+              "record": "exclusive",
+              "gap": "none",
+              "duration": "transaction"
+            },
             "citation": {
               "source": "PostgreSQL 16 — 13.3.2. Row-Level Locks",
               "url": "https://www.postgresql.org/docs/16/explicit-locking.html#LOCKING-ROWS",
@@ -250,7 +299,11 @@
             }
           },
           "write": {
-            "value": { "record": "exclusive", "gap": "none", "duration": "transaction" },
+            "value": {
+              "record": "exclusive",
+              "gap": "none",
+              "duration": "transaction"
+            },
             "citation": {
               "source": "PostgreSQL 16 — 13.3.2. Row-Level Locks",
               "url": "https://www.postgresql.org/docs/16/explicit-locking.html#LOCKING-ROWS",
@@ -258,7 +311,11 @@
             }
           },
           "insert": {
-            "value": { "record": "exclusive", "gap": "none", "duration": "transaction" },
+            "value": {
+              "record": "exclusive",
+              "gap": "none",
+              "duration": "transaction"
+            },
             "citation": {
               "source": "PostgreSQL 16 — 13.2.3. Serializable Isolation Level",
               "url": "https://www.postgresql.org/docs/16/transaction-iso.html#XACT-SERIALIZABLE",

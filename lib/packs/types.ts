@@ -151,6 +151,12 @@ export type EnginePack = {
     /** Only engines that run a serialization check report this one. */
     readonly readWriteDependencies?: EngineErrorShape
     readonly deadlock?: EngineErrorShape
+    /**
+     * What the engine says about any statement sent to a transaction it has
+     * already failed. Recorded because it is what an application actually sees
+     * after a serialization failure it did not catch.
+     */
+    readonly abortedTransaction?: EngineErrorShape
   }
   readonly levels: Readonly<Record<IsolationLevel, LevelEntry>>
 }

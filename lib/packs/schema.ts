@@ -98,6 +98,7 @@ export const enginePackSchema = z
       serializationFailure: engineErrorSchema,
       readWriteDependencies: engineErrorSchema.optional(),
       deadlock: engineErrorSchema.optional(),
+      abortedTransaction: engineErrorSchema.optional(),
     }),
     levels: z.object(
       Object.fromEntries(LEVELS.map((level) => [level, levelEntrySchema])) as Record<

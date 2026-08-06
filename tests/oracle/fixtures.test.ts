@@ -1,0 +1,132 @@
+import { readFileSync, existsSync } from 'node:fs'
+import { join } from 'node:path'
+import { describe as suite, expect, it } from 'vitest'
+import { LEVELS } from '@/lib/schedule'
+import { PACKS } from '@/lib/packs'
+import { SCENARIOS } from '@/lib/scenarios'
+import { fixtureName, type OracleRun } from '@/lib/oracle/types'
+
+/**
+ * Integrity of the recorded evidence, before anything is compared against it.
+ *
+ * A fixture without an engine version is not evidence — vendor behaviour
+ * changes across versions (CLAUDE.md invariant 10). A missing fixture is worse
+ * than a failing one, because it silently removes a claim from verification.
+ */
+
+const ROOT = join(process.cwd(), 'tests', 'oracle')
+
+export function loadFixture(packId: string, scenarioId: string, level: string): OracleRun | null {
+  const file = join(ROOT, packId, fixtureName(scenarioId, level as never))
+  if (!existsSync(file)) return null
+  return JSON.parse(readFileSync(file, 'utf8')) as OracleRun
+}
+
+suite('oracle fixtures', () => {
+  for (const pack of PACKS) {
+    const recordable = LEVELS.filter((level) => pack.levels[level].kind !== 'unsupported')
+
+    it(`${pack.id} has a fixture for every scenario at every level it supports`, () => {
+      const missing: string[] = []
+      for (const scenario of SCENARIOS) {
+        for (const level of recordable) {
+          if (!loadFixture(pack.id, scenario.id, level)) {
+            missing.push(`${scenario.id} @ ${level}`)
+          }
+        }
+      }
+      expect(missing, `run pnpm oracle:record — missing: ${missing.join(', ')}`).toEqual([])
+    })
+
+    it(`${pack.id} fixtures record the engine version, image and date`, () => {
+      for (const scenario of SCENARIOS) {
+        for (const level of recordable) {
+          const run = loadFixture(pack.id, scenario.id, level)
+          if (!run) continue
+          expect(run.engineVersion, `${scenario.id} @ ${level}`).toMatch(/\d/)
+          expect(run.image).toContain(':')
+          expect(run.recordedOn).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+          expect(run.engine).toBe(pack.engine)
+          expect(run.level).toBe(level)
+        }
+      }
+    })
+
+    it(`${pack.id} fixtures record an outcome for every step and every transaction`, () => {
+      for (const scenario of SCENARIOS) {
+        for (const level of recordable) {
+          const run = loadFixture(pack.id, scenario.id, level)
+          if (!run) continue
+          expect(run.steps.length, `${scenario.id} @ ${level}`).toBe(scenario.schedule.steps.length)
+          run.steps.forEach((step, index) => {
+            expect(step.index).toBe(index)
+            expect(step.txn).toBe(scenario.schedule.steps[index]?.txn)
+          })
+          for (const txn of scenario.schedule.transactions) {
+            expect(['committed', 'aborted']).toContain(run.transactions[txn])
+          }
+        }
+      }
+    })
+
+    it(`${pack.id} never records a statement left waiting at the end of a schedule`, () => {
+      // A schedule that ends with a session still blocked has not been observed
+      // to completion, and any claim drawn from it would be guesswork.
+      for (const scenario of SCENARIOS) {
+        for (const level of recordable) {
+          const run = loadFixture(pack.id, scenario.id, level)
+          if (!run) continue
+          const stuck = run.steps.filter(
+            (step) => step.outcome.status === 'error' && step.outcome.code === 'blocked',
+          )
+          expect(stuck.map((step) => step.notation), `${scenario.id} @ ${level}`).toEqual([])
+        }
+      }
+    })
+  }
+})
+
+suite('what the oracle says about PostgreSQL', () => {
+  // These are not simulator assertions. They are readings of the recorded
+  // evidence, kept as tests so that a re-recording against a new PostgreSQL
+  // release that changes them fails loudly rather than passing quietly.
+  const pack = 'postgres-16'
+
+  it('permits write skew at REPEATABLE READ and refuses it at SERIALIZABLE', () => {
+    const rr = loadFixture(pack, 'write-skew', 'REPEATABLE READ')
+    const ser = loadFixture(pack, 'write-skew', 'SERIALIZABLE')
+    expect(rr?.transactions).toEqual({ T1: 'committed', T2: 'committed' })
+    expect(rr?.finalState).toEqual([
+      { key: 1, value: 0 },
+      { key: 2, value: 0 },
+    ])
+    expect(ser?.transactions).toEqual({ T1: 'committed', T2: 'aborted' })
+    expect(ser?.finalState).toEqual([
+      { key: 1, value: 0 },
+      { key: 2, value: 1 },
+    ])
+  })
+
+  it('never permits a dirty read, even at READ UNCOMMITTED', () => {
+    const run = loadFixture(pack, 'dirty-read', 'READ UNCOMMITTED')
+    const read = run?.steps[3]?.outcome
+    expect(read?.status).toBe('ok')
+    expect(read?.status === 'ok' ? read.read : null).toEqual({ type: 'row', value: 100 })
+  })
+
+  it('prevents phantoms at REPEATABLE READ, which ANSI does not require', () => {
+    const run = loadFixture(pack, 'phantom-read', 'REPEATABLE READ')
+    const first = run?.steps[1]?.outcome
+    const second = run?.steps[5]?.outcome
+    expect(first?.status === 'ok' ? first.read : null).toEqual(
+      second?.status === 'ok' ? second.read : undefined,
+    )
+  })
+
+  it('records the wait when a locking read meets a held row lock', () => {
+    const run = loadFixture(pack, 'lost-update-locked', 'READ COMMITTED')
+    const blocked = run?.steps.find((step) => step.blockedUntilStep !== null)
+    expect(blocked?.notation).toBe('r2[1]•')
+    expect(blocked?.blockedUntilStep).toBe(5)
+  })
+})

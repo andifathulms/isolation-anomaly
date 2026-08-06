@@ -1,0 +1,30 @@
+# Development only. Never runs in CI, never ships in the bundle.
+# `pnpm oracle:record` brings these up, executes every library schedule against
+# them, and commits what they did as fixtures under tests/oracle/.
+#
+# The only non-default settings are ones that affect timing, not semantics:
+# a short deadlock_timeout so detection happens inside the harness's wait
+# window, and fsync off because these databases are thrown away.
+name: isolation-anomaly-oracle
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    command:
+      - postgres
+      - -c
+      - deadlock_timeout=300ms
+      - -c
+      - fsync=off
+      - -c
+      - full_page_writes=off
+    environment:
+      POSTGRES_PASSWORD: oracle
+      POSTGRES_DB: oracle
+    ports:
+      - '55432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d oracle']
+      interval: 1s
+      timeout: 3s
+      retries: 30
