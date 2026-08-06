@@ -22,7 +22,22 @@ const TYPES = {
   '.txt': 'text/plain; charset=utf-8',
 }
 
-async function resolveFile(pathname) {
+async function resolveFile(rawPathname) {
+  /*
+   * The App Router emits chunks under a literal `[locale]` directory, which a
+   * browser requests percent-encoded. Serving `url.pathname` verbatim looks for
+   * a directory actually named `%5Blocale%5D`, so every client chunk 404s and
+   * the interactive pages silently never hydrate — which is exactly what a
+   * preview is supposed to catch rather than cause. A malformed escape is not
+   * worth throwing over; fall back to the raw path and let the 404 happen.
+   */
+  let pathname = rawPathname
+  try {
+    pathname = decodeURIComponent(rawPathname)
+  } catch {
+    // Keep the undecoded path.
+  }
+
   const candidates = [pathname, join(pathname, 'index.html'), `${pathname}.html`]
   for (const candidate of candidates) {
     const full = join(ROOT, normalize(candidate))
