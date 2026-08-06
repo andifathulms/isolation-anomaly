@@ -13,7 +13,9 @@ import { scenarioText } from '@/lib/i18n/content'
 import type { Locale } from '@/lib/i18n/locales'
 import { Editor } from './Editor'
 import { Score } from './Score'
+import { ScoreLegend } from './ScoreLegend'
 import { StepList } from './StepList'
+import { Tour } from './Tour'
 import { AnomalyCallout } from './AnomalyCallout'
 import { SnapshotPanel } from './SnapshotPanel'
 import { VersionChains } from '@/components/versions/VersionChains'
@@ -25,7 +27,17 @@ import { LockTable } from '@/components/locks/LockTable'
  * re-run — the trace carries the world after every step.
  *
  * State lives in the URL hash, so a run can be shared as a link (PRD §5.7).
+ *
+ * The page is ordered by what a reader wants to know, not by what is easiest to
+ * lay out: what is running, the score, the controls that move through it, the
+ * verdict, and only then the engine internals that explain the verdict. The
+ * verdict used to sit below three dense panels, which put the answer to the
+ * reader's actual question below the fold.
  */
+
+/** Milliseconds per statement when playing. Slow enough to read the score. */
+const PLAY_INTERVAL = 1100
+
 export function Workbench({
   dict,
   locale,
@@ -49,6 +61,7 @@ export function Workbench({
   const [state, setState] = useState<ShareState>(fallback)
   const [copied, setCopied] = useState(false)
   const [editing, setEditing] = useState(false)
+  const [playing, setPlaying] = useState(false)
 
   // Read the hash on mount and whenever it changes, so a pasted link works.
   useEffect(() => {
@@ -96,117 +109,159 @@ export function Workbench({
       if (event.target instanceof HTMLElement && ['INPUT', 'SELECT', 'TEXTAREA'].includes(event.target.tagName)) {
         return
       }
-      if (event.key === 'ArrowRight') goTo(step + 1)
-      if (event.key === 'ArrowLeft') goTo(step - 1)
+      if (event.key === 'ArrowRight') {
+        setPlaying(false)
+        goTo(step + 1)
+      }
+      if (event.key === 'ArrowLeft') {
+        setPlaying(false)
+        goTo(step - 1)
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [goTo, step])
+
+  // Playing advances one statement at a time and stops at the end rather than
+  // looping — the last step is the outcome, and looping would scroll past it.
+  useEffect(() => {
+    if (!playing) return
+    if (step >= maxStep) {
+      setPlaying(false)
+      return
+    }
+    const timer = window.setTimeout(() => goTo(step + 1), PLAY_INTERVAL)
+    return () => window.clearTimeout(timer)
+  }, [playing, step, maxStep, goTo])
+
+  // Changing what is being run invalidates a run in progress.
+  const change = useCallback(
+    (next: Partial<ShareState>) => {
+      setPlaying(false)
+      update(next)
+    },
+    [update],
+  )
 
   if (!schedule) return null
 
   const levelEntry = pack.levels[state.level]
   const world = trace?.steps[step]?.state
   const current = trace?.steps[step]
+  const context = `${pack.engine} ${pack.version} · ${state.level}`
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-end gap-4">
-        <label className="flex flex-col gap-1">
-          <span className="font-control text-xs uppercase tracking-wide text-ink-muted">
-            {dict.controls.scenario}
-          </span>
-          <select
-            value={scenario?.id ?? ''}
-            onChange={(event) => update({ scenarioId: event.target.value, schedule: null, step: 0 })}
-            className="min-w-56 rounded-sm border border-staff bg-manuscript-raised px-2 py-1.5 font-control text-sm"
-          >
-            {state.schedule ? <option value="">shared schedule</option> : null}
-            {SCENARIOS.map((candidate) => (
-              <option key={candidate.id} value={candidate.id}>
-                {scenarioText(locale, candidate).title}
-              </option>
-            ))}
-          </select>
-        </label>
+      <Tour dict={dict} />
 
-        <label className="flex flex-col gap-1">
-          <span className="font-control text-xs uppercase tracking-wide text-ink-muted">
-            {dict.controls.engine}
-          </span>
-          <select
-            value={pack.id}
-            onChange={(event) => update({ packId: event.target.value, step: 0 })}
-            className="rounded-sm border border-staff bg-manuscript-raised px-2 py-1.5 font-control text-sm"
-          >
-            {PACKS.map((candidate) => (
-              <option key={candidate.id} value={candidate.id}>
-                {candidate.engine} {candidate.version}
-              </option>
-            ))}
-          </select>
-        </label>
+      {/*
+        The three dials that drive everything, in a bar that stays put while the
+        reader scrolls through the panels below — changing the level and seeing
+        the outcome change is the core loop, and it used to require scrolling
+        back to the top of the page. It sits slightly under the header's own
+        height so the two never separate and let content show through the seam.
 
-        <label className="flex flex-col gap-1">
-          <span className="font-control text-xs uppercase tracking-wide text-ink-muted">
-            {dict.controls.level}
-          </span>
-          <select
-            value={state.level}
-            onChange={(event) => update({ level: event.target.value as IsolationLevel, step: 0 })}
-            className="rounded-sm border border-staff bg-manuscript-raised px-2 py-1.5 font-mono text-sm"
-          >
-            {LEVELS.map((level) => (
-              <option key={level} value={level}>
-                {level}
-                {pack.levels[level].kind === 'alias' ? ` (${dict.controls.alias})` : ''}
-              </option>
-            ))}
-          </select>
-        </label>
+        Static below `sm`: stacked on a phone the three selects are four rows
+        tall, and pinning that to the top would leave almost no room for the
+        score it is supposed to be controlling.
+      */}
+      <div className="z-20 -mx-4 border-y border-staff-faint bg-manuscript px-4 py-3 sm:sticky sm:top-[5.1rem] sm:-mx-6 sm:px-6">
+        <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
+          <p className="eyebrow w-full sm:sr-only">{dict.controls.setup}</p>
 
-        <button
-          type="button"
-          onClick={() => {
-            // Editing starts from whatever is on screen, and the edited
-            // schedule travels in the hash from then on.
-            if (!editing && schedule) update({ schedule, scenarioId: null })
-            setEditing(!editing)
-          }}
-          className="rounded-sm border border-staff px-3 py-1.5 font-control text-sm"
-        >
-          {editing ? dict.editor.done : dict.editor.edit}
-        </button>
+          <label className="flex w-full min-w-0 flex-col gap-1 sm:w-auto">
+            <span className="eyebrow">{dict.controls.scenario}</span>
+            <select
+              value={scenario?.id ?? ''}
+              onChange={(event) => change({ scenarioId: event.target.value, schedule: null, step: 0 })}
+              className="control w-full sm:w-auto sm:min-w-56"
+            >
+              {state.schedule ? <option value="">shared schedule</option> : null}
+              {SCENARIOS.map((candidate) => (
+                <option key={candidate.id} value={candidate.id}>
+                  {scenarioText(locale, candidate).title}
+                </option>
+              ))}
+            </select>
+          </label>
 
-        <button
-          type="button"
-          onClick={() => {
-            void navigator.clipboard?.writeText(window.location.href).then(() => {
-              setCopied(true)
-              window.setTimeout(() => setCopied(false), 1600)
-            })
-          }}
-          className="rounded-sm border border-staff px-3 py-1.5 font-control text-sm"
-        >
-          {copied ? dict.controls.copied : dict.controls.copyLink}
-        </button>
+          <label className="flex w-full min-w-0 flex-col gap-1 sm:w-auto">
+            <span className="eyebrow">{dict.controls.engine}</span>
+            <select
+              value={pack.id}
+              onChange={(event) => change({ packId: event.target.value, step: 0 })}
+              className="control w-full sm:w-auto"
+            >
+              {PACKS.map((candidate) => (
+                <option key={candidate.id} value={candidate.id}>
+                  {candidate.engine} {candidate.version}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="flex w-full min-w-0 flex-col gap-1 sm:w-auto">
+            <span className="eyebrow">{dict.controls.level}</span>
+            <select
+              value={state.level}
+              onChange={(event) => change({ level: event.target.value as IsolationLevel, step: 0 })}
+              className="control w-full font-mono sm:w-auto"
+            >
+              {LEVELS.map((level) => (
+                <option key={level} value={level}>
+                  {level}
+                  {pack.levels[level].kind === 'alias' ? ` (${dict.controls.alias})` : ''}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                // Editing starts from whatever is on screen, and the edited
+                // schedule travels in the hash from then on.
+                if (!editing && schedule) change({ schedule, scenarioId: null })
+                setEditing(!editing)
+              }}
+              aria-pressed={editing}
+              className="control"
+            >
+              {editing ? dict.editor.done : dict.editor.edit}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                void navigator.clipboard?.writeText(window.location.href).then(() => {
+                  setCopied(true)
+                  window.setTimeout(() => setCopied(false), 1600)
+                })
+              }}
+              className="control"
+            >
+              {copied ? dict.controls.copied : dict.controls.copyLink}
+            </button>
+          </div>
+        </div>
       </div>
 
       {levelEntry.kind === 'alias' ? (
-        <p className="max-w-prose border-l-2 border-voiceB bg-voiceB-wash/40 px-3 py-2 text-sm">
+        <p className="max-w-reading rounded-r-md border-l-2 border-voiceB bg-voiceB-wash/40 px-4 py-3 text-sm leading-relaxed">
           <span className="font-mono">{state.level}</span> — {dict.controls.aliasNote}{' '}
           <span className="font-mono">{levelEntry.of}</span>. {levelEntry.summary}
         </p>
       ) : null}
 
       {result?.type === 'refused' ? (
-        <section className="max-w-prose rounded-sm border-l-2 border-conductor bg-conductor-wash/40 px-4 py-3">
-          <h2 className="font-prose text-lg text-conductor">{dict.refusal.heading}</h2>
+        <section className="max-w-reading rounded-lg border border-conductor/30 border-l-2 border-l-conductor bg-conductor-wash/40 px-5 py-4">
+          <h2 className="font-prose text-section text-conductor">{dict.refusal.heading}</h2>
           <p className="mt-1 font-mono text-sm">{refusalHeadline(result.refusal)}</p>
-          <p className="mt-2 text-sm">{result.refusal.gap}</p>
-          <p className="mt-2 text-sm text-ink-muted">{dict.refusal.body}</p>
+          <p className="mt-2 text-sm leading-relaxed">{result.refusal.gap}</p>
+          <p className="mt-2 text-sm leading-relaxed text-ink-muted">{dict.refusal.body}</p>
           {'citation' in result.refusal ? (
-            <blockquote className="mt-3 border-l border-staff pl-3 text-sm italic text-ink-muted">
+            <blockquote className="mt-3 border-l border-staff pl-3 text-sm italic leading-relaxed text-ink-muted">
               “{result.refusal.citation.quote}”
               <footer className="mt-1 not-italic">
                 <a
@@ -226,13 +281,15 @@ export function Workbench({
       {editing && schedule ? (
         <Editor
           schedule={schedule}
-          onChange={(next: Schedule) => update({ schedule: next, scenarioId: null })}
+          onChange={(next: Schedule) => change({ schedule: next, scenarioId: null })}
           dict={dict}
         />
       ) : null}
 
       {issues.length > 0 ? (
-        <p className="max-w-prose border-l-2 border-conductor pl-3 text-sm">{dict.editor.invalid}</p>
+        <p className="max-w-reading border-l-2 border-conductor pl-3 text-sm leading-relaxed">
+          {dict.editor.invalid}
+        </p>
       ) : null}
 
       {trace && world && current ? (
@@ -242,18 +299,19 @@ export function Workbench({
             trace={trace}
             currentStep={step}
             anomalies={anomalies}
-            onSelectStep={goTo}
+            onSelectStep={(target) => {
+              setPlaying(false)
+              goTo(target)
+            }}
             onMoveStep={(from, to) => {
               // Re-interleaving produces a new schedule, so it stops being the
               // library scenario and starts travelling in the link instead.
               const next = moveStep(schedule, from, to)
-              if (next !== schedule) update({ schedule: next, scenarioId: null, step: to })
+              if (next !== schedule) change({ schedule: next, scenarioId: null, step: to })
             }}
             labels={{ conductorMark: dict.anomaly.found.toLowerCase() }}
             summary={summary}
           />
-
-          <p className="max-w-prose text-sm text-ink-muted">{dict.editor.dragHint}</p>
 
           {/* Stepping is the one thing that changes without the page changing,
               so it is announced rather than left to be noticed. */}
@@ -262,69 +320,117 @@ export function Workbench({
           </p>
 
           <div className="flex flex-wrap items-center gap-2">
+            <span className="eyebrow mr-1">{dict.controls.playback}</span>
+
             <button
               type="button"
               onClick={() => goTo(0)}
               disabled={step === 0}
-              className="rounded-sm border border-staff px-2 py-1 font-control text-sm disabled:opacity-40"
+              aria-label={dict.controls.first}
+              className="control px-2"
             >
-              ⏮ {dict.controls.first}
+              ⏮
             </button>
             <button
               type="button"
-              onClick={() => goTo(step - 1)}
+              onClick={() => {
+                setPlaying(false)
+                goTo(step - 1)
+              }}
               disabled={step === 0}
-              className="rounded-sm border border-staff px-2 py-1 font-control text-sm disabled:opacity-40"
+              className="control"
             >
-              ← {dict.controls.previous}
+              ← <span className="hidden sm:inline">{dict.controls.previous}</span>
             </button>
-            <span className="font-mono text-sm">
+
+            <button
+              type="button"
+              onClick={() => {
+                if (step >= maxStep) goTo(0)
+                setPlaying(!playing)
+              }}
+              aria-pressed={playing}
+              className="control control-strong"
+            >
+              {playing ? '❚❚' : '▶'}{' '}
+              <span className="hidden sm:inline">
+                {playing ? dict.controls.pause : step >= maxStep ? dict.controls.replay : dict.controls.play}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setPlaying(false)
+                goTo(step + 1)
+              }}
+              disabled={step === maxStep}
+              className="control"
+            >
+              <span className="hidden sm:inline">{dict.controls.next}</span> →
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPlaying(false)
+                goTo(maxStep)
+              }}
+              disabled={step === maxStep}
+              aria-label={dict.controls.last}
+              className="control px-2"
+            >
+              ⏭
+            </button>
+
+            <span className="font-mono text-sm text-ink-muted">
               {dict.controls.step} {step} {dict.controls.ofSteps} {maxStep}
             </span>
-            <button
-              type="button"
-              onClick={() => goTo(step + 1)}
-              disabled={step === maxStep}
-              className="rounded-sm border border-staff px-2 py-1 font-control text-sm disabled:opacity-40"
-            >
-              {dict.controls.next} →
-            </button>
-            <button
-              type="button"
-              onClick={() => goTo(maxStep)}
-              disabled={step === maxStep}
-              className="rounded-sm border border-staff px-2 py-1 font-control text-sm disabled:opacity-40"
-            >
-              {dict.controls.last} ⏭
-            </button>
           </div>
 
           {current.note ? (
-            <p className="max-w-prose border-l-2 border-staff pl-3 text-sm text-ink-muted">{current.note}</p>
+            <p className="max-w-reading border-l-2 border-staff pl-3 text-sm leading-relaxed text-ink-muted">
+              {current.note}
+            </p>
           ) : null}
 
-          <AnomalyCallout anomalies={anomalies} dict={dict} locale={locale} />
+          {/* The answer to the question the reader arrived with. */}
+          <AnomalyCallout anomalies={anomalies} dict={dict} locale={locale} context={context} />
 
-          <div className="grid gap-8 lg:grid-cols-3">
-            <VersionChains chains={world.chains} transactions={world.transactions} dict={dict} />
-            <LockTable locks={world.locks} waits={world.waits} dict={dict} />
-            <SnapshotPanel
-              transactions={world.transactions}
-              committedRows={world.committedRows}
-              dict={dict}
-            />
-          </div>
+          <ScoreLegend dict={dict} />
+
+          <p className="max-w-reading text-sm leading-relaxed text-ink-muted">
+            {dict.editor.dragHint} {dict.controls.keyboardHint}
+          </p>
+
+          <section aria-labelledby="panels-heading" className="border-t border-staff-faint pt-8">
+            <h2 id="panels-heading" className="font-prose text-title">
+              {dict.panels.heading}
+            </h2>
+            <p className="mt-2 max-w-reading text-sm leading-relaxed text-ink-muted">
+              {dict.panels.headingHint}
+            </p>
+
+            <div className="mt-6 grid gap-8 lg:grid-cols-3">
+              <VersionChains chains={world.chains} transactions={world.transactions} dict={dict} />
+              <LockTable locks={world.locks} waits={world.waits} dict={dict} />
+              <SnapshotPanel
+                transactions={world.transactions}
+                committedRows={world.committedRows}
+                dict={dict}
+              />
+            </div>
+          </section>
 
           <nav aria-label={dict.controls.step}>
             <StepList trace={trace} currentStep={step} onSelectStep={goTo} dict={dict} />
           </nav>
 
           {graph ? (
-            <section aria-labelledby="serial-heading" className="max-w-prose">
-              <h3 id="serial-heading" className="font-prose text-lg">
+            <section aria-labelledby="serial-heading" className="max-w-reading">
+              <h3 id="serial-heading" className="font-prose text-section">
                 {cycle ? dict.graph.cycle : dict.graph.noCycle}
               </h3>
-              <p className="mt-1 text-sm text-ink-muted">
+              <p className="mt-1 text-sm leading-relaxed text-ink-muted">
                 {cycle ? explainCycle(cycle) : dict.graph.noCycleBody}
               </p>
               {!cycle && graph.nodes.length > 0 ? (
@@ -334,18 +440,14 @@ export function Workbench({
           ) : null}
 
           {scenario ? (
-            <section className="max-w-prose space-y-2 border-t border-staff-faint pt-6">
-              <h3 className="font-prose text-lg">{scenarioText(locale, scenario).title}</h3>
-              <p className="text-sm">
-                <span className="font-control text-xs uppercase tracking-wide text-ink-muted">
-                  {dict.scenarios.framing}:{' '}
-                </span>
+            <section className="max-w-reading space-y-3 border-t border-staff-faint pt-8">
+              <h3 className="font-prose text-section">{scenarioText(locale, scenario).title}</h3>
+              <p className="text-sm leading-relaxed">
+                <span className="eyebrow">{dict.scenarios.framing}: </span>
                 {scenarioText(locale, scenario).framing}
               </p>
-              <p className="text-sm">
-                <span className="font-control text-xs uppercase tracking-wide text-ink-muted">
-                  {dict.scenarios.lesson}:{' '}
-                </span>
+              <p className="text-sm leading-relaxed">
+                <span className="eyebrow">{dict.scenarios.lesson}: </span>
                 {scenarioText(locale, scenario).lesson}
               </p>
             </section>
