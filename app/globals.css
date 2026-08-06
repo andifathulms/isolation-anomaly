@@ -2,9 +2,89 @@
 @tailwind components;
 @tailwind utilities;
 
+/**
+ * The palettes. Channel triplets rather than hex, so Tailwind can apply an
+ * alpha to any token — `bg-conductor-wash/40` has to keep working.
+ *
+ * Two rules govern both palettes:
+ *   - Conductor's red is reserved for anomalies and aborts (PRD §8). Nothing
+ *     else in either theme may reach for it.
+ *   - The three voices are distinguishable from one another for the common
+ *     colour-vision deficiencies, and are never the only signal anyway — the
+ *     score gives each voice a marker shape as well.
+ */
+@layer base {
+  :root {
+    /* Paper, in three depths. */
+    --manuscript: 242 238 226;
+    --manuscript-raised: 250 247 238;
+    --manuscript-sunk: 230 224 208;
+
+    /* Rules. `staff` is meant to be seen; `staff-faint` is scaffolding. */
+    --staff: 150 143 130;
+    --staff-faint: 199 192 178;
+
+    /* Ink, in three weights. `muted` carries body text, so it clears 7:1. */
+    --ink: 29 27 23;
+    --ink-muted: 82 77 67;
+    --ink-soft: 122 116 102;
+
+    --voice-a: 40 74 124;
+    --voice-a-wash: 221 228 239;
+    --voice-b: 128 97 40;
+    --voice-b-wash: 239 230 210;
+    --voice-c: 55 90 70;
+    --voice-c-wash: 222 231 224;
+
+    --conductor: 168 51 40;
+    --conductor-wash: 243 222 217;
+
+    /* The ruled ground of the page, and the shadow a leaf casts on it. */
+    --ground-rule: 168 163 152 / 0.14;
+    --shadow-edge: 230 224 208;
+    --shadow-cast: 29 27 23;
+
+    color-scheme: light;
+  }
+
+  /*
+   * The same manuscript under a lamp: warm rather than blue-black, because a
+   * cream page that turns grey at night stops looking like paper.
+   */
+  :root[data-theme='dark'] {
+    --manuscript: 26 24 21;
+    --manuscript-raised: 35 32 28;
+    --manuscript-sunk: 18 16 14;
+
+    --staff: 122 114 100;
+    --staff-faint: 64 59 51;
+
+    --ink: 238 233 222;
+    --ink-muted: 176 168 153;
+    --ink-soft: 135 128 114;
+
+    --voice-a: 148 180 226;
+    --voice-a-wash: 34 47 68;
+    --voice-b: 216 184 116;
+    --voice-b-wash: 58 47 26;
+    --voice-c: 143 195 163;
+    --voice-c-wash: 31 50 38;
+
+    --conductor: 232 128 112;
+    --conductor-wash: 62 32 27;
+
+    --ground-rule: 122 114 100 / 0.1;
+    --shadow-edge: 18 16 14;
+    --shadow-cast: 0 0 0;
+
+    color-scheme: dark;
+  }
+}
+
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
   }
 
   body {
@@ -17,20 +97,91 @@
       to bottom,
       transparent 0,
       transparent 31px,
-      rgba(168, 163, 152, 0.14) 31px,
-      rgba(168, 163, 152, 0.14) 32px
+      rgb(var(--ground-rule)) 31px,
+      rgb(var(--ground-rule)) 32px
     );
     background-size: 100% 32px;
   }
 
+  ::selection {
+    background-color: rgb(var(--voice-a-wash));
+    color: rgb(var(--ink));
+  }
+
   :focus-visible {
     @apply outline-none ring-2 ring-voiceA ring-offset-2 ring-offset-manuscript;
+  }
+
+  /* Native controls inherit the manuscript rather than the operating system. */
+  select,
+  input,
+  button,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /*
+   * The one control shape in the app. `control` is the quiet default; the two
+   * modifiers are the only ways to be louder, which keeps a page from filling
+   * up with things all shouting at the same volume.
+   */
+  .control {
+    @apply inline-flex items-center gap-1.5 rounded-md border border-staff bg-manuscript-raised px-3 py-1.5
+      font-control text-sm text-ink transition-colors;
+  }
+
+  .control:hover:not(:disabled) {
+    @apply border-ink-muted bg-manuscript-sunk;
+  }
+
+  .control:disabled {
+    @apply cursor-not-allowed opacity-40;
+  }
+
+  /* The primary action on a page. There is at most one. */
+  .control-strong {
+    @apply border-ink bg-ink text-manuscript-raised;
+  }
+
+  .control-strong:hover:not(:disabled) {
+    @apply border-ink bg-ink-muted text-manuscript-raised;
+  }
+
+  /* An eyebrow label. Uppercase, tracked, and never a whole sentence. */
+  .eyebrow {
+    @apply font-control text-label font-medium uppercase text-ink-soft;
+  }
+
+  /* A leaf of paper: panels, tables, the score. */
+  .leaf {
+    @apply rounded-lg border border-staff-faint bg-manuscript-raised shadow-leaf;
   }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
   }
 
   /* Visible to a screen reader, not to the eye. */
