@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { LEVELS, validateSchedule, type IsolationLevel, type Schedule } from '@/lib/schedule'
+import { LEVELS, moveStep, validateSchedule, type IsolationLevel, type Schedule } from '@/lib/schedule'
 import { PACKS, requirePack } from '@/lib/packs'
 import { SCENARIOS, getScenario } from '@/lib/scenarios'
 import { execute, narrateStep, narrateTrace, refusalHeadline } from '@/lib/engine'
@@ -243,9 +243,17 @@ export function Workbench({
             currentStep={step}
             anomalies={anomalies}
             onSelectStep={goTo}
+            onMoveStep={(from, to) => {
+              // Re-interleaving produces a new schedule, so it stops being the
+              // library scenario and starts travelling in the link instead.
+              const next = moveStep(schedule, from, to)
+              if (next !== schedule) update({ schedule: next, scenarioId: null, step: to })
+            }}
             labels={{ conductorMark: dict.anomaly.found.toLowerCase() }}
             summary={summary}
           />
+
+          <p className="max-w-prose text-sm text-ink-muted">{dict.editor.dragHint}</p>
 
           {/* Stepping is the one thing that changes without the page changing,
               so it is announced rather than left to be noticed. */}

@@ -1,8 +1,10 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import {
+  canMove,
   describe,
+  moveStep,
   validateSchedule,
   type InitialRow,
   type Operation,
@@ -76,21 +78,16 @@ export function Editor({
   readonly dict: Dictionary
 }) {
   const issues = useMemo(() => validateSchedule(schedule), [schedule])
+  const [dragFrom, setDragFrom] = useState<number | null>(null)
 
   const setSteps = (steps: readonly ScheduleStep[]) => onChange({ ...schedule, steps })
 
   const patchStep = (index: number, patch: Partial<ScheduleStep>) =>
     setSteps(schedule.steps.map((step, at) => (at === index ? { ...step, ...patch } : step)))
 
-  const move = (index: number, by: number) => {
-    const target = index + by
-    if (target < 0 || target >= schedule.steps.length) return
-    const next = [...schedule.steps]
-    const [taken] = next.splice(index, 1)
-    if (!taken) return
-    next.splice(target, 0, taken)
-    setSteps(next)
-  }
+  // Moves go through the same clamping the score's drag uses, so a step can
+  // never be pushed past its own transaction's neighbours.
+  const move = (index: number, by: number) => onChange(moveStep(schedule, index, index + by))
 
   const addTransaction = () => {
     const next = `T${schedule.transactions.length + 1}`
@@ -171,7 +168,20 @@ export function Editor({
 
         <ol className="mt-3 space-y-1">
           {schedule.steps.map((step, index) => (
-            <li key={index} className="flex flex-wrap items-center gap-1.5">
+            <li
+              key={index}
+              draggable={canMove(schedule, index)}
+              onDragStart={() => setDragFrom(index)}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={() => {
+                if (dragFrom !== null) onChange(moveStep(schedule, dragFrom, index))
+                setDragFrom(null)
+              }}
+              onDragEnd={() => setDragFrom(null)}
+              className={`flex flex-wrap items-center gap-1.5 ${
+                dragFrom === index ? 'opacity-50' : ''
+              } ${canMove(schedule, index) ? 'cursor-grab' : ''}`}
+            >
               <span className="w-6 font-mono text-xs text-ink-muted">{index}</span>
 
               <select

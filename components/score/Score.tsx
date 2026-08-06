@@ -1,6 +1,7 @@
 'use client'
 
-import type { Schedule } from '@/lib/schedule'
+import { useState } from 'react'
+import { moveRange, type Schedule } from '@/lib/schedule'
 import type { ExecutionTrace } from '@/lib/engine'
 import type { DetectedAnomaly } from '@/lib/detect'
 
@@ -15,11 +16,17 @@ import type { DetectedAnomaly } from '@/lib/detect'
  * Nothing is computed here: the component renders a trace. Colours are semantic
  * tokens only, and conductor's red appears on nothing but anomalies and aborts.
  *
+ * Marks can be dragged sideways to re-interleave the schedule (PRD §5.1). A
+ * mark can only travel between its own transaction's neighbours, and the range
+ * it may reach is shaded while dragging — you are choosing the interleaving, not
+ * rewriting the transaction, and the shading says so before the drop.
+ *
  * Accessibility: this is one graphic with a written summary, not a grid of
- * buttons. Marks stay clickable for a mouse, but the keyboard and screen-reader
- * path is the step list beside it — real buttons, in order, with the same
- * information. Focusable SVG groups would have produced dozens of tab stops
- * announcing coordinates, which is worse than a single good description.
+ * buttons. Marks stay clickable and draggable for a mouse, but the keyboard and
+ * screen-reader path is the step list and the editor's move buttons — real
+ * controls, in order, with the same information. Focusable SVG groups would have
+ * produced dozens of tab stops announcing coordinates, which is worse than a
+ * single good description.
  */
 
 const GUTTER = 76
@@ -44,6 +51,8 @@ type Props = {
   readonly currentStep: number
   readonly anomalies: readonly DetectedAnomaly[]
   readonly onSelectStep: (step: number) => void
+  /** Omitted when the score is read-only. */
+  readonly onMoveStep?: (from: number, to: number) => void
   readonly labels: { readonly conductorMark: string }
   /** Written description of the whole score, for anyone not looking at it. */
   readonly summary: string
@@ -74,13 +83,24 @@ export function Score({
   currentStep,
   anomalies,
   onSelectStep,
+  onMoveStep,
   labels,
   summary,
 }: Props) {
+  const [dragging, setDragging] = useState<{ from: number; to: number } | null>(null)
   const width = GUTTER + schedule.steps.length * COLUMN + 16
   const height = TOP + schedule.transactions.length * STAVE_GAP + BOTTOM_PAD
   const columnX = (index: number) => GUTTER + index * COLUMN + COLUMN / 2
   const staveY = (txnIndex: number) => TOP + txnIndex * STAVE_GAP
+
+  const columnAt = (clientX: number, element: SVGSVGElement) => {
+    const box = element.getBoundingClientRect()
+    const scale = width / box.width
+    const x = (clientX - box.left) * scale
+    return Math.min(Math.max(Math.floor((x - GUTTER) / COLUMN), 0), schedule.steps.length - 1)
+  }
+
+  const allowed = dragging ? moveRange(schedule, dragging.from) : null
 
   const causeSteps = [...new Set(anomalies.map((found) => found.causeStep))].sort((a, b) => a - b)
   const involved = new Set(anomalies.flatMap((found) => found.steps))
@@ -162,6 +182,28 @@ export function Score({
           )
         })}
 
+        {/* While dragging: the span this mark may travel, and where it would land. */}
+        {dragging && allowed ? (
+          <g>
+            <rect
+              x={GUTTER + allowed.first * COLUMN}
+              y={TOP - 34}
+              width={(allowed.last - allowed.first + 1) * COLUMN}
+              height={height - BOTTOM_PAD - TOP + 48}
+              className="fill-voiceA-wash"
+              opacity={0.55}
+            />
+            <line
+              x1={GUTTER + dragging.to * COLUMN + COLUMN / 2}
+              x2={GUTTER + dragging.to * COLUMN + COLUMN / 2}
+              y1={TOP - 34}
+              y2={height - BOTTOM_PAD + 14}
+              className="stroke-voiceA"
+              strokeWidth={2}
+            />
+          </g>
+        ) : null}
+
         {/* Operation marks. */}
         {trace.steps.map((step) => {
           const txnIndex = schedule.transactions.indexOf(step.txn)
@@ -178,8 +220,28 @@ export function Score({
           return (
             <g
               key={`op-${step.index}`}
-              className={`${tone} cursor-pointer`}
+              className={`${tone} ${onMoveStep ? 'cursor-grab' : 'cursor-pointer'}`}
               onClick={() => onSelectStep(step.index)}
+              onPointerDown={(event) => {
+                if (!onMoveStep) return
+                event.currentTarget.ownerSVGElement?.setPointerCapture(event.pointerId)
+                setDragging({ from: step.index, to: step.index })
+              }}
+              onPointerMove={(event) => {
+                if (!onMoveStep || !dragging) return
+                const svg = event.currentTarget.ownerSVGElement
+                if (!svg) return
+                const range = moveRange(schedule, dragging.from)
+                const column = columnAt(event.clientX, svg)
+                const clamped = Math.min(Math.max(column, range.first), range.last)
+                if (clamped !== dragging.to) setDragging({ ...dragging, to: clamped })
+              }}
+              onPointerUp={() => {
+                if (!onMoveStep || !dragging) return
+                if (dragging.to !== dragging.from) onMoveStep(dragging.from, dragging.to)
+                setDragging(null)
+              }}
+              onPointerCancel={() => setDragging(null)}
             >
               {involved.has(step.index) ? (
                 <circle cx={x} cy={y} r={14} className="fill-conductor-wash" />

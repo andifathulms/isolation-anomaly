@@ -115,7 +115,7 @@ export type Dictionary = {
   >
   readonly scenarios: Record<'heading' | 'lead' | 'documents' | 'permittedAt' | 'never' | 'open' | 'framing' | 'lesson', string>
   readonly refusal: Record<'heading' | 'body', string>
-  readonly editor: Record<'edit' | 'done' | 'invalid', string>
+  readonly editor: Record<'edit' | 'done' | 'invalid' | 'dragHint', string>
 }
 
 const en: Dictionary = {
@@ -283,6 +283,8 @@ const en: Dictionary = {
     edit: 'Edit this schedule',
     done: 'Done editing',
     invalid: 'This schedule cannot be handed to a database as written. Fix the problems above to run it.',
+    dragHint:
+      'Drag a mark sideways to re-interleave and re-run. A mark can only move between its own transaction’s neighbouring operations — a session issues its statements in order, so the interleaving is the only thing you get to choose.',
   },
 }
 
@@ -453,6 +455,8 @@ const id: Dictionary = {
     done: 'Selesai menyunting',
     invalid:
       'Jadwal ini tidak bisa diberikan ke basis data seperti apa adanya. Perbaiki masalah di atas untuk menjalankannya.',
+    dragHint:
+      'Geser sebuah tanda ke samping untuk mengubah urutan sisipan lalu menjalankannya ulang. Sebuah tanda hanya bisa bergerak di antara operasi tetangganya dalam transaksi yang sama — sebuah session mengirim statement-nya secara berurutan, jadi yang bisa Anda pilih hanyalah cara menyisipkannya.',
   },
 }
 
