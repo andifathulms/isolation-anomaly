@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { LEVELS, type IsolationLevel } from '@/lib/schedule'
+import { LEVELS, validateSchedule, type IsolationLevel, type Schedule } from '@/lib/schedule'
 import { PACKS, requirePack } from '@/lib/packs'
 import { SCENARIOS, getScenario } from '@/lib/scenarios'
 import { execute, refusalHeadline } from '@/lib/engine'
@@ -9,6 +9,7 @@ import { detect } from '@/lib/detect'
 import { buildConflictGraph, explainCycle, findCycle } from '@/lib/serial'
 import { decodeShareState, encodeShareState, type ShareState } from '@/lib/share'
 import type { Dictionary } from '@/lib/i18n/dictionaries'
+import { Editor } from './Editor'
 import { Score } from './Score'
 import { StepList } from './StepList'
 import { AnomalyCallout } from './AnomalyCallout'
@@ -43,6 +44,7 @@ export function Workbench({
 
   const [state, setState] = useState<ShareState>(fallback)
   const [copied, setCopied] = useState(false)
+  const [editing, setEditing] = useState(false)
 
   // Read the hash on mount and whenever it changes, so a pasted link works.
   useEffect(() => {
@@ -56,9 +58,11 @@ export function Workbench({
   const schedule = state.schedule ?? scenario?.schedule ?? SCENARIOS[0]?.schedule
   const pack = requirePack(state.packId)
 
+  const issues = useMemo(() => (schedule ? validateSchedule(schedule) : []), [schedule])
+
   const result = useMemo(
-    () => (schedule ? execute(schedule, pack, state.level) : null),
-    [schedule, pack, state.level],
+    () => (schedule && issues.length === 0 ? execute(schedule, pack, state.level) : null),
+    [schedule, issues.length, pack, state.level],
   )
 
   const trace = result?.type === 'trace' ? result.trace : null
@@ -159,6 +163,19 @@ export function Workbench({
         <button
           type="button"
           onClick={() => {
+            // Editing starts from whatever is on screen, and the edited
+            // schedule travels in the hash from then on.
+            if (!editing && schedule) update({ schedule, scenarioId: null })
+            setEditing(!editing)
+          }}
+          className="rounded-sm border border-staff px-3 py-1.5 font-control text-sm"
+        >
+          {editing ? dict.editor.done : dict.editor.edit}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
             void navigator.clipboard?.writeText(window.location.href).then(() => {
               setCopied(true)
               window.setTimeout(() => setCopied(false), 1600)
@@ -199,6 +216,18 @@ export function Workbench({
             </blockquote>
           ) : null}
         </section>
+      ) : null}
+
+      {editing && schedule ? (
+        <Editor
+          schedule={schedule}
+          onChange={(next: Schedule) => update({ schedule: next, scenarioId: null })}
+          dict={dict}
+        />
+      ) : null}
+
+      {issues.length > 0 ? (
+        <p className="max-w-prose border-l-2 border-conductor pl-3 text-sm">{dict.editor.invalid}</p>
       ) : null}
 
       {trace && world && current ? (

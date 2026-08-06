@@ -115,6 +115,7 @@ export type Dictionary = {
   >
   readonly scenarios: Record<'heading' | 'lead' | 'documents' | 'permittedAt' | 'never' | 'open' | 'framing' | 'lesson', string>
   readonly refusal: Record<'heading' | 'body', string>
+  readonly editor: Record<'edit' | 'done' | 'invalid', string>
 }
 
 const en: Dictionary = {
@@ -277,6 +278,11 @@ const en: Dictionary = {
   refusal: {
     heading: 'Refused',
     body: 'This engine does not model what was asked for, and guessing at a vendor behaviour would be worse than saying so.',
+  },
+  editor: {
+    edit: 'Edit this schedule',
+    done: 'Done editing',
+    invalid: 'This schedule cannot be handed to a database as written. Fix the problems above to run it.',
   },
 }
 
@@ -441,6 +447,12 @@ const id: Dictionary = {
     heading: 'Ditolak',
     body:
       'Mesin ini tidak memodelkan apa yang diminta, dan menebak perilaku vendor akan lebih buruk daripada mengatakannya terus terang.',
+  },
+  editor: {
+    edit: 'Sunting jadwal ini',
+    done: 'Selesai menyunting',
+    invalid:
+      'Jadwal ini tidak bisa diberikan ke basis data seperti apa adanya. Perbaiki masalah di atas untuk menjalankannya.',
   },
 }
 
