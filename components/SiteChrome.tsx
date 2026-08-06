@@ -3,6 +3,7 @@ import { LOCALES, LOCALE_LABELS, type Locale } from '@/lib/i18n/locales'
 import { dictionary } from '@/lib/i18n/dictionaries'
 import { ThemeToggle } from './ThemeToggle'
 import { MakerSignature } from './MakerSignature'
+import { BrandMark } from './BrandMark'
 
 /**
  * Header, navigation and the standing statement about what this is — every page
@@ -49,7 +50,11 @@ export function SiteChrome({
           score's own marks ghosted through the header as it scrolled past. */}
       <header className="sticky top-0 z-30 border-b border-staff-faint bg-manuscript">
         <div className="mx-auto flex max-w-6xl items-center gap-x-4 px-4 pt-3 sm:px-6">
-          <Link href={`${base}/`} className="whitespace-nowrap font-prose text-xl leading-none tracking-tight">
+          <Link
+            href={`${base}/`}
+            className="flex items-center gap-2.5 whitespace-nowrap font-prose text-xl leading-none tracking-tight"
+          >
+            <BrandMark size={26} />
             {dict.site.title}
           </Link>
 

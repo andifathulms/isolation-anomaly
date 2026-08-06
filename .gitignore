@@ -1,6 +1,11 @@
 node_modules/
 .next/
 out/
+
+# Brand masters: every size and colour variant of the mark, lockup and
+# wordmark. The subset the site and the README actually use is copied into
+# public/ and committed there; this is the working directory it came from.
+exports/
 *.tsbuildinfo
 next-env.d.ts
 .DS_Store

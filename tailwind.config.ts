@@ -14,6 +14,13 @@ const token = (name: string) => `rgb(var(${name}) / <alpha-value>)`
 
 const config: Config = {
   content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}'],
+  /*
+   * Colour is handled entirely by the custom properties below, so `dark:` is
+   * needed only where the two themes need genuinely different content rather
+   * than a different value — swapping the brand mark for its light variant,
+   * which is a different file and not a token.
+   */
+  darkMode: ['selector', '[data-theme="dark"]'],
   theme: {
     extend: {
       colors: {
