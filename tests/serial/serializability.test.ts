@@ -89,6 +89,71 @@ function corpus(): readonly Schedule[] {
 
 const SMALL_SCHEDULES = corpus()
 
+/**
+ * Three transactions, every interleaving.
+ *
+ * Two transactions can only produce a two-cycle, and a two-cycle is the easiest
+ * kind to find. A cycle through three transactions — T1 waits on T2 waits on T3
+ * waits on T1, with no pair of them conflicting in both directions — is where a
+ * depth-first search can plausibly be wrong, so the graph is checked against
+ * exhaustive search over all 1680 interleavings of three three-step
+ * transactions.
+ */
+function threeTransactionCorpus(): readonly Schedule[] {
+  const ops: Readonly<Record<'T1' | 'T2' | 'T3', readonly Operation[]>> = {
+    // Chosen so each transaction reads what the next one writes: the shape that
+    // produces a three-cycle rather than a pair of two-cycles.
+    T1: [{ type: 'read', key: 1 }, { type: 'write', key: 2, value: 11 }, { type: 'commit' }],
+    T2: [{ type: 'read', key: 2 }, { type: 'write', key: 3, value: 22 }, { type: 'commit' }],
+    T3: [{ type: 'read', key: 3 }, { type: 'write', key: 1, value: 33 }, { type: 'commit' }],
+  }
+
+  const patterns: ('T1' | 'T2' | 'T3')[][] = []
+  const walk = (left: number, middle: number, right: number, acc: ('T1' | 'T2' | 'T3')[]) => {
+    if (left === 0 && middle === 0 && right === 0) {
+      patterns.push([...acc])
+      return
+    }
+    if (left > 0) walk(left - 1, middle, right, [...acc, 'T1'])
+    if (middle > 0) walk(left, middle - 1, right, [...acc, 'T2'])
+    if (right > 0) walk(left, middle, right - 1, [...acc, 'T3'])
+  }
+  walk(3, 3, 3, [])
+
+  return patterns.map((pattern, index) => {
+    const taken = new Map<'T1' | 'T2' | 'T3', number>([
+      ['T1', 0],
+      ['T2', 0],
+      ['T3', 0],
+    ])
+    const steps = pattern.map((txn) => {
+      const next = taken.get(txn) ?? 0
+      taken.set(txn, next + 1)
+      const op = ops[txn][next]
+      if (!op) throw new Error('three-transaction generator overran')
+      return { txn, op }
+    })
+    return {
+      id: `trio-${index}`,
+      title: 'Generated three-transaction schedule',
+      transactions: ['T1', 'T2', 'T3'],
+      initial: [
+        { key: 1, value: 1 },
+        { key: 2, value: 2 },
+        { key: 3, value: 3 },
+      ],
+      steps: [
+        { txn: 'T1' as const, op: { type: 'begin' as const } },
+        { txn: 'T2' as const, op: { type: 'begin' as const } },
+        { txn: 'T3' as const, op: { type: 'begin' as const } },
+        ...steps,
+      ],
+    }
+  })
+}
+
+const TRIO_SCHEDULES = threeTransactionCorpus()
+
 suite('conflict graph versus brute-force serializability', () => {
   it(`agrees on all ${SMALL_SCHEDULES.length} generated small schedules, at every level`, () => {
     const disagreements: string[] = []
@@ -110,6 +175,31 @@ suite('conflict graph versus brute-force serializability', () => {
       }
     }
     expect(disagreements).toEqual([])
+  })
+
+  it(`agrees on all ${TRIO_SCHEDULES.length} three-transaction interleavings`, () => {
+    const pack = requirePack('postgres-16')
+    const disagreements: string[] = []
+    let threeCycles = 0
+
+    for (const schedule of TRIO_SCHEDULES) {
+      // One engine and one level is enough here: the claim under test belongs to
+      // the graph search, not to any engine's rules, and READ COMMITTED produces
+      // the widest variety of graphs because nothing is aborted.
+      const result = execute(schedule, pack, 'READ COMMITTED')
+      if (result.type !== 'trace') continue
+      const graph = buildConflictGraph(result.trace)
+      if (isConflictSerializable(graph) !== isSerializableByBruteForce(graph)) {
+        disagreements.push(schedule.id)
+      }
+      const cycle = findCycle(graph)
+      if (cycle && new Set(cycle).size === 3) threeCycles += 1
+    }
+
+    expect(disagreements).toEqual([])
+    // If this corpus produced no three-transaction cycles it would be testing
+    // nothing the two-transaction corpus does not already cover.
+    expect(threeCycles, 'the corpus produced no cycles through three transactions').toBeGreaterThan(0)
   })
 
   it('agrees on every library scenario, at every level', () => {
