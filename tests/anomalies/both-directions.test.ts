@@ -2,8 +2,8 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe as suite, expect, it } from 'vitest'
 import { LEVELS, type IsolationLevel } from '@/lib/schedule'
-import { PACKS } from '@/lib/packs'
-import { SCENARIOS } from '@/lib/scenarios'
+import { PACKS, requirePack } from '@/lib/packs'
+import { SCENARIOS, requireScenario } from '@/lib/scenarios'
 import { execute } from '@/lib/engine'
 import { ANOMALY_IDS, detect, detectedIds } from '@/lib/detect'
 
@@ -85,17 +85,44 @@ suite('the detector is not a rubber stamp', () => {
     }
   })
 
-  it('finds nothing at all at the strictest level of every pack', () => {
-    for (const pack of PACKS) {
-      const strictest: IsolationLevel = 'SERIALIZABLE'
-      if (pack.levels[strictest].kind === 'unsupported') continue
-      for (const scenario of SCENARIOS) {
-        const result = execute(scenario.schedule, pack, strictest)
-        if (result.type !== 'trace') continue
-        const found = detectedIds(result.trace)
-        expect(found, `${pack.id} ${scenario.id} at SERIALIZABLE`).toEqual([])
-      }
+  it('finds nothing across the whole library at a level that really is serializable', () => {
+    // PostgreSQL's SERIALIZABLE runs a serialization check, so nothing in the
+    // library survives it. This is the shape the other assertion below is
+    // measured against.
+    const pack = requirePack('postgres-16')
+    for (const scenario of SCENARIOS) {
+      const result = execute(scenario.schedule, pack, 'SERIALIZABLE')
+      if (result.type !== 'trace') continue
+      expect(detectedIds(result.trace), `${scenario.id} at PostgreSQL SERIALIZABLE`).toEqual([])
     }
+  })
+})
+
+suite('the level named SERIALIZABLE does not mean serializable', () => {
+  // This test exists because an earlier version of it asserted the opposite —
+  // that nothing could be found at SERIALIZABLE on any engine — and Oracle
+  // disproved it. That assumption is exactly the one the project was built to
+  // take apart, and it had crept into the test suite.
+  const level: IsolationLevel = 'SERIALIZABLE'
+
+  it('is serializable on PostgreSQL, which aborts write skew there', () => {
+    const result = execute(requireScenario('write-skew').schedule, requirePack('postgres-16'), level)
+    if (result.type !== 'trace') throw new Error('expected a trace')
+    expect(detectedIds(result.trace)).toEqual([])
+    expect(result.trace.transactions.map((txn) => txn.outcome)).toEqual(['committed', 'aborted'])
+  })
+
+  it('is snapshot isolation on Oracle, which permits write skew there and raises nothing', () => {
+    const result = execute(requireScenario('write-skew').schedule, requirePack('oracle-23ai'), level)
+    if (result.type !== 'trace') throw new Error('expected a trace')
+    expect(detectedIds(result.trace)).toContain('write-skew')
+    // Both doctors go off call, both commit, and the engine says nothing.
+    expect(result.trace.transactions.map((txn) => txn.outcome)).toEqual(['committed', 'committed'])
+    expect(result.trace.finalState).toEqual([
+      { key: 1, value: 0 },
+      { key: 2, value: 0 },
+    ])
+    expect(result.trace.steps.every((step) => step.outcome.type === 'ok')).toBe(true)
   })
 })
 

@@ -12,7 +12,7 @@ export const dirtyRead: Scenario = {
   framing:
     'A refund is being processed. The refund transaction has already reduced the balance to 0 when a reporting query reads it, and then the refund fails and rolls back.',
   lesson:
-    'ANSI defines READ UNCOMMITTED as the level that permits this. PostgreSQL accepts the name and gives you READ COMMITTED, so the reporting query sees 100 at every level — the balance that was actually committed. MySQL InnoDB is the contrast: its READ UNCOMMITTED is real, and the reporting query there reads 0 — a balance that never existed. SQL Server’s READ UNCOMMITTED is real too, and it reads 0 for the same reason.',
+    'ANSI defines READ UNCOMMITTED as the level that permits this. PostgreSQL accepts the name and gives you READ COMMITTED, so the reporting query sees 100 at every level — the balance that was actually committed. MySQL InnoDB is the contrast: its READ UNCOMMITTED is real, and the reporting query there reads 0 — a balance that never existed. SQL Server’s READ UNCOMMITTED is real too, and it reads 0 for the same reason. Oracle refuses the level name outright: it has no READ UNCOMMITTED and never permits a dirty read at all.',
   anomaly: 'dirty-read',
   schedule: {
     id: 'dirty-read',
@@ -33,6 +33,7 @@ export const dirtyRead: Scenario = {
     'postgres-16': [],
     'mysql-8-innodb': ['READ UNCOMMITTED'],
     'sqlserver-2022': ['READ UNCOMMITTED'],
+    'oracle-23ai': [],
   },
 }
 
@@ -62,5 +63,6 @@ export const dirtyWrite: Scenario = {
     'postgres-16': [],
     'mysql-8-innodb': [],
     'sqlserver-2022': [],
+    'oracle-23ai': [],
   },
 }

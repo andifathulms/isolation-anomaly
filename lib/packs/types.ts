@@ -100,6 +100,19 @@ export type DeadlockVictim =
    */
   | 'unmodelled'
 
+export type FailureScope =
+  /** The engine rolls back the whole transaction. */
+  | 'transaction'
+  /**
+   * Only the failed statement is rolled back. The transaction stays open and a
+   * COMMIT that follows commits the work done before the failure — Oracle lists
+   * "commit the work executed to that point" as a legitimate response — but it
+   * cannot simply carry on: every later write or locking read raises the same
+   * error until the transaction ends. Recorded behaviour, and the reason the
+   * documentation tells you to roll back to a savepoint.
+   */
+  | 'statementThenPoisoned'
+
 export type AfterAbort =
   /** Every statement fails until the transaction block ends. */
   | 'rejectStatements'
@@ -206,5 +219,11 @@ export type EnginePack = {
    * outside any transaction.
    */
   readonly afterAbort?: Rule<AfterAbort>
+  /**
+   * How much a serialization failure destroys. Most engines end the
+   * transaction; Oracle ends only the statement, which changes what a later
+   * COMMIT means and is exactly the sort of thing that cannot be inferred.
+   */
+  readonly failureScope?: Rule<FailureScope>
   readonly levels: Readonly<Record<IsolationLevel, LevelEntry>>
 }

@@ -1,4 +1,5 @@
 import {
+  isWriteOperation,
   predicateContains,
   notate,
   type IsolationLevel,
@@ -69,6 +70,11 @@ type Runtime = {
   snapshotCommitted: ReadonlySet<Xid> | null
   pending: { readonly stepIndex: number; readonly op: Operation; waitingFor: readonly TxnId[] } | null
   error: { code: string; message: string; cause: AbortCause } | null
+  /**
+   * Set when a serialization failure ended the statement but not the
+   * transaction. Everything that writes or locks after it raises the same error.
+   */
+  poisoned: EngineErrorShape | null
   /** Single-key reads, for the serialization check and the conflict graph. */
   readonly readKeys: Set<Key>
   readonly readPredicates: Predicate[]
@@ -113,6 +119,7 @@ export function execute(
       snapshotCommitted: null,
       pending: null,
       error: null,
+      poisoned: null,
       readKeys: new Set<Key>(),
       readPredicates: [],
     })
@@ -259,6 +266,13 @@ export function execute(
   }
 
   const abort = (runtime: Runtime, step: number, shape: EngineErrorShape, cause: AbortCause): StepOutcome => {
+    // Some engines lose only the statement. The transaction stays open, keeps
+    // its locks, and a later COMMIT commits whatever it had already done — but
+    // it cannot go on writing, and every later attempt raises the same error.
+    if ((pack.failureScope?.value ?? 'transaction') === 'statementThenPoisoned') {
+      runtime.poisoned = shape
+      return { type: 'error', code: shape.code, message: shape.message, cause }
+    }
     runtime.status = 'aborted'
     runtime.endedAtStep = step
     runtime.error = { code: shape.code, message: shape.message, cause }
@@ -379,6 +393,16 @@ export function execute(
         }
       }
       return { type: 'error', code: shape.code, message: shape.message, cause: 'transactionAlreadyAborted' }
+    }
+
+    // A transaction that already failed to serialize cannot write or lock again.
+    if (runtime.poisoned && (isWriteOperation(op) || op.type === 'selectForUpdate')) {
+      return {
+        type: 'error',
+        code: runtime.poisoned.code,
+        message: runtime.poisoned.message,
+        cause: 'staleWrite',
+      }
     }
 
     // The snapshot belongs to the moment the statement started, not to the

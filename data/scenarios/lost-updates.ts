@@ -34,6 +34,7 @@ export const lostUpdate: Scenario = {
     'postgres-16': ['READ UNCOMMITTED', 'READ COMMITTED'],
     'mysql-8-innodb': ['READ UNCOMMITTED', 'READ COMMITTED', 'REPEATABLE READ'],
     'sqlserver-2022': ['READ UNCOMMITTED', 'READ COMMITTED'],
+    'oracle-23ai': ['READ COMMITTED'],
   },
 }
 
@@ -65,5 +66,6 @@ export const lostUpdateLocked: Scenario = {
     'postgres-16': [],
     'mysql-8-innodb': [],
     'sqlserver-2022': [],
+    'oracle-23ai': [],
   },
 }

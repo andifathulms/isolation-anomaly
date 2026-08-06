@@ -1,0 +1,240 @@
+{
+  "id": "oracle-23ai",
+  "engine": "Oracle Database",
+  "version": "23ai Free",
+  "verifiedOn": "2026-08-06",
+  "docsUrl": "https://docs.oracle.com/en/database/oracle/oracle-database/23/cncpt/data-concurrency-and-consistency.html",
+  "defaultLevel": "READ COMMITTED",
+  "summary": "Oracle has two isolation levels, not five. READ UNCOMMITTED and REPEATABLE READ do not exist — asking for them is refused here rather than mapped to something else — and dirty reads are impossible at any level. What Oracle calls SERIALIZABLE is snapshot isolation: it gives the transaction one point in time, raises ORA-08177 if you write a row someone else committed since, and permits write skew despite the name. That is the sharpest naming problem in the whole project: a developer who chooses SERIALIZABLE here because the word means something in a textbook has not got what the textbook describes. One more thing Oracle alone does: ORA-08177 rolls back the statement and leaves the transaction open, so a COMMIT that follows commits the work done before the failure.",
+  "errors": {
+    "serializationFailure": {
+      "code": "8177",
+      "message": "ORA-08177: can't serialize access for this transaction",
+      "citation": {
+        "source": "Oracle Database 23ai — Data Concurrency and Consistency",
+        "url": "https://docs.oracle.com/en/database/oracle/oracle-database/23/cncpt/data-concurrency-and-consistency.html",
+        "quote": "Oracle AI Database permits a serializable transaction to modify a row only if changes to the row made by other transactions were already committed when the serializable transaction began. The database generates an error when a serializable transaction tries to update or delete data changed by a different transaction that committed after the serializable transaction began."
+      }
+    }
+  },
+  "failureScope": {
+    "value": "statementThenPoisoned",
+    "citation": {
+      "source": "Oracle Database 23ai — Data Concurrency and Consistency",
+      "url": "https://docs.oracle.com/en/database/oracle/oracle-database/23/cncpt/data-concurrency-and-consistency.html",
+      "quote": "When a serializable transaction fails with the ORA-08177 error, an application can take several actions, including the following: Commit the work executed to that point"
+    }
+  },
+  "levels": {
+    "READ UNCOMMITTED": {
+      "kind": "unsupported",
+      "displayName": "READ UNCOMMITTED (no such level)",
+      "summary": "Oracle offers read committed and serializable, and a read-only mode. There is no READ UNCOMMITTED to select, and no level at which a dirty read is possible — so unlike PostgreSQL, which accepts the name and quietly gives you READ COMMITTED, Oracle does not accept it at all.",
+      "citation": {
+        "source": "Oracle Database 23ai — Data Concurrency and Consistency",
+        "url": "https://docs.oracle.com/en/database/oracle/oracle-database/23/cncpt/data-concurrency-and-consistency.html",
+        "quote": "Oracle AI Database never permits a dirty read, which occurs when a transaction reads uncommitted data in another transaction."
+      }
+    },
+    "READ COMMITTED": {
+      "kind": "modelled",
+      "displayName": "READ COMMITTED",
+      "summary": "The default. Every query sees data committed before that query began, so two reads in one transaction can disagree. A write to a row another transaction has just committed is re-applied to the new version rather than refused.",
+      "semantics": {
+        "visibility": {
+          "value": {
+            "snapshot": "statement",
+            "readsUncommitted": false,
+            "lockingReadsSeeLatestCommitted": true,
+            "plainReadsAreLocking": false
+          },
+          "citation": {
+            "source": "Oracle Database 23ai — Data Concurrency and Consistency",
+            "url": "https://docs.oracle.com/en/database/oracle/oracle-database/23/cncpt/data-concurrency-and-consistency.html",
+            "quote": "In the read committed isolation level, every query executed by a transaction sees only data committed before the query—not the transaction—began."
+          }
+        },
+        "conflicts": {
+          "value": {
+            "writeOnStaleRow": "applyToLatest",
+            "lockingReadOnStaleRow": "readLatest",
+            "writeWriteBlocks": true
+          },
+          "citation": {
+            "source": "Oracle Database 23ai — Data Concurrency and Consistency",
+            "url": "https://docs.oracle.com/en/database/oracle/oracle-database/23/cncpt/data-concurrency-and-consistency.html",
+            "quote": "Oracle AI Database always enforces statement-level read consistency, which guarantees that data returned by a single query is committed and consistent for a single point in time."
+          }
+        },
+        "locks": {
+          "plainRead": {
+            "value": {
+              "record": "none",
+              "gap": "none",
+              "duration": "statement"
+            },
+            "citation": {
+              "source": "Oracle Database 23ai — Data Concurrency and Consistency",
+              "url": "https://docs.oracle.com/en/database/oracle/oracle-database/23/cncpt/data-concurrency-and-consistency.html",
+              "quote": "Oracle AI Database never permits a dirty read, which occurs when a transaction reads uncommitted data in another transaction."
+            }
+          },
+          "lockingRead": {
+            "value": {
+              "record": "exclusive",
+              "gap": "none",
+              "duration": "transaction"
+            },
+            "citation": {
+              "source": "Oracle Database 23ai — Data Concurrency and Consistency",
+              "url": "https://docs.oracle.com/en/database/oracle/oracle-database/23/cncpt/data-concurrency-and-consistency.html",
+              "quote": "Oracle AI Database automatically detects deadlocks and resolves them by rolling back one statement involved in the deadlock, releasing one set of the conflicting row locks."
+            }
+          },
+          "write": {
+            "value": {
+              "record": "exclusive",
+              "gap": "none",
+              "duration": "transaction"
+            },
+            "citation": {
+              "source": "Oracle Database 23ai — Data Concurrency and Consistency",
+              "url": "https://docs.oracle.com/en/database/oracle/oracle-database/23/cncpt/data-concurrency-and-consistency.html",
+              "quote": "The statement rolled back belongs to the transaction that detects the deadlock. Usually, the signaled transaction should be rolled back explicitly, but it can retry the rolled-back statement after waiting."
+            }
+          },
+          "insert": {
+            "value": {
+              "record": "exclusive",
+              "gap": "none",
+              "duration": "transaction"
+            },
+            "citation": {
+              "source": "Oracle Database 23ai — Data Concurrency and Consistency",
+              "url": "https://docs.oracle.com/en/database/oracle/oracle-database/23/cncpt/data-concurrency-and-consistency.html",
+              "quote": "Oracle AI Database always enforces statement-level read consistency, which guarantees that data returned by a single query is committed and consistent for a single point in time."
+            }
+          }
+        },
+        "serializationCheck": {
+          "value": "none",
+          "citation": {
+            "source": "Oracle Database 23ai — Data Concurrency and Consistency",
+            "url": "https://docs.oracle.com/en/database/oracle/oracle-database/23/cncpt/data-concurrency-and-consistency.html",
+            "quote": "In the read committed isolation level, every query executed by a transaction sees only data committed before the query—not the transaction—began."
+          }
+        }
+      }
+    },
+    "REPEATABLE READ": {
+      "kind": "unsupported",
+      "displayName": "REPEATABLE READ (no such level)",
+      "summary": "Oracle has no REPEATABLE READ. What it offers instead is SERIALIZABLE, which gives the whole transaction one point in time — stronger than ANSI's REPEATABLE READ for reads, and still not serializable. Select SERIALIZABLE and read what it actually prevents.",
+      "citation": {
+        "source": "Oracle Database 23ai — Data Concurrency and Consistency",
+        "url": "https://docs.oracle.com/en/database/oracle/oracle-database/23/cncpt/data-concurrency-and-consistency.html",
+        "quote": "Oracle AI Database offers the read committed (default) and serializable isolation levels. Also, the database offers a read-only mode."
+      }
+    },
+    "SNAPSHOT": {
+      "kind": "unsupported",
+      "displayName": "SNAPSHOT (the level Oracle has, under another name)",
+      "summary": "There is no level called SNAPSHOT to select — and yet snapshot isolation is exactly what Oracle gives you when you ask for SERIALIZABLE. This is the one refusal in the project that points at a level the engine really does implement, wearing a different name.",
+      "citation": {
+        "source": "Oracle Database 23ai — Data Concurrency and Consistency",
+        "url": "https://docs.oracle.com/en/database/oracle/oracle-database/23/cncpt/data-concurrency-and-consistency.html",
+        "quote": "A serializable transaction operates in an environment that makes it appear as if no other users were modifying data in the database."
+      }
+    },
+    "SERIALIZABLE": {
+      "kind": "modelled",
+      "displayName": "SERIALIZABLE (Snapshot Isolation)",
+      "summary": "Snapshot isolation under the strongest name in the standard. One point in time for the whole transaction, ORA-08177 if you write a row committed since it began — and write skew permitted, because two transactions writing different rows never collide. There is no serialization check to catch it, so the on-call roster empties here exactly as it does at PostgreSQL's REPEATABLE READ.",
+      "semantics": {
+        "visibility": {
+          "value": {
+            "snapshot": "transaction",
+            "readsUncommitted": false,
+            "lockingReadsSeeLatestCommitted": true,
+            "plainReadsAreLocking": false
+          },
+          "citation": {
+            "source": "Oracle Database 23ai — Data Concurrency and Consistency",
+            "url": "https://docs.oracle.com/en/database/oracle/oracle-database/23/cncpt/data-concurrency-and-consistency.html",
+            "quote": "In the serializable isolation level, a transaction sees only changes committed at the time the transaction—not the query—began and changes made by the transaction itself."
+          }
+        },
+        "conflicts": {
+          "value": {
+            "writeOnStaleRow": "abort",
+            "lockingReadOnStaleRow": "abort",
+            "writeWriteBlocks": true
+          },
+          "citation": {
+            "source": "Oracle Database 23ai — Data Concurrency and Consistency",
+            "url": "https://docs.oracle.com/en/database/oracle/oracle-database/23/cncpt/data-concurrency-and-consistency.html",
+            "quote": "The database generates an error when a serializable transaction tries to update or delete data changed by a different transaction that committed after the serializable transaction began."
+          }
+        },
+        "locks": {
+          "plainRead": {
+            "value": {
+              "record": "none",
+              "gap": "none",
+              "duration": "statement"
+            },
+            "citation": {
+              "source": "Oracle Database 23ai — Data Concurrency and Consistency",
+              "url": "https://docs.oracle.com/en/database/oracle/oracle-database/23/cncpt/data-concurrency-and-consistency.html",
+              "quote": "Oracle AI Database can also provide read consistency to all queries in a transaction, known as transaction-level read consistency. In this case, each statement in a transaction sees data from the same point in time. This is the time at which the transaction began."
+            }
+          },
+          "lockingRead": {
+            "value": {
+              "record": "exclusive",
+              "gap": "none",
+              "duration": "transaction"
+            },
+            "citation": {
+              "source": "Oracle Database 23ai — Data Concurrency and Consistency",
+              "url": "https://docs.oracle.com/en/database/oracle/oracle-database/23/cncpt/data-concurrency-and-consistency.html",
+              "quote": "Oracle AI Database permits a serializable transaction to modify a row only if changes to the row made by other transactions were already committed when the serializable transaction began."
+            }
+          },
+          "write": {
+            "value": {
+              "record": "exclusive",
+              "gap": "none",
+              "duration": "transaction"
+            },
+            "citation": {
+              "source": "Oracle Database 23ai — Data Concurrency and Consistency",
+              "url": "https://docs.oracle.com/en/database/oracle/oracle-database/23/cncpt/data-concurrency-and-consistency.html",
+              "quote": "The database generates an error when a serializable transaction tries to update or delete data changed by a different transaction that committed after the serializable transaction began."
+            }
+          },
+          "insert": {
+            "value": {
+              "record": "exclusive",
+              "gap": "none",
+              "duration": "transaction"
+            },
+            "citation": {
+              "source": "Oracle Database 23ai — Data Concurrency and Consistency",
+              "url": "https://docs.oracle.com/en/database/oracle/oracle-database/23/cncpt/data-concurrency-and-consistency.html",
+              "quote": "A serializable transaction operates in an environment that makes it appear as if no other users were modifying data in the database."
+            }
+          }
+        },
+        "serializationCheck": {
+          "value": "none",
+          "citation": {
+            "source": "Oracle Database 23ai — Data Concurrency and Consistency",
+            "url": "https://docs.oracle.com/en/database/oracle/oracle-database/23/cncpt/data-concurrency-and-consistency.html",
+            "quote": "A serializable transaction operates in an environment that makes it appear as if no other users were modifying data in the database."
+          }
+        }
+      }
+    }
+  }
+}

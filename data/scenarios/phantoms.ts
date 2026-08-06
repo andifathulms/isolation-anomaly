@@ -37,6 +37,7 @@ export const phantomRead: Scenario = {
     'postgres-16': ['READ UNCOMMITTED', 'READ COMMITTED'],
     'mysql-8-innodb': ['READ UNCOMMITTED', 'READ COMMITTED'],
     'sqlserver-2022': ['READ UNCOMMITTED', 'READ COMMITTED', 'REPEATABLE READ'],
+    'oracle-23ai': ['READ COMMITTED'],
   },
 }
 
@@ -68,5 +69,6 @@ export const phantomInsertRace: Scenario = {
     'postgres-16': ['READ UNCOMMITTED', 'READ COMMITTED', 'REPEATABLE READ'],
     'mysql-8-innodb': ['READ UNCOMMITTED', 'READ COMMITTED', 'REPEATABLE READ'],
     'sqlserver-2022': ['READ UNCOMMITTED', 'READ COMMITTED', 'REPEATABLE READ', 'SNAPSHOT'],
+    'oracle-23ai': ['READ COMMITTED', 'SERIALIZABLE'],
   },
 }

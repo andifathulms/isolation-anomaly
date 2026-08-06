@@ -5,6 +5,7 @@ export type {
   DeadlockVictim,
   EngineErrorShape,
   EnginePack,
+  FailureScope,
   GapLockMode,
   LevelEntry,
   LevelSemantics,
