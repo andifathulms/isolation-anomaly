@@ -149,4 +149,17 @@ The site states plainly that this models documented behaviour for a fixed operat
 
 ## Current state
 
-M0 — not yet scaffolded. Next: static export deploying to Pages, the schedule model, the pack schema and validator, and the containerised oracle harness. **No executor work until a schedule can be run against a real PostgreSQL and its result recorded.**
+M0–M6 built, PostgreSQL and MySQL InnoDB shipping.
+
+- Oracle harness records against PostgreSQL 16.14 and MySQL 8.4.11 in containers. 80 fixtures under `tests/oracle/`. Waits are read from `pg_stat_activity` and `performance_schema.data_lock_waits` rather than inferred from a slow statement.
+- Executor matches every fixture: values read, error codes and their steps, where execution waited and until when, transaction outcomes, rows affected, final table.
+- Detector, scenario library (10 scenarios), conflict graph with brute-force cross-check, and the full UI in English and Indonesian.
+- 622 tests. `pnpm test:run` covers the oracle comparison, both-direction detection and the serializability cross-check.
+
+**Not done, and deliberately:** SQL Server. `mcr.microsoft.com/mssql/server:2022` has no arm64 build, so no fixture could be recorded on this machine, and invariant 10 forbids shipping a pack whose behaviour was never observed. Adding it means recording on an amd64 host first.
+
+Open modelling boundaries, all documented in the code:
+
+- **Deadlock victim selection.** Both engines document only that they pick *a* transaction. The model rolls back the one whose wait closed the cycle, and every shipped schedule is checked against the real victim. A schedule where that diverges cannot be claimed.
+- **Lock wait timeouts are not modelled.** `innodb_lock_wait_timeout` is left long enough that it never fires inside a recorded run; a statement still waiting when a schedule ends is recorded as exactly that.
+- **Duplicate-key inserts are refused**, not modelled.

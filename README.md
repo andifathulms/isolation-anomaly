@@ -8,11 +8,32 @@ This models **documented behaviour for a fixed operation set at specific engine 
 
 > Previously named *Sekat* (Indonesian: a partition, a divider) in `PRD.md`. The slug is now `isolation-anomaly`.
 
+## What is here
+
+Ten scenarios, each with the framing that makes the stakes obvious, executed against two engine packs at every isolation level. Six pages: an overview, the score with stepping and state panels, the scenario library, the cross-engine matrix, the conflict graph, and the engine packs with every citation printed beside the rule it justifies.
+
 ## Why
 
 Write skew is the point. Two transactions read the same data, each verify a constraint, each write a *different* row, and both commit. Nothing conflicted, and the constraint is violated by the combination. It is absent from the ANSI anomaly list, permitted by snapshot isolation, and it is the anomaly most likely to hurt a real application.
 
 And the level names mean different things in different engines. PostgreSQL's `REPEATABLE READ` is snapshot isolation. PostgreSQL's `READ UNCOMMITTED` is `READ COMMITTED`. Oracle's `SERIALIZABLE` is snapshot isolation. None of that is derivable from general MVCC knowledge — it is read from vendor documentation, cited in an engine pack, and verified against the running engine.
+
+## What the engines actually disagree about
+
+Recorded against PostgreSQL 16.14 and MySQL 8.4.11, in containers, and committed as fixtures:
+
+| | PostgreSQL 16 | MySQL 8.4 InnoDB |
+|---|---|---|
+| Default level | `READ COMMITTED` | `REPEATABLE READ` |
+| `READ UNCOMMITTED` | alias for `READ COMMITTED`; no dirty reads at any level | real: the read returns a value that was rolled back |
+| `REPEATABLE READ` | snapshot isolation; phantoms prevented, write skew permitted | snapshot for plain reads only; DML acts on the freshest committed row |
+| Lost update at `REPEATABLE READ` | aborted with `40001` | permitted, silently |
+| `SNAPSHOT` | no such level — refused, naming `REPEATABLE READ` | no such level — refused |
+| Write skew at `SERIALIZABLE` | detected; second committer aborted with `40001` | no check; deadlock, one transaction rolled back on `1213` |
+
+The same schedule, the same level name, opposite outcomes. That disagreement is the reason the matrix exists.
+
+SQL Server is not in this release: its 2022 image has no arm64 build, so no fixture could be recorded, and an engine pack with no recording behind it is exactly the claim this project refuses to make.
 
 ## Language
 
