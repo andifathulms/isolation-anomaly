@@ -69,13 +69,13 @@ export function Matrix({ dict, locale }: { readonly dict: Dictionary; readonly l
   return (
     <div className="space-y-6">
       <label className="flex flex-col gap-1">
-        <span className="font-control text-xs uppercase tracking-wide text-ink-muted">
+        <span className="eyebrow">
           {dict.controls.scenario}
         </span>
         <select
           value={scenarioId}
           onChange={(event) => setScenarioId(event.target.value)}
-          className="min-w-72 rounded-sm border border-staff bg-manuscript-raised px-2 py-1.5 font-control text-sm"
+          className="control max-w-full sm:min-w-72"
         >
           {SCENARIOS.map((candidate) => (
             <option key={candidate.id} value={candidate.id}>
@@ -85,19 +85,19 @@ export function Matrix({ dict, locale }: { readonly dict: Dictionary; readonly l
         </select>
       </label>
 
-      <p className="max-w-prose text-sm">
-        <span className="font-control text-xs uppercase tracking-wide text-ink-muted">
+      <p className="max-w-reading text-sm leading-relaxed">
+        <span className="eyebrow">
           {dict.scenarios.documents}:{' '}
         </span>
         {scenario.anomaly ? `${anomalyText(locale, scenario.anomaly).name} — ` : ''}
         {scenarioText(locale, scenario).framing}
       </p>
 
-      <div className="overflow-x-auto rounded-sm border border-staff-faint bg-manuscript-raised">
+      <div className="leaf overflow-x-auto">
         <table className="w-full text-sm">
-          <thead>
+          <thead className="bg-manuscript-sunk">
             <tr className="border-b border-staff-faint">
-              <th className="px-3 py-2 text-left font-control text-[11px] font-normal uppercase tracking-wide text-ink-muted">
+              <th className="px-3 py-2 text-left eyebrow font-normal">
                 {dict.matrix.engine}
               </th>
               {LEVELS.map((level) => (
@@ -105,7 +105,7 @@ export function Matrix({ dict, locale }: { readonly dict: Dictionary; readonly l
                   <abbr title={level} className="no-underline">
                     {LEVEL_ABBREVIATIONS[level]}
                   </abbr>
-                  <span className="ml-1 hidden font-control text-[10px] uppercase tracking-wide text-ink-muted xl:inline">
+                  <span className="ml-1 hidden eyebrow xl:inline">
                     {level}
                   </span>
                 </th>
@@ -114,33 +114,39 @@ export function Matrix({ dict, locale }: { readonly dict: Dictionary; readonly l
           </thead>
           <tbody>
             {rows.map(({ pack, cells }) => (
-              <tr key={pack.id} className="border-b border-staff-faint/60 align-top">
-                <th scope="row" className="px-3 py-3 text-left font-prose font-normal">
+              <tr key={pack.id} className="border-b border-staff-faint/60 align-top last:border-b-0">
+                {/* Two packs share the engine name and version and differ only
+                    in an option, so the id is the row's real identity and the
+                    summary explains the difference on hover. */}
+                <th scope="row" className="px-3 py-3 text-left font-prose font-normal" title={pack.summary}>
                   {pack.engine} {pack.version}
-                  <span className="block font-mono text-xs text-ink-muted">{pack.id}</span>
+                  <span className="block font-mono text-xs text-ink-soft">{pack.id}</span>
                 </th>
                 {cells.map((cell, index) => {
                   const level = LEVELS[index] ?? 'READ COMMITTED'
                   if (cell.kind === 'refused') {
                     return (
                       <td key={level} className="px-3 py-3">
-                        <span className="font-control text-xs text-ink-muted">{dict.matrix.refused}</span>
+                        <span className="font-control text-xs text-ink-soft">{dict.matrix.refused}</span>
                       </td>
                     )
                   }
                   const anomalous = cell.anomalies.length > 0
                   return (
-                    <td key={level} className="px-3 py-3">
+                    <td key={level} className="p-1">
                       <Link
                         href={`/${locale}/schedule/#s=${scenario.id}&p=${pack.id}&l=${LEVEL_ABBREVIATIONS[level]}&i=0`}
-                        className="block"
+                        className="block rounded-md px-2 py-2 transition-colors hover:bg-manuscript-sunk"
                       >
+                        {/* An anomaly or an abort is exactly what conductor's
+                            red is for; a clean run must stay quiet, or the grid
+                            stops being scannable. */}
                         {anomalous ? (
-                          <span className="font-control text-xs text-conductor">
+                          <span className="font-control text-xs font-medium text-conductor">
                             {dict.matrix.anomalyAt}
                           </span>
                         ) : cell.aborted.length > 0 ? (
-                          <span className="font-control text-xs text-conductor">
+                          <span className="font-control text-xs font-medium text-conductor">
                             {dict.matrix.abortedAt} {cell.aborted.join(', ')}
                           </span>
                         ) : (
@@ -152,12 +158,12 @@ export function Matrix({ dict, locale }: { readonly dict: Dictionary; readonly l
                           </span>
                         ) : null}
                         {cell.errorCodes.length > 0 ? (
-                          <span className="mt-1 block font-mono text-[11px] text-ink-muted">
+                          <span className="mt-1 block font-mono text-[11px] text-ink-soft">
                             {cell.errorCodes.join(', ')}
                           </span>
                         ) : null}
                         {cell.alias ? (
-                          <span className="mt-1 block font-control text-[10px] uppercase tracking-wide text-ink-muted">
+                          <span className="mt-1 block eyebrow">
                             {dict.controls.alias} → {LEVEL_ABBREVIATIONS[cell.alias as never]}
                           </span>
                         ) : null}
@@ -171,7 +177,15 @@ export function Matrix({ dict, locale }: { readonly dict: Dictionary; readonly l
         </table>
       </div>
 
-      <p className="max-w-prose text-sm text-ink-muted">{dict.matrix.lead}</p>
+      {/* What the words in the cells mean. The page heading already carries
+          `dict.matrix.lead`, so repeating it under the grid said nothing. */}
+      <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
+        <span className="eyebrow">{dict.matrix.legend}</span>
+        <span className="font-control text-xs text-ink-muted">{dict.matrix.clean}</span>
+        <span className="font-control text-xs font-medium text-conductor">{dict.matrix.anomalyAt}</span>
+        <span className="font-control text-xs font-medium text-conductor">{dict.matrix.abortedAt}</span>
+        <span className="font-control text-xs text-ink-soft">{dict.matrix.refused}</span>
+      </div>
     </div>
   )
 }
