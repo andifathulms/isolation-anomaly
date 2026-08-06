@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { LOCALES, LOCALE_LABELS, type Locale } from '@/lib/i18n/locales'
 import { dictionary } from '@/lib/i18n/dictionaries'
 import { ThemeToggle } from './ThemeToggle'
+import { MakerSignature } from './MakerSignature'
 
 /**
  * Header, navigation and the standing statement about what this is — every page
@@ -106,10 +107,21 @@ export function SiteChrome({
         {children}
       </main>
 
+      {/*
+        One seam. The standing statement about what this models and the maker's
+        mark share the footer's single rule and are held apart by alignment
+        instead of another divider — a claim about the work's evidence and a
+        personal credit should not read as one paragraph.
+      */}
       <footer className="mt-8 border-t border-staff-faint bg-manuscript-raised">
-        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-          <h2 className="eyebrow">{dict.site.disclaimerHeading}</h2>
-          <p className="mt-2 max-w-reading text-sm leading-relaxed text-ink-muted">{dict.site.disclaimer}</p>
+        <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6 md:flex-row md:items-end md:justify-between md:gap-12">
+          <div>
+            <h2 className="eyebrow">{dict.site.disclaimerHeading}</h2>
+            <p className="mt-2 max-w-reading text-sm leading-relaxed text-ink-muted">
+              {dict.site.disclaimer}
+            </p>
+          </div>
+          <MakerSignature />
         </div>
       </footer>
     </div>
