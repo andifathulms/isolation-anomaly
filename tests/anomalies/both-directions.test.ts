@@ -30,8 +30,18 @@ suite('anomaly detection in both directions', () => {
 
         it(`${pack.id} · ${scenario.id} · ${level} ${shouldOccur ? 'produces' : 'does not produce'} ${scenario.anomaly}`, () => {
           const result = execute(scenario.schedule, pack, level)
-          expect(result.type).toBe('trace')
-          if (result.type !== 'trace') return
+
+          // A refused run makes no claim either way, so it must not be listed as
+          // a level that permits the anomaly — that would be claiming something
+          // the model has just declined to work out.
+          if (result.type === 'refused') {
+            expect(
+              shouldOccur,
+              `${scenario.id} @ ${level} on ${pack.id} is refused (${result.refusal.type}), ` +
+                `so it cannot be listed as permitting ${scenario.anomaly}`,
+            ).toBe(false)
+            return
+          }
           const found = detectedIds(result.trace)
           if (shouldOccur) {
             expect(found, `expected ${scenario.anomaly}, found [${found.join(', ')}]`).toContain(

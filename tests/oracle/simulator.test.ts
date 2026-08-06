@@ -32,11 +32,31 @@ suite('simulator versus recorded real databases', () => {
         const recorded = fixture(pack.id, scenario.id, level)
         if (!recorded) continue
 
+        const result = execute(scenario.schedule, pack, level)
+
+        // A refusal is not a failure to match — it is the model declining to
+        // claim this run. It still has to be justified: the only refusal allowed
+        // against a recording is a deadlock on an engine whose victim this
+        // project refuses to guess, and the recording must actually show one.
+        if (result.type === 'refused') {
+          suite(`${pack.id} · ${scenario.id} · ${level} (refused)`, () => {
+            it('refuses only where the engine deadlocked and the pack declines to name a victim', () => {
+              expect(result.refusal.type).toBe('unmodelledDeadlock')
+              expect(pack.deadlockVictim?.value).toBe('unmodelled')
+              const deadlockCode = pack.errors.deadlock?.code
+              const engineDeadlocked = recorded.steps.some(
+                (step) => step.outcome.status === 'error' && step.outcome.code === deadlockCode,
+              )
+              expect(
+                engineDeadlocked,
+                `${scenario.id} @ ${level}: the model refused, but ${pack.engine} did not deadlock`,
+              ).toBe(true)
+            })
+          })
+          continue
+        }
+
         suite(`${pack.id} · ${scenario.id} · ${level}`, () => {
-          const result = execute(scenario.schedule, pack, level)
-          if (result.type !== 'trace') {
-            throw new Error(`Executor refused a level the pack models: ${result.refusal.type}`)
-          }
           const simulated = projectToOracleShape(result.trace, {
             engineVersion: recorded.engineVersion,
             image: recorded.image,

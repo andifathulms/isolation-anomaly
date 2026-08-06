@@ -13,7 +13,7 @@ export const phantomRead: Scenario = {
   framing:
     'Slots 1 and 2 of a five-slot calendar are booked. A report counts the bookings, someone books slot 3 and commits, and the report counts again to render a total.',
   lesson:
-    'At READ COMMITTED the second count returns three rows where the first returned two. PostgreSQL’s REPEATABLE READ prevents this — which the SQL standard does not require of that level, and which is exactly why the level name cannot be trusted across engines.',
+    'At READ COMMITTED the second count returns three rows where the first returned two. PostgreSQL’s REPEATABLE READ prevents this — which the SQL standard does not require of that level, and which is exactly why the level name cannot be trusted across engines. SQL Server settles the argument about what the level name means: its REPEATABLE READ holds shared locks on the rows it read but cannot lock a row that does not exist yet, so the phantom appears there and not on PostgreSQL — the same level name, opposite answers, and ANSI permits both.',
   anomaly: 'phantom-read',
   schedule: {
     id: 'phantom-read',
@@ -36,6 +36,7 @@ export const phantomRead: Scenario = {
   expectedAt: {
     'postgres-16': ['READ UNCOMMITTED', 'READ COMMITTED'],
     'mysql-8-innodb': ['READ UNCOMMITTED', 'READ COMMITTED'],
+    'sqlserver-2022': ['READ UNCOMMITTED', 'READ COMMITTED', 'REPEATABLE READ'],
   },
 }
 
@@ -66,5 +67,6 @@ export const phantomInsertRace: Scenario = {
   expectedAt: {
     'postgres-16': ['READ UNCOMMITTED', 'READ COMMITTED', 'REPEATABLE READ'],
     'mysql-8-innodb': ['READ UNCOMMITTED', 'READ COMMITTED', 'REPEATABLE READ'],
+    'sqlserver-2022': ['READ UNCOMMITTED', 'READ COMMITTED', 'REPEATABLE READ', 'SNAPSHOT'],
   },
 }

@@ -123,8 +123,15 @@ export function execute(
   const waitResource = new Map<number, WaitState['resource']>()
   const states: WorldState[] = []
 
+  /**
+   * Single statements the engine ran outside any transaction after rolling one
+   * back. They are committed the moment they run, so every reader sees them.
+   */
+  const autocommitted = new Set<Xid>()
+  let nextAutocommitXid = 1000
+
   const committedXids = (): ReadonlySet<Xid> => {
-    const set = new Set<Xid>()
+    const set = new Set<Xid>(autocommitted)
     for (const runtime of runtimes.values()) {
       if (runtime.status === 'committed') set.add(runtime.xid)
     }
@@ -291,6 +298,53 @@ export function execute(
     )
   }
 
+  /**
+   * Runs one statement as its own transaction, immediately committed.
+   *
+   * This is what a session does on an engine that keeps accepting statements
+   * after it rolled the transaction back: there is no transaction any more, so
+   * each statement stands alone and lands in the table on its own. An
+   * application whose error handler swallowed the failure goes on writing.
+   */
+  const autocommit = (runtime: Runtime, op: Operation, step: number): Attempt => {
+    const xid = nextAutocommitXid
+    nextAutocommitXid += 1
+    autocommitted.add(xid)
+    const view: View = {
+      self: xid,
+      committed: committedXids(),
+      readsUncommitted: semantics.visibility.value.readsUncommitted,
+      aborted: abortedXids(),
+    }
+
+    switch (op.type) {
+      case 'read':
+      case 'selectForUpdate':
+        return { type: 'ok', read: { type: 'row', value: visibleValue(store, op.key, view) }, rowsAffected: null }
+      case 'readRange': {
+        const rows = visibleKeys(store, view)
+          .filter((key) => predicateContains(op.predicate, key))
+          .map((key) => ({ key, value: visibleValue(store, key, view) as number }))
+        return { type: 'ok', read: { type: 'rows', rows }, rowsAffected: null }
+      }
+      case 'write':
+      case 'delete': {
+        const live = visibleValue(store, op.key, view) !== null
+        if (!live) return { type: 'ok', read: null, rowsAffected: 0 }
+        appendVersion(store, op.key, op.type === 'write' ? op.value : null, xid, step)
+        recordAntidependencies(runtime, op.key, step)
+        return { type: 'ok', read: null, rowsAffected: 1 }
+      }
+      case 'insert': {
+        appendVersion(store, op.key, op.value, xid, step)
+        recordAntidependencies(runtime, op.key, step)
+        return { type: 'ok', read: null, rowsAffected: 1 }
+      }
+      default:
+        return { type: 'ok', read: null, rowsAffected: null }
+    }
+  }
+
   const attempt = (txn: TxnId, op: Operation, step: number): Attempt => {
     const runtime = runtimes.get(txn)
     if (!runtime) {
@@ -306,9 +360,12 @@ export function execute(
       return { type: 'ok', read: null, rowsAffected: null }
     }
 
-    // Once the engine has failed a transaction, every statement but the
-    // terminal one is rejected until the block ends.
+    // Once the engine has failed a transaction, what happens to the statements
+    // that follow is the engine's business, and the engines disagree.
     if (runtime.status === 'aborted' && op.type !== 'commit' && op.type !== 'rollback') {
+      if ((pack.afterAbort?.value ?? 'rejectStatements') === 'autocommitStatements') {
+        return autocommit(runtime, op, step)
+      }
       const shape = pack.errors.abortedTransaction
       if (!shape) {
         return {
@@ -442,7 +499,18 @@ export function execute(
 
       case 'commit': {
         if (runtime.status === 'aborted') {
-          // The engine accepts COMMIT on a failed transaction and rolls back.
+          // Engines differ on what COMMIT means here. PostgreSQL and MySQL
+          // accept it and commit nothing; SQL Server rolled the transaction back
+          // when it failed, so there is no transaction left to commit.
+          const shape = pack.errors.commitAfterAbort
+          if (shape) {
+            return {
+              type: 'error',
+              code: shape.code,
+              message: shape.message,
+              cause: 'transactionAlreadyAborted',
+            }
+          }
           return { type: 'ok', read: null, rowsAffected: null }
         }
         if (dangerousStructure(runtime)) {
@@ -472,16 +540,18 @@ export function execute(
   /**
    * Breaks one deadlock, if the waiting statements form a cycle.
    *
-   * Both engines modelled here document that they detect deadlocks and roll
-   * back a transaction to break them, and neither promises *which*. This model
-   * picks the transaction whose wait closed the cycle — the one whose arrival
-   * made the deadlock exist — and every schedule shipped with the project is
-   * checked against the real engine to confirm the victim matches. A schedule
-   * where it does not is a schedule this model cannot claim to explain.
+   * Every engine modelled here documents that it detects deadlocks and rolls
+   * back a transaction to break them, and none promises *which*. So the choice
+   * is a declared pack rule rather than a guess baked in here: PostgreSQL and
+   * InnoDB roll back the transaction whose wait closed the cycle, SQL Server the
+   * one that had been waiting longest. Both were read off the recordings, and
+   * every shipped schedule checks the victim against the real engine.
    *
    * Returns true when a victim was rolled back, so the caller can retry the
    * statements the released locks may have freed.
    */
+  let unmodelledDeadlock: Refusal | null = null
+
   const breakDeadlock = (step: number): boolean => {
     const waiters = schedule.transactions
       .map((txn) => runtimes.get(txn))
@@ -510,14 +580,37 @@ export function execute(
     for (const waiter of waiters) {
       const found = cycle(waiter.txn)
       if (!found || found.length < 2) continue
-      const deadlocked = found
+      const inCycle = found
         .map((txn) => runtimes.get(txn))
         .filter((runtime): runtime is Runtime & { pending: NonNullable<Runtime['pending']> } =>
           runtime !== undefined && runtime.pending !== null,
         )
-        .reduce((latest, candidate) =>
-          candidate.pending.stepIndex > latest.pending.stepIndex ? candidate : latest,
-        )
+      const victimRule = pack.deadlockVictim?.value ?? 'lastWaiter'
+      if (victimRule === 'unmodelled') {
+        // Which transaction loses decides the outcome, and this engine's choice
+        // cannot be reproduced. Half of this run would be invention.
+        unmodelledDeadlock = {
+          type: 'unmodelledDeadlock',
+          packId: pack.id,
+          txns: found,
+          gap:
+            `${found.join(' and ')} deadlock here. ${pack.engine} chooses which one to roll back by its own ` +
+            `cost estimate, and that choice decides what the other transaction reads and whether it commits — ` +
+            `so this model will not guess it.`,
+          citation: pack.deadlockVictim?.citation ?? pack.errors.serializationFailure.citation,
+        }
+        return false
+      }
+      const takeLastWaiter = victimRule === 'lastWaiter'
+      const deadlocked = inCycle.reduce((chosen, candidate) =>
+        takeLastWaiter
+          ? candidate.pending.stepIndex > chosen.pending.stepIndex
+            ? candidate
+            : chosen
+          : candidate.pending.stepIndex < chosen.pending.stepIndex
+            ? candidate
+            : chosen,
+      )
       const pendingStep = deadlocked.pending.stepIndex
       const pendingOp = deadlocked.pending.op
       const victim: Runtime = deadlocked
@@ -639,6 +732,8 @@ export function execute(
     })
     runtime.pending = null
   }
+
+  if (unmodelledDeadlock !== null) return { type: 'refused', refusal: unmodelledDeadlock }
 
   const steps: readonly TraceStep[] = schedule.steps.map((step, index) => {
     const outcome = outcomes.get(index)

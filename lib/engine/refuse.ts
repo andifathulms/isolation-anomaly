@@ -30,6 +30,18 @@ export type Refusal =
     }
   | {
       /**
+       * These statements deadlock, and this engine does not choose its victim by
+       * any rule that can be reproduced. Which transaction survives decides the
+       * outcome, so the run is refused rather than half-answered.
+       */
+      readonly type: 'unmodelledDeadlock'
+      readonly packId: string
+      readonly txns: readonly TxnId[]
+      readonly gap: string
+      readonly citation: Citation
+    }
+  | {
+      /**
        * The schedule sends an operation to a transaction whose previous
        * statement is still waiting on a lock. A real session could not accept
        * it, so the schedule cannot be executed as written.
@@ -48,6 +60,8 @@ export function refusalHeadline(refusal: Refusal): string {
       return `${refusal.packId} does not model the ${refusal.operation} operation`
     case 'unmodelledPredicate':
       return `Only closed key ranges are modelled as predicates`
+    case 'unmodelledDeadlock':
+      return `${refusal.txns.join(' and ')} deadlock, and ${refusal.packId} does not choose its victim predictably`
     case 'sessionBusy':
       return `${refusal.txn} is still waiting on the statement from step ${refusal.waitingSince}`
     default: {

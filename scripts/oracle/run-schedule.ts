@@ -20,6 +20,18 @@ import type { OracleDriver, OracleSession, ReadShape, StatementResult } from './
 
 /** How long to give a statement before deciding it is stuck, engine silent. */
 const PATIENCE_MS = 4000
+/**
+ * How long to let a busy session finish before recording that it could not
+ * accept the next statement.
+ *
+ * Some waits end without the schedule's help: a deadlock resolves on its own,
+ * and SQL Server's deadlock monitor runs on a multi-second interval. Declaring
+ * the session busy the instant the next step arrives would record the harness's
+ * own pacing as engine behaviour — a schedule would look as though both
+ * transactions failed when in fact one was rolled back and the other was
+ * moments from committing.
+ */
+const BUSY_BUDGET_MS = 12000
 /** Polling interval while waiting for a statement or a reported lock wait. */
 const TICK_MS = 25
 /** How long to let released statements finish after each step. */
@@ -126,6 +138,19 @@ export async function runScheduleAgainstEngine(
     const state = states.get(step.txn)
     if (!state) throw new Error(`${scenarioId}: step ${index} names undeclared transaction ${step.txn}`)
     if (state.pending) {
+      // Wait for the engine to finish with this session before giving up on it.
+      const deadline = Date.now() + BUSY_BUDGET_MS
+      while (!state.pending.settled && Date.now() < deadline) {
+        await delay(TICK_MS)
+      }
+      if (state.pending.settled) {
+        record(state, state.pending)
+        blockedUntil.set(state.pending.stepIndex, index - 1)
+        state.pending = null
+      }
+    }
+
+    if (state.pending) {
       // A real session cannot accept a statement while its previous one is
       // still waiting on a lock. That is not a harness failure — it is a fact
       // about this schedule at this level, so it is recorded like any other.
@@ -222,9 +247,14 @@ export async function runScheduleAgainstEngine(
     state.pending = null
   }
 
-  const finalState = await driver.finalState()
-
+  // Sessions close *before* the final state is read. A transaction left open
+  // still holds its exclusive locks, and on a lock-based engine an ordinary
+  // read of the table would wait on them forever. Closing first makes the
+  // engine roll those transactions back, so "the committed contents after the
+  // schedule" is a well-defined thing to record on every engine.
   for (const state of states.values()) await state.session.close()
+
+  const finalState = await driver.finalState()
 
   const steps: OracleStep[] = schedule.steps.map((step, index) => {
     const outcome = outcomes.get(index)

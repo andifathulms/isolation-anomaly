@@ -59,7 +59,11 @@
         },
         "locks": {
           "plainRead": {
-            "value": { "record": "none", "gap": "none", "duration": "statement" },
+            "value": {
+              "record": "none",
+              "gap": "none",
+              "duration": "statement"
+            },
             "citation": {
               "source": "MySQL 8.4 — 17.7.2.1 Transaction Isolation Levels",
               "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html",
@@ -67,7 +71,11 @@
             }
           },
           "lockingRead": {
-            "value": { "record": "exclusive", "gap": "none", "duration": "transaction" },
+            "value": {
+              "record": "exclusive",
+              "gap": "none",
+              "duration": "transaction"
+            },
             "citation": {
               "source": "MySQL 8.4 — 17.7.2.1 Transaction Isolation Levels",
               "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html",
@@ -75,7 +83,11 @@
             }
           },
           "write": {
-            "value": { "record": "exclusive", "gap": "none", "duration": "transaction" },
+            "value": {
+              "record": "exclusive",
+              "gap": "none",
+              "duration": "transaction"
+            },
             "citation": {
               "source": "MySQL 8.4 — 17.7.1 InnoDB Locking",
               "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-locking.html",
@@ -83,7 +95,11 @@
             }
           },
           "insert": {
-            "value": { "record": "exclusive", "gap": "insertIntention", "duration": "transaction" },
+            "value": {
+              "record": "exclusive",
+              "gap": "insertIntention",
+              "duration": "transaction"
+            },
             "citation": {
               "source": "MySQL 8.4 — 17.7.1 InnoDB Locking",
               "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-locking.html",
@@ -133,7 +149,11 @@
         },
         "locks": {
           "plainRead": {
-            "value": { "record": "none", "gap": "none", "duration": "statement" },
+            "value": {
+              "record": "none",
+              "gap": "none",
+              "duration": "statement"
+            },
             "citation": {
               "source": "MySQL 8.4 — 17.7.2.3 Consistent Nonlocking Reads",
               "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-consistent-read.html",
@@ -141,7 +161,11 @@
             }
           },
           "lockingRead": {
-            "value": { "record": "exclusive", "gap": "none", "duration": "transaction" },
+            "value": {
+              "record": "exclusive",
+              "gap": "none",
+              "duration": "transaction"
+            },
             "citation": {
               "source": "MySQL 8.4 — 17.7.2.1 Transaction Isolation Levels",
               "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html",
@@ -149,7 +173,11 @@
             }
           },
           "write": {
-            "value": { "record": "exclusive", "gap": "none", "duration": "transaction" },
+            "value": {
+              "record": "exclusive",
+              "gap": "none",
+              "duration": "transaction"
+            },
             "citation": {
               "source": "MySQL 8.4 — 17.7.1 InnoDB Locking",
               "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-locking.html",
@@ -157,7 +185,11 @@
             }
           },
           "insert": {
-            "value": { "record": "exclusive", "gap": "insertIntention", "duration": "transaction" },
+            "value": {
+              "record": "exclusive",
+              "gap": "insertIntention",
+              "duration": "transaction"
+            },
             "citation": {
               "source": "MySQL 8.4 — 17.7.2.1 Transaction Isolation Levels",
               "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html",
@@ -207,7 +239,11 @@
         },
         "locks": {
           "plainRead": {
-            "value": { "record": "none", "gap": "none", "duration": "statement" },
+            "value": {
+              "record": "none",
+              "gap": "none",
+              "duration": "statement"
+            },
             "citation": {
               "source": "MySQL 8.4 — 17.7.2.1 Transaction Isolation Levels",
               "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html",
@@ -215,7 +251,11 @@
             }
           },
           "lockingRead": {
-            "value": { "record": "exclusive", "gap": "gap", "duration": "transaction" },
+            "value": {
+              "record": "exclusive",
+              "gap": "gap",
+              "duration": "transaction"
+            },
             "citation": {
               "source": "MySQL 8.4 — 17.7.2.1 Transaction Isolation Levels",
               "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html",
@@ -223,7 +263,11 @@
             }
           },
           "write": {
-            "value": { "record": "exclusive", "gap": "none", "duration": "transaction" },
+            "value": {
+              "record": "exclusive",
+              "gap": "none",
+              "duration": "transaction"
+            },
             "citation": {
               "source": "MySQL 8.4 — 17.7.2.1 Transaction Isolation Levels",
               "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html",
@@ -231,7 +275,11 @@
             }
           },
           "insert": {
-            "value": { "record": "exclusive", "gap": "insertIntention", "duration": "transaction" },
+            "value": {
+              "record": "exclusive",
+              "gap": "insertIntention",
+              "duration": "transaction"
+            },
             "citation": {
               "source": "MySQL 8.4 — 17.7.1 InnoDB Locking",
               "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-locking.html",
@@ -291,7 +339,11 @@
         },
         "locks": {
           "plainRead": {
-            "value": { "record": "shared", "gap": "gap", "duration": "transaction" },
+            "value": {
+              "record": "shared",
+              "gap": "gap",
+              "duration": "transaction"
+            },
             "citation": {
               "source": "MySQL 8.4 — 17.7.2.1 Transaction Isolation Levels",
               "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html",
@@ -299,7 +351,11 @@
             }
           },
           "lockingRead": {
-            "value": { "record": "exclusive", "gap": "gap", "duration": "transaction" },
+            "value": {
+              "record": "exclusive",
+              "gap": "gap",
+              "duration": "transaction"
+            },
             "citation": {
               "source": "MySQL 8.4 — 17.7.2.1 Transaction Isolation Levels",
               "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html",
@@ -307,7 +363,11 @@
             }
           },
           "write": {
-            "value": { "record": "exclusive", "gap": "none", "duration": "transaction" },
+            "value": {
+              "record": "exclusive",
+              "gap": "none",
+              "duration": "transaction"
+            },
             "citation": {
               "source": "MySQL 8.4 — 17.7.2.1 Transaction Isolation Levels",
               "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html",
@@ -315,7 +375,11 @@
             }
           },
           "insert": {
-            "value": { "record": "exclusive", "gap": "insertIntention", "duration": "transaction" },
+            "value": {
+              "record": "exclusive",
+              "gap": "insertIntention",
+              "duration": "transaction"
+            },
             "citation": {
               "source": "MySQL 8.4 — 17.7.1 InnoDB Locking",
               "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-locking.html",
@@ -332,6 +396,14 @@
           }
         }
       }
+    }
+  },
+  "deadlockVictim": {
+    "value": "lastWaiter",
+    "citation": {
+      "source": "MySQL 8.4 — 17.7.5.2 Deadlock Detection",
+      "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-deadlock-detection.html",
+      "quote": "InnoDB tries to pick small transactions to roll back, where the size of a transaction is determined by the number of rows inserted, updated, or deleted."
     }
   }
 }

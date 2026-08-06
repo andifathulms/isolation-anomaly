@@ -336,5 +336,21 @@
         }
       }
     }
+  },
+  "deadlockVictim": {
+    "value": "lastWaiter",
+    "citation": {
+      "source": "PostgreSQL 16 — 13.3.5. Deadlocks",
+      "url": "https://www.postgresql.org/docs/16/explicit-locking.html#LOCKING-DEADLOCKS",
+      "quote": "PostgreSQL automatically detects deadlock situations and resolves them by aborting one of the transactions involved, allowing the other(s) to complete."
+    }
+  },
+  "afterAbort": {
+    "value": "rejectStatements",
+    "citation": {
+      "source": "PostgreSQL 16 — Appendix A. PostgreSQL Error Codes",
+      "url": "https://www.postgresql.org/docs/16/errcodes-appendix.html",
+      "quote": "Class 25 — Invalid Transaction State ... 25P02  in_failed_sql_transaction"
+    }
   }
 }

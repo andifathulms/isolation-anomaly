@@ -21,6 +21,7 @@ import { SCENARIOS } from '../../lib/scenarios'
 import { fixtureName } from '../../lib/oracle/types'
 import { createPostgresDriver } from './postgres'
 import { createMysqlDriver } from './mysql'
+import { createSqlServerDriver } from './sqlserver'
 import type { OracleDriver } from './driver'
 import { runScheduleAgainstEngine } from './run-schedule'
 
@@ -32,7 +33,7 @@ const keepRunning = args.includes('--keep')
 const onlyScenario = args.find((arg) => arg.startsWith('--scenario='))?.split('=')[1]
 const onlyPack = args.find((arg) => arg.startsWith('--pack='))?.split('=')[1]
 
-const DRIVERS: readonly (() => OracleDriver)[] = [createPostgresDriver, createMysqlDriver]
+const DRIVERS: readonly (() => OracleDriver)[] = [createPostgresDriver, createMysqlDriver, createSqlServerDriver]
 
 function compose(...commandArgs: string[]): void {
   execFileSync('docker', ['compose', '-f', COMPOSE_FILE, ...commandArgs], { stdio: 'inherit' })

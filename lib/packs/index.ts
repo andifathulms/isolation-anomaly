@@ -1,6 +1,8 @@
 export type {
+  AfterAbort,
   Citation,
   Conflicts,
+  DeadlockVictim,
   EngineErrorShape,
   EnginePack,
   GapLockMode,

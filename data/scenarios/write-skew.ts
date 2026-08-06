@@ -16,7 +16,7 @@ export const writeSkew: Scenario = {
   framing:
     'Two doctors are on call and at least one must remain. Each opens the roster, sees that the other is on call, and takes themselves off. Both commit.',
   lesson:
-    'This is the anomaly that is not in the ANSI list. PostgreSQL’s REPEATABLE READ is snapshot isolation, and permits it: both transactions commit and nobody is on call. Only SERIALIZABLE catches it, and it does so by aborting the second transaction to commit with a read/write dependency failure — not by blocking. MySQL InnoDB permits it at REPEATABLE READ as well, and at SERIALIZABLE it does not detect anything — it deadlocks, and one transaction is rolled back with 1213.',
+    'This is the anomaly that is not in the ANSI list. PostgreSQL’s REPEATABLE READ is snapshot isolation, and permits it: both transactions commit and nobody is on call. Only SERIALIZABLE catches it, and it does so by aborting the second transaction to commit with a read/write dependency failure — not by blocking. MySQL InnoDB permits it at REPEATABLE READ as well, and at SERIALIZABLE it does not detect anything — it deadlocks, and one transaction is rolled back with 1213. SQL Server permits it at SNAPSHOT, which is the same anomaly under a name that at least admits what the level is; at REPEATABLE READ and SERIALIZABLE its shared locks turn the schedule into a deadlock, and because SQL Server picks its victim by cost estimate this model refuses to say which transaction loses.',
   anomaly: 'write-skew',
   schedule: {
     id: 'write-skew',
@@ -40,6 +40,7 @@ export const writeSkew: Scenario = {
   expectedAt: {
     'postgres-16': ['READ UNCOMMITTED', 'READ COMMITTED', 'REPEATABLE READ'],
     'mysql-8-innodb': ['READ UNCOMMITTED', 'READ COMMITTED', 'REPEATABLE READ'],
+    'sqlserver-2022': ['READ UNCOMMITTED', 'READ COMMITTED', 'SNAPSHOT'],
   },
 }
 
@@ -75,5 +76,6 @@ export const writeSkewLocked: Scenario = {
   expectedAt: {
     'postgres-16': [],
     'mysql-8-innodb': [],
+    'sqlserver-2022': [],
   },
 }

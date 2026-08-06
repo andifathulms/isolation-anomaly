@@ -1,0 +1,137 @@
+{
+  "scenarioId": "write-skew",
+  "packId": "sqlserver-2022",
+  "engine": "Microsoft SQL Server",
+  "engineVersion": "16.0.4265.3",
+  "image": "mcr.microsoft.com/mssql/server:2022-latest",
+  "recordedOn": "2026-08-06",
+  "level": "READ UNCOMMITTED",
+  "steps": [
+    {
+      "index": 0,
+      "txn": "T1",
+      "notation": "b1",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "ok",
+        "read": null,
+        "rowsAffected": null
+      }
+    },
+    {
+      "index": 1,
+      "txn": "T2",
+      "notation": "b2",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "ok",
+        "read": null,
+        "rowsAffected": null
+      }
+    },
+    {
+      "index": 2,
+      "txn": "T1",
+      "notation": "r1[P:1..2]",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "ok",
+        "read": {
+          "type": "rows",
+          "rows": [
+            {
+              "key": 1,
+              "value": 1
+            },
+            {
+              "key": 2,
+              "value": 1
+            }
+          ]
+        },
+        "rowsAffected": null
+      }
+    },
+    {
+      "index": 3,
+      "txn": "T2",
+      "notation": "r2[P:1..2]",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "ok",
+        "read": {
+          "type": "rows",
+          "rows": [
+            {
+              "key": 1,
+              "value": 1
+            },
+            {
+              "key": 2,
+              "value": 1
+            }
+          ]
+        },
+        "rowsAffected": null
+      }
+    },
+    {
+      "index": 4,
+      "txn": "T1",
+      "notation": "w1[1=0]",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "ok",
+        "read": null,
+        "rowsAffected": 1
+      }
+    },
+    {
+      "index": 5,
+      "txn": "T2",
+      "notation": "w2[2=0]",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "ok",
+        "read": null,
+        "rowsAffected": 1
+      }
+    },
+    {
+      "index": 6,
+      "txn": "T1",
+      "notation": "c1",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "ok",
+        "read": null,
+        "rowsAffected": null
+      }
+    },
+    {
+      "index": 7,
+      "txn": "T2",
+      "notation": "c2",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "ok",
+        "read": null,
+        "rowsAffected": null
+      }
+    }
+  ],
+  "transactions": {
+    "T1": "committed",
+    "T2": "committed"
+  },
+  "finalState": [
+    {
+      "key": 1,
+      "value": 0
+    },
+    {
+      "key": 2,
+      "value": 0
+    }
+  ]
+}

@@ -87,6 +87,25 @@ export type LockPlan = {
   readonly duration: SnapshotScope
 }
 
+export type DeadlockVictim =
+  /** The transaction that had been waiting longest when the cycle closed. */
+  | 'firstWaiter'
+  /** The transaction whose wait closed the cycle. */
+  | 'lastWaiter'
+  /**
+   * The engine's choice cannot be predicted, so a deadlock is refused rather
+   * than guessed. SQL Server picks by internal cost estimate: the same schedule
+   * loses T1 at REPEATABLE READ and T2 at SERIALIZABLE, which no rule over
+   * waiting order reproduces.
+   */
+  | 'unmodelled'
+
+export type AfterAbort =
+  /** Every statement fails until the transaction block ends. */
+  | 'rejectStatements'
+  /** Each statement runs as its own transaction and commits immediately. */
+  | 'autocommitStatements'
+
 export type SerializationCheck =
   | 'none'
   /**
@@ -164,6 +183,28 @@ export type EnginePack = {
      * after a serialization failure it did not catch.
      */
     readonly abortedTransaction?: EngineErrorShape
+    /**
+     * What COMMIT does on a transaction the engine already rolled back. SQL
+     * Server errors, because the rollback left no transaction to commit;
+     * PostgreSQL and MySQL accept it and commit nothing. Declared rather than
+     * assumed, because it decides what an application's commit path sees after
+     * a deadlock it did not catch.
+     */
+    readonly commitAfterAbort?: EngineErrorShape
   }
+  /**
+   * Which transaction the engine rolls back to break a deadlock. No vendor
+   * promises a specific choice, so this is a modelling decision per engine, and
+   * it is set to whatever that engine's recordings show.
+   */
+  readonly deadlockVictim?: Rule<DeadlockVictim>
+  /**
+   * What the session does with further statements after the engine has rolled
+   * the transaction back. PostgreSQL rejects them until the block ends; SQL
+   * Server accepts them and runs each as its own autocommitted statement, so an
+   * error handler that swallowed the failure goes on writing to the table
+   * outside any transaction.
+   */
+  readonly afterAbort?: Rule<AfterAbort>
   readonly levels: Readonly<Record<IsolationLevel, LevelEntry>>
 }

@@ -45,3 +45,27 @@ services:
       interval: 2s
       timeout: 5s
       retries: 40
+
+  # amd64 only: there is no arm64 build of this image, so on Apple Silicon it
+  # runs under emulation. The binary and its semantics are unchanged; only the
+  # instruction set is translated, and the recorded version string proves which
+  # server answered.
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    environment:
+      ACCEPT_EULA: 'Y'
+      MSSQL_SA_PASSWORD: Oracle_harness1
+      MSSQL_PID: Developer
+    ports:
+      - '55433:1433'
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          '/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -C -Q "SELECT 1" || exit 1',
+        ]
+      interval: 3s
+      timeout: 10s
+      retries: 40
+      start_period: 20s

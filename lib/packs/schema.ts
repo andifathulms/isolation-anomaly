@@ -100,7 +100,10 @@ export const enginePackSchema = z
       readWriteDependencies: engineErrorSchema.optional(),
       deadlock: engineErrorSchema.optional(),
       abortedTransaction: engineErrorSchema.optional(),
+      commitAfterAbort: engineErrorSchema.optional(),
     }),
+    deadlockVictim: rule(z.enum(['firstWaiter', 'lastWaiter', 'unmodelled'])).optional(),
+    afterAbort: rule(z.enum(['rejectStatements', 'autocommitStatements'])).optional(),
     levels: z.object(
       Object.fromEntries(LEVELS.map((level) => [level, levelEntrySchema])) as Record<
         (typeof LEVELS)[number],
@@ -145,6 +148,16 @@ export const enginePackSchema = z
         code: z.ZodIssueCode.custom,
         path: ['errors', 'readWriteDependencies'],
         message: 'A pack with an ssi serialization check must declare its read/write dependency error.',
+      })
+    }
+
+    // A pack that models deadlocks must say which transaction loses one. The
+    // choice changes the outcome, so leaving it implicit would hide a guess.
+    if (pack.errors.deadlock && !pack.deadlockVictim) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['deadlockVictim'],
+        message: 'A pack that declares a deadlock error must declare which transaction is the victim.',
       })
     }
 
