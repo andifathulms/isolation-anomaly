@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-manuscript text-ink font-prose antialiased;
+  }
+
+  /* Manuscript paper: a faint ruled ground, deliberately recessive. */
+  .manuscript-ground {
+    background-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 31px,
+      rgba(168, 163, 152, 0.14) 31px,
+      rgba(168, 163, 152, 0.14) 32px
+    );
+    background-size: 100% 32px;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-voiceA ring-offset-2 ring-offset-manuscript;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
