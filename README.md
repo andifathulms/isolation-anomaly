@@ -14,7 +14,7 @@ This models **documented behaviour for a fixed operation set at specific engine 
 
 Start with [the on-call roster emptying at REPEATABLE READ](https://andifathulms.github.io/isolation-anomaly/en/schedule/#s=write-skew&p=postgres-16&l=RR&i=5) — two doctors, each checking that the other is on call, both going off call, both committing. Then switch the level to SERIALIZABLE and watch the same schedule get refused, or switch the engine to MySQL and watch it deadlock instead.
 
-Ten scenarios, each with the framing that makes the stakes obvious, executed against two engine packs at every isolation level. Six pages: an overview, the score with stepping and state panels, the scenario library, the cross-engine matrix, the conflict graph, and the engine packs with every citation printed beside the rule it justifies.
+Ten scenarios, each with the framing that makes the stakes obvious, executed against three engine packs at every isolation level. Six pages: an overview, the score with stepping and state panels, the scenario library, the cross-engine matrix, the conflict graph, and the engine packs with every citation printed beside the rule it justifies.
 
 ## Why
 
@@ -24,20 +24,21 @@ And the level names mean different things in different engines. PostgreSQL's `RE
 
 ## What the engines actually disagree about
 
-Recorded against PostgreSQL 16.14 and MySQL 8.4.11, in containers, and committed as fixtures:
+Recorded against PostgreSQL 16.14, MySQL 8.4.11 and SQL Server 16.0.4265.3, in containers, and committed as fixtures:
 
-| | PostgreSQL 16 | MySQL 8.4 InnoDB |
-|---|---|---|
-| Default level | `READ COMMITTED` | `REPEATABLE READ` |
-| `READ UNCOMMITTED` | alias for `READ COMMITTED`; no dirty reads at any level | real: the read returns a value that was rolled back |
-| `REPEATABLE READ` | snapshot isolation; phantoms prevented, write skew permitted | snapshot for plain reads only; DML acts on the freshest committed row |
-| Lost update at `REPEATABLE READ` | aborted with `40001` | permitted, silently |
-| `SNAPSHOT` | no such level — refused, naming `REPEATABLE READ` | no such level — refused |
-| Write skew at `SERIALIZABLE` | detected; second committer aborted with `40001` | no check; deadlock, one transaction rolled back on `1213` |
+| | PostgreSQL 16 | MySQL 8.4 InnoDB | SQL Server 2022 |
+|---|---|---|---|
+| Default level | `READ COMMITTED` | `REPEATABLE READ` | `READ COMMITTED` |
+| Concurrency control | MVCC | MVCC | locks, except at `SNAPSHOT` |
+| `READ UNCOMMITTED` | alias for `READ COMMITTED`; no dirty reads at any level | real dirty read | real dirty read |
+| **Phantom at `REPEATABLE READ`** | **no** — the level is snapshot isolation | **no** — snapshot for plain reads | **yes** — a shared lock cannot lock a row that does not exist yet |
+| Lost update at `REPEATABLE READ` | aborted with `40001` | permitted, silently | deadlock |
+| `SNAPSHOT` | no such level — refused, naming `REPEATABLE READ` | no such level — refused | the real thing, and **write skew is permitted** |
+| Write skew caught by | `SERIALIZABLE`, aborting the second committer with `40001` | nothing — `SERIALIZABLE` deadlocks instead | nothing — locks deadlock instead |
 
-The same schedule, the same level name, opposite outcomes. That disagreement is the reason the matrix exists.
+Three engines, one schedule, the same level name, opposite answers — and ANSI permits all of it. That is the reason the matrix exists.
 
-SQL Server is not in this release: its 2022 image has no arm64 build, so no fixture could be recorded, and an engine pack with no recording behind it is exactly the claim this project refuses to make.
+Where the model will not answer: SQL Server picks its deadlock victim by internal cost estimate, and the same schedule loses T1 at `REPEATABLE READ` and T2 at `SERIALIZABLE`. No rule over waiting order reproduces that, so those runs are **refused** with the gap named rather than guessed. Five of the 130 recorded runs are refused, and the test suite checks each refusal is justified by a deadlock in the recording.
 
 ## Language
 

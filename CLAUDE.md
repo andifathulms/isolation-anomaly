@@ -151,17 +151,18 @@ The site states plainly that this models documented behaviour for a fixed operat
 
 **Live at https://andifathulms.github.io/isolation-anomaly/** — `main` deploys through Actions, gated on pack validation, typecheck, lint and the full suite.
 
-M0–M6 built, PostgreSQL and MySQL InnoDB shipping.
+M0–M6 built. All three v1 engine packs shipping: PostgreSQL 16, MySQL 8.4 InnoDB, SQL Server 2022.
 
-- Oracle harness records against PostgreSQL 16.14 and MySQL 8.4.11 in containers. 80 fixtures under `tests/oracle/`. Waits are read from `pg_stat_activity` and `performance_schema.data_lock_waits` rather than inferred from a slow statement.
+- Oracle harness records against PostgreSQL 16.14, MySQL 8.4.11 and SQL Server 16.0.4265.3 in containers. 130 fixtures under `tests/oracle/`. Waits are read from `pg_stat_activity`, `performance_schema.data_lock_waits` and `sys.dm_exec_requests` rather than inferred from a slow statement. Re-recording produces byte-identical fixtures.
+- SQL Server runs under x86 emulation on Apple Silicon (there is no arm64 image). Same binary, same semantics; the recorded version string identifies the server that answered.
 - Executor matches every fixture: values read, error codes and their steps, where execution waited and until when, transaction outcomes, rows affected, final table.
 - Detector, scenario library (10 scenarios), conflict graph with brute-force cross-check, and the full UI in English and Indonesian.
 - 622 tests. `pnpm test:run` covers the oracle comparison, both-direction detection and the serializability cross-check.
 
-**Not done, and deliberately:** SQL Server. `mcr.microsoft.com/mssql/server:2022` has no arm64 build, so no fixture could be recorded on this machine, and invariant 10 forbids shipping a pack whose behaviour was never observed. Adding it means recording on an amd64 host first.
+Open modelling boundaries, all declared as pack rules with citations rather than assumed in the executor:
 
-Open modelling boundaries, all documented in the code:
-
-- **Deadlock victim selection.** Both engines document only that they pick *a* transaction. The model rolls back the one whose wait closed the cycle, and every shipped schedule is checked against the real victim. A schedule where that diverges cannot be claimed.
+- **Deadlock victim selection** is `deadlockVictim`. PostgreSQL and InnoDB roll back the transaction whose wait closed the cycle, and the recordings agree. SQL Server picks by cost estimate — the same schedule loses T1 at REPEATABLE READ and T2 at SERIALIZABLE — so its pack declares the victim `unmodelled` and the executor refuses the whole run. Five recorded runs are refused; `tests/oracle` checks each refusal is justified by a deadlock in the fixture.
+- **What a session does after the engine rolls its transaction back** is `afterAbort`: PostgreSQL rejects statements with 25P02, SQL Server autocommits each one, which is how a swallowed 3960 still writes to the table.
+- **READ_COMMITTED_SNAPSHOT is OFF** in the SQL Server pack — the SQL Server default. RCSI would be a second pack, not a flag.
 - **Lock wait timeouts are not modelled.** `innodb_lock_wait_timeout` is left long enough that it never fires inside a recorded run; a statement still waiting when a schedule ends is recorded as exactly that.
 - **Duplicate-key inserts are refused**, not modelled.
