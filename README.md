@@ -14,7 +14,7 @@ This models **documented behaviour for a fixed operation set at specific engine 
 
 Start with [the on-call roster emptying at REPEATABLE READ](https://andifathulms.github.io/isolation-anomaly/en/schedule/#s=write-skew&p=postgres-16&l=RR&i=5) — two doctors, each checking that the other is on call, both going off call, both committing. Then switch the level to SERIALIZABLE and watch the same schedule get refused, or switch the engine to MySQL and watch it deadlock instead.
 
-Ten scenarios, each with the framing that makes the stakes obvious, executed against three engine packs at every isolation level. Six pages: an overview, the score with stepping and state panels, the scenario library, the cross-engine matrix, the conflict graph, and the engine packs with every citation printed beside the rule it justifies.
+Ten scenarios, each with the framing that makes the stakes obvious, executed against four engine packs at every isolation level. Six pages: an overview, the score with stepping and state panels, the scenario library, the cross-engine matrix, the conflict graph, and the engine packs with every citation printed beside the rule it justifies.
 
 ## Why
 
@@ -24,21 +24,21 @@ And the level names mean different things in different engines. PostgreSQL's `RE
 
 ## What the engines actually disagree about
 
-Recorded against PostgreSQL 16.14, MySQL 8.4.11 and SQL Server 16.0.4265.3, in containers, and committed as fixtures:
+Recorded against PostgreSQL 16.14, MySQL 8.4.11, SQL Server 16.0.4265.3 and Oracle 23.26.2.0.0 — in containers, committed as 150 fixtures:
 
-| | PostgreSQL 16 | MySQL 8.4 InnoDB | SQL Server 2022 |
-|---|---|---|---|
-| Default level | `READ COMMITTED` | `REPEATABLE READ` | `READ COMMITTED` |
-| Concurrency control | MVCC | MVCC | locks, except at `SNAPSHOT` |
-| `READ UNCOMMITTED` | alias for `READ COMMITTED`; no dirty reads at any level | real dirty read | real dirty read |
-| **Phantom at `REPEATABLE READ`** | **no** — the level is snapshot isolation | **no** — snapshot for plain reads | **yes** — a shared lock cannot lock a row that does not exist yet |
-| Lost update at `REPEATABLE READ` | aborted with `40001` | permitted, silently | deadlock |
-| `SNAPSHOT` | no such level — refused, naming `REPEATABLE READ` | no such level — refused | the real thing, and **write skew is permitted** |
-| Write skew caught by | `SERIALIZABLE`, aborting the second committer with `40001` | nothing — `SERIALIZABLE` deadlocks instead | nothing — locks deadlock instead |
+| | PostgreSQL 16 | MySQL 8.4 InnoDB | SQL Server 2022 | Oracle 23ai |
+|---|---|---|---|---|
+| Levels it really has | 3 | 4 | 5 | **2** |
+| Default | `READ COMMITTED` | `REPEATABLE READ` | `READ COMMITTED` | `READ COMMITTED` |
+| `READ UNCOMMITTED` | accepts the name, gives you `READ COMMITTED` | real dirty read | real dirty read | **no such level** |
+| `REPEATABLE READ` | snapshot isolation, no phantoms | snapshot for plain reads only | ANSI's: locks, **phantoms possible** | **no such level** |
+| `SNAPSHOT` | no such level | no such level | the real thing | no such level — and yet it is what `SERIALIZABLE` gives you |
+| **Write skew is permitted at** | `REPEATABLE READ` | `REPEATABLE READ` | `SNAPSHOT` | **`SERIALIZABLE`** |
+| Write skew is caught by | `SERIALIZABLE`, aborting with `40001` | nothing — it deadlocks | nothing — it deadlocks | **nothing at all** |
 
-Three engines, one schedule, the same level name, opposite answers — and ANSI permits all of it. That is the reason the matrix exists.
+One schedule — two doctors, each checking the other is on call, each going off call — commits on Oracle at the level named `SERIALIZABLE`, with no error raised. The same schedule is aborted by PostgreSQL at the same level name. Nothing about that is derivable from the word.
 
-Where the model will not answer: SQL Server picks its deadlock victim by internal cost estimate, and the same schedule loses T1 at `REPEATABLE READ` and T2 at `SERIALIZABLE`. No rule over waiting order reproduces that, so those runs are **refused** with the gap named rather than guessed. Five of the 130 recorded runs are refused, and the test suite checks each refusal is justified by a deadlock in the recording.
+Where the model will not answer: SQL Server picks its deadlock victim by internal cost estimate, and the same schedule loses T1 at `REPEATABLE READ` and T2 at `SERIALIZABLE`. No rule over waiting order reproduces that, so those runs are **refused** with the gap named rather than guessed. Five of the 150 recorded runs are refused, and the test suite checks each refusal is justified by a deadlock in the recording.
 
 ## Language
 
