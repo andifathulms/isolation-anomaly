@@ -1,0 +1,126 @@
+{
+  "scenarioId": "phantom-read",
+  "packId": "sqlserver-2022-rcsi",
+  "engine": "Microsoft SQL Server",
+  "engineVersion": "16.0.4265.3",
+  "image": "mcr.microsoft.com/mssql/server:2022-latest",
+  "recordedOn": "2026-08-06",
+  "level": "SERIALIZABLE",
+  "steps": [
+    {
+      "index": 0,
+      "txn": "T1",
+      "notation": "b1",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "ok",
+        "read": null,
+        "rowsAffected": null
+      }
+    },
+    {
+      "index": 1,
+      "txn": "T1",
+      "notation": "r1[P:1..5]",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "ok",
+        "read": {
+          "type": "rows",
+          "rows": [
+            {
+              "key": 1,
+              "value": 1
+            },
+            {
+              "key": 2,
+              "value": 1
+            }
+          ]
+        },
+        "rowsAffected": null
+      }
+    },
+    {
+      "index": 2,
+      "txn": "T2",
+      "notation": "b2",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "ok",
+        "read": null,
+        "rowsAffected": null
+      }
+    },
+    {
+      "index": 3,
+      "txn": "T2",
+      "notation": "i2[3=1]",
+      "blockedUntilStep": 6,
+      "outcome": {
+        "status": "ok",
+        "read": null,
+        "rowsAffected": 1
+      }
+    },
+    {
+      "index": 4,
+      "txn": "T2",
+      "notation": "c2",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "error",
+        "code": "sessionBusy",
+        "message": "T2 could not accept this statement: its statement from step 3 was still waiting on a lock."
+      }
+    },
+    {
+      "index": 5,
+      "txn": "T1",
+      "notation": "r1[P:1..5]",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "ok",
+        "read": {
+          "type": "rows",
+          "rows": [
+            {
+              "key": 1,
+              "value": 1
+            },
+            {
+              "key": 2,
+              "value": 1
+            }
+          ]
+        },
+        "rowsAffected": null
+      }
+    },
+    {
+      "index": 6,
+      "txn": "T1",
+      "notation": "c1",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "ok",
+        "read": null,
+        "rowsAffected": null
+      }
+    }
+  ],
+  "transactions": {
+    "T1": "committed",
+    "T2": "aborted"
+  },
+  "finalState": [
+    {
+      "key": 1,
+      "value": 1
+    },
+    {
+      "key": 2,
+      "value": 1
+    }
+  ]
+}

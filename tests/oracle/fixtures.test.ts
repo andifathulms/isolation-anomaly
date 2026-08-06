@@ -138,3 +138,37 @@ suite('what the oracle says about PostgreSQL', () => {
     expect(blocked?.blockedUntilStep).toBe(5)
   })
 })
+
+suite('what one database option does to SQL Server', () => {
+  // The two SQL Server packs differ only in READ_COMMITTED_SNAPSHOT, and this is
+  // the whole point of shipping the second one: the option does not change what
+  // a read returns, it changes whether the read has to wait for a writer.
+  const scenario = 'dirty-read'
+  const level = 'READ COMMITTED'
+
+  it('makes a read wait when it is off, and not wait when it is on', () => {
+    const locking = loadFixture('sqlserver-2022', scenario, level)
+    const versioned = loadFixture('sqlserver-2022-rcsi', scenario, level)
+    expect(locking).not.toBeNull()
+    expect(versioned).not.toBeNull()
+    if (!locking || !versioned) return
+
+    // With shared locks, the read is blocked by the uncommitted write until the
+    // writer rolls back.
+    const blocked = locking.steps.filter((step) => step.blockedUntilStep !== null)
+    expect(blocked.map((step) => step.notation)).toEqual(['r2[1]'])
+
+    // With row versioning, nothing waits at all.
+    expect(versioned.steps.filter((step) => step.blockedUntilStep !== null)).toEqual([])
+  })
+
+  it('does not change a single value that was read', () => {
+    const locking = loadFixture('sqlserver-2022', scenario, level)
+    const versioned = loadFixture('sqlserver-2022-rcsi', scenario, level)
+    if (!locking || !versioned) return
+    const reads = (run: OracleRun) =>
+      run.steps.map((step) => (step.outcome.status === 'ok' ? step.outcome.read : null))
+    expect(reads(versioned)).toEqual(reads(locking))
+    expect(versioned.finalState).toEqual(locking.finalState)
+  })
+})

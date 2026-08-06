@@ -1,0 +1,112 @@
+{
+  "scenarioId": "lost-update-locked",
+  "packId": "sqlserver-2022-rcsi",
+  "engine": "Microsoft SQL Server",
+  "engineVersion": "16.0.4265.3",
+  "image": "mcr.microsoft.com/mssql/server:2022-latest",
+  "recordedOn": "2026-08-06",
+  "level": "SNAPSHOT",
+  "steps": [
+    {
+      "index": 0,
+      "txn": "T1",
+      "notation": "b1",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "ok",
+        "read": null,
+        "rowsAffected": null
+      }
+    },
+    {
+      "index": 1,
+      "txn": "T2",
+      "notation": "b2",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "ok",
+        "read": null,
+        "rowsAffected": null
+      }
+    },
+    {
+      "index": 2,
+      "txn": "T1",
+      "notation": "r1[1]•",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "ok",
+        "read": {
+          "type": "row",
+          "value": 10
+        },
+        "rowsAffected": null
+      }
+    },
+    {
+      "index": 3,
+      "txn": "T2",
+      "notation": "r2[1]•",
+      "blockedUntilStep": 5,
+      "outcome": {
+        "status": "error",
+        "code": "3960",
+        "message": "Snapshot isolation transaction aborted due to update conflict. You cannot use snapshot isolation to access table 'dbo.items' directly or indirectly in database 'oracle_rcsi' to update, delete, or insert the row that has been modified or deleted by another transaction. Retry the transaction or change the isolation level for the update/delete statement."
+      }
+    },
+    {
+      "index": 4,
+      "txn": "T1",
+      "notation": "w1[1=9]",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "ok",
+        "read": null,
+        "rowsAffected": 1
+      }
+    },
+    {
+      "index": 5,
+      "txn": "T1",
+      "notation": "c1",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "ok",
+        "read": null,
+        "rowsAffected": null
+      }
+    },
+    {
+      "index": 6,
+      "txn": "T2",
+      "notation": "w2[1=8]",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "ok",
+        "read": null,
+        "rowsAffected": 1
+      }
+    },
+    {
+      "index": 7,
+      "txn": "T2",
+      "notation": "c2",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "error",
+        "code": "3902",
+        "message": "The COMMIT TRANSACTION request has no corresponding BEGIN TRANSACTION."
+      }
+    }
+  ],
+  "transactions": {
+    "T1": "committed",
+    "T2": "aborted"
+  },
+  "finalState": [
+    {
+      "key": 1,
+      "value": 8
+    }
+  ]
+}

@@ -18,7 +18,13 @@ const SERVER = {
   connectionTimeout: 60000,
 } as const
 
-const DATABASE = 'oracle'
+/** One database per pack, so the two READ_COMMITTED_SNAPSHOT settings coexist. */
+const DATABASES = {
+  'sqlserver-2022': { name: 'oracle', readCommittedSnapshot: 'OFF' },
+  'sqlserver-2022-rcsi': { name: 'oracle_rcsi', readCommittedSnapshot: 'ON' },
+} as const
+
+export type SqlServerPackId = keyof typeof DATABASES
 
 /**
  * SQL Server 2022 in a container.
@@ -31,10 +37,12 @@ const DATABASE = 'oracle'
  * it: a level that has to be enabled is still a level the engine has, and
  * recording it is the only way to show that its SNAPSHOT permits write skew.
  *
- * READ_COMMITTED_SNAPSHOT is deliberately left OFF, which is the SQL Server
- * default and the configuration the pack models.
+ * The same server backs two packs, one per database: READ_COMMITTED_SNAPSHOT
+ * OFF (the SQL Server default) and ON. Separate databases, because the option is
+ * set per database and the two must not contaminate each other.
  */
-export function createSqlServerDriver(): OracleDriver {
+export function createSqlServerDriver(packId: SqlServerPackId = 'sqlserver-2022'): OracleDriver {
+  const database = DATABASES[packId]
   let admin: mssql.ConnectionPool | null = null
 
   async function adminPool(): Promise<mssql.ConnectionPool> {
@@ -42,19 +50,27 @@ export function createSqlServerDriver(): OracleDriver {
 
     const bootstrap = await new mssql.ConnectionPool({ ...SERVER, database: 'master' }).connect()
     await bootstrap.request().batch(
-      `IF DB_ID('${DATABASE}') IS NULL CREATE DATABASE ${DATABASE};`,
+      `IF DB_ID('${database.name}') IS NULL CREATE DATABASE ${database.name};`,
     )
     // Snapshot isolation is off by default and cannot be requested without it.
-    await bootstrap.request().batch(`ALTER DATABASE ${DATABASE} SET ALLOW_SNAPSHOT_ISOLATION ON;`)
-    await bootstrap.request().batch(`ALTER DATABASE ${DATABASE} SET READ_COMMITTED_SNAPSHOT OFF;`)
+    await bootstrap.request().batch(
+      `ALTER DATABASE ${database.name} SET ALLOW_SNAPSHOT_ISOLATION ON;`,
+    )
+    // The option this pack exists to record. ALTER DATABASE needs the database
+    // to itself, so it is set with only the bootstrap connection open.
+    await bootstrap
+      .request()
+      .batch(
+        `ALTER DATABASE ${database.name} SET READ_COMMITTED_SNAPSHOT ${database.readCommittedSnapshot} WITH ROLLBACK IMMEDIATE;`,
+      )
     await bootstrap.close()
 
-    admin = await new mssql.ConnectionPool({ ...SERVER, database: DATABASE }).connect()
+    admin = await new mssql.ConnectionPool({ ...SERVER, database: database.name }).connect()
     return admin
   }
 
   return {
-    packId: 'sqlserver-2022',
+    packId,
     engine: 'Microsoft SQL Server',
     image: 'mcr.microsoft.com/mssql/server:2022-latest',
     service: 'sqlserver',
@@ -79,7 +95,7 @@ export function createSqlServerDriver(): OracleDriver {
     },
 
     async openSession(txn, level): Promise<OracleSession> {
-      const pool = await new mssql.ConnectionPool({ ...SERVER, database: DATABASE }).connect()
+      const pool = await new mssql.ConnectionPool({ ...SERVER, database: database.name }).connect()
       // The level is set on the session before any transaction starts: SQL
       // Server aborts a transaction that tries to change *into* SNAPSHOT.
       await pool.request().batch(`SET TRANSACTION ISOLATION LEVEL ${level};`)

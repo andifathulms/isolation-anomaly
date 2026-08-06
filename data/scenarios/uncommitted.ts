@@ -34,6 +34,7 @@ export const dirtyRead: Scenario = {
     'mysql-8-innodb': ['READ UNCOMMITTED'],
     'sqlserver-2022': ['READ UNCOMMITTED'],
     'oracle-23ai': [],
+    'sqlserver-2022-rcsi': ['READ UNCOMMITTED'],
   },
 }
 
@@ -64,5 +65,6 @@ export const dirtyWrite: Scenario = {
     'mysql-8-innodb': [],
     'sqlserver-2022': [],
     'oracle-23ai': [],
+    'sqlserver-2022-rcsi': [],
   },
 }

@@ -14,7 +14,7 @@ This models **documented behaviour for a fixed operation set at specific engine 
 
 Start with [the on-call roster emptying at REPEATABLE READ](https://andifathulms.github.io/isolation-anomaly/en/schedule/#s=write-skew&p=postgres-16&l=RR&i=5) — two doctors, each checking that the other is on call, both going off call, both committing. Then switch the level to SERIALIZABLE and watch the same schedule get refused, or switch the engine to MySQL and watch it deadlock instead.
 
-Ten scenarios, each with the framing that makes the stakes obvious, executed against four engine packs at every isolation level. Six pages: an overview, the score with stepping and state panels, the scenario library, the cross-engine matrix, the conflict graph, and the engine packs with every citation printed beside the rule it justifies.
+Ten scenarios, each with the framing that makes the stakes obvious, executed against five engine packs at every isolation level. Six pages: an overview, the score with stepping and state panels, the scenario library, the cross-engine matrix, the conflict graph, and the engine packs with every citation printed beside the rule it justifies.
 
 ## Why
 
@@ -37,6 +37,8 @@ Recorded against PostgreSQL 16.14, MySQL 8.4.11, SQL Server 16.0.4265.3 and Orac
 | Write skew is caught by | `SERIALIZABLE`, aborting with `40001` | nothing — it deadlocks | nothing — it deadlocks | **nothing at all** |
 
 One schedule — two doctors, each checking the other is on call, each going off call — commits on Oracle at the level named `SERIALIZABLE`, with no error raised. The same schedule is aborted by PostgreSQL at the same level name. Nothing about that is derivable from the word.
+
+There are two SQL Server packs, differing only in one database option: `READ_COMMITTED_SNAPSHOT` off (the default) and on. With it on, `READ COMMITTED` stops taking shared locks and hands each statement a versioned snapshot instead — the values read are the same and what changes is who waits for whom. It ships as a separate pack rather than a flag, because an option that changes what a level *means* deserves its own citations and its own recordings.
 
 Where the model will not answer: SQL Server picks its deadlock victim by internal cost estimate, and the same schedule loses T1 at `REPEATABLE READ` and T2 at `SERIALIZABLE`. No rule over waiting order reproduces that, so those runs are **refused** with the gap named rather than guessed. Five of the 150 recorded runs are refused, and the test suite checks each refusal is justified by a deadlock in the recording.
 

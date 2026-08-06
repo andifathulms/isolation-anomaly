@@ -35,6 +35,7 @@ export const nonRepeatableRead: Scenario = {
     'mysql-8-innodb': ['READ UNCOMMITTED', 'READ COMMITTED'],
     'sqlserver-2022': ['READ UNCOMMITTED', 'READ COMMITTED'],
     'oracle-23ai': ['READ COMMITTED'],
+    'sqlserver-2022-rcsi': ['READ UNCOMMITTED', 'READ COMMITTED'],
   },
 }
 
@@ -70,5 +71,6 @@ export const readSkew: Scenario = {
     'mysql-8-innodb': ['READ UNCOMMITTED', 'READ COMMITTED'],
     'sqlserver-2022': ['READ UNCOMMITTED', 'READ COMMITTED'],
     'oracle-23ai': ['READ COMMITTED'],
+    'sqlserver-2022-rcsi': ['READ UNCOMMITTED', 'READ COMMITTED'],
   },
 }

@@ -151,7 +151,7 @@ The site states plainly that this models documented behaviour for a fixed operat
 
 **Live at https://andifathulms.github.io/isolation-anomaly/** — `main` deploys through Actions, gated on pack validation, typecheck, lint and the full suite.
 
-M0–M6 built. Four engine packs shipping: PostgreSQL 16, MySQL 8.4 InnoDB, SQL Server 2022, Oracle 23ai. (PRD §3 caps v1 at three; Oracle is the M6 pack the milestone table calls for, and it is the one that makes the naming lesson undeniable.)
+M0–M6 built. Five engine packs shipping: PostgreSQL 16, MySQL 8.4 InnoDB, SQL Server 2022, SQL Server 2022 with RCSI, Oracle 23ai. (PRD §3 caps v1 at three; Oracle is the M6 pack the milestone table calls for, and it is the one that makes the naming lesson undeniable.)
 
 - Oracle harness records against PostgreSQL 16.14, MySQL 8.4.11, SQL Server 16.0.4265.3 and Oracle 23.26.2.0.0 in containers. 150 fixtures under `tests/oracle/`. Waits are read from `pg_stat_activity`, `performance_schema.data_lock_waits` `sys.dm_exec_requests` and `v$session.blocking_session` rather than inferred from a slow statement. Re-recording produces byte-identical fixtures.
 - SQL Server runs under x86 emulation on Apple Silicon (there is no arm64 image). Same binary, same semantics; the recorded version string identifies the server that answered.
@@ -163,7 +163,7 @@ Open modelling boundaries, all declared as pack rules with citations rather than
 
 - **Deadlock victim selection** is `deadlockVictim`. PostgreSQL and InnoDB roll back the transaction whose wait closed the cycle, and the recordings agree. SQL Server picks by cost estimate — the same schedule loses T1 at REPEATABLE READ and T2 at SERIALIZABLE — so its pack declares the victim `unmodelled` and the executor refuses the whole run. Five recorded runs are refused; `tests/oracle` checks each refusal is justified by a deadlock in the fixture.
 - **What a session does after the engine rolls its transaction back** is `afterAbort`: PostgreSQL rejects statements with 25P02, SQL Server autocommits each one, which is how a swallowed 3960 still writes to the table.
-- **READ_COMMITTED_SNAPSHOT is OFF** in the SQL Server pack — the SQL Server default. RCSI would be a second pack, not a flag.
+- **READ_COMMITTED_SNAPSHOT** is a second pack (`sqlserver-2022-rcsi`), not a flag, and the two are recorded against separate databases on the same server so the option cannot leak between them.
 - **`failureScope`** is how much a serialization failure destroys: the transaction everywhere except Oracle, where it is the statement — and then every later write or locking read in that transaction raises the same error, which the recording shows and the model reproduces.
 - **A plain read after Oracle's ORA-08177 is not exercised** by the library, so the model lets it proceed from the snapshot. If a scenario ever needs it, record it first.
 - **Lock wait timeouts are not modelled.** `innodb_lock_wait_timeout` is left long enough that it never fires inside a recorded run; a statement still waiting when a schedule ends is recorded as exactly that.
