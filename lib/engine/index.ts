@@ -1,5 +1,6 @@
 export { execute } from './execute'
 export { projectToOracleShape } from './project'
+export { narrateStep, narrateTrace } from './narrate'
 export { refusalHeadline, type Refusal } from './refuse'
 export { BOOTSTRAP_XID } from './mvcc'
 export type {

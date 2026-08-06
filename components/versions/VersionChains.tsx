@@ -41,10 +41,10 @@ export function VersionChains({
               <table className="w-full text-sm">
                 <thead>
                   <tr className="font-control text-[11px] uppercase tracking-wide text-ink-muted">
-                    <th className="px-3 py-1 text-left font-normal">{dict.panels.value}</th>
-                    <th className="px-3 py-1 text-left font-normal">{dict.panels.createdBy}</th>
-                    <th className="px-3 py-1 text-left font-normal">{dict.panels.deletedBy}</th>
-                    <th className="px-3 py-1 text-left font-normal" />
+                    <th scope="col" className="px-3 py-1 text-left font-normal">{dict.panels.value}</th>
+                    <th scope="col" className="px-3 py-1 text-left font-normal">{dict.panels.createdBy}</th>
+                    <th scope="col" className="px-3 py-1 text-left font-normal">{dict.panels.deletedBy}</th>
+                    <th scope="col" className="px-3 py-1 text-left font-normal" />
                   </tr>
                 </thead>
                 <tbody className="font-mono">

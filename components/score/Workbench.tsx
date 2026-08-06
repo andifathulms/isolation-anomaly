@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { LEVELS, validateSchedule, type IsolationLevel, type Schedule } from '@/lib/schedule'
 import { PACKS, requirePack } from '@/lib/packs'
 import { SCENARIOS, getScenario } from '@/lib/scenarios'
-import { execute, refusalHeadline } from '@/lib/engine'
+import { execute, narrateStep, narrateTrace, refusalHeadline } from '@/lib/engine'
 import { detect } from '@/lib/detect'
 import { buildConflictGraph, explainCycle, findCycle } from '@/lib/serial'
 import { decodeShareState, encodeShareState, type ShareState } from '@/lib/share'
@@ -67,6 +67,7 @@ export function Workbench({
 
   const trace = result?.type === 'trace' ? result.trace : null
   const anomalies = useMemo(() => (trace ? detect(trace) : []), [trace])
+  const summary = useMemo(() => (trace ? narrateTrace(trace, anomalies) : ''), [trace, anomalies])
   const graph = useMemo(() => (trace ? buildConflictGraph(trace) : null), [trace])
   const cycle = useMemo(() => (graph ? findCycle(graph) : null), [graph])
 
@@ -239,20 +240,29 @@ export function Workbench({
             anomalies={anomalies}
             onSelectStep={goTo}
             labels={{ conductorMark: dict.anomaly.found.toLowerCase() }}
+            summary={summary}
           />
+
+          {/* Stepping is the one thing that changes without the page changing,
+              so it is announced rather than left to be noticed. */}
+          <p aria-live="polite" className="sr-only">
+            {narrateStep(current)}
+          </p>
 
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => goTo(0)}
-              className="rounded-sm border border-staff px-2 py-1 font-control text-sm"
+              disabled={step === 0}
+              className="rounded-sm border border-staff px-2 py-1 font-control text-sm disabled:opacity-40"
             >
               ⏮ {dict.controls.first}
             </button>
             <button
               type="button"
               onClick={() => goTo(step - 1)}
-              className="rounded-sm border border-staff px-2 py-1 font-control text-sm"
+              disabled={step === 0}
+              className="rounded-sm border border-staff px-2 py-1 font-control text-sm disabled:opacity-40"
             >
               ← {dict.controls.previous}
             </button>
@@ -262,14 +272,16 @@ export function Workbench({
             <button
               type="button"
               onClick={() => goTo(step + 1)}
-              className="rounded-sm border border-staff px-2 py-1 font-control text-sm"
+              disabled={step === maxStep}
+              className="rounded-sm border border-staff px-2 py-1 font-control text-sm disabled:opacity-40"
             >
               {dict.controls.next} →
             </button>
             <button
               type="button"
               onClick={() => goTo(maxStep)}
-              className="rounded-sm border border-staff px-2 py-1 font-control text-sm"
+              disabled={step === maxStep}
+              className="rounded-sm border border-staff px-2 py-1 font-control text-sm disabled:opacity-40"
             >
               {dict.controls.last} ⏭
             </button>
@@ -291,7 +303,9 @@ export function Workbench({
             />
           </div>
 
-          <StepList trace={trace} currentStep={step} onSelectStep={goTo} dict={dict} />
+          <nav aria-label={dict.controls.step}>
+            <StepList trace={trace} currentStep={step} onSelectStep={goTo} dict={dict} />
+          </nav>
 
           {graph ? (
             <section aria-labelledby="serial-heading" className="max-w-prose">

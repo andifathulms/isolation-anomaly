@@ -39,10 +39,10 @@ export function LockTable({
         <table className="mt-3 w-full rounded-sm border border-staff-faint bg-manuscript-raised text-sm">
           <thead>
             <tr className="font-control text-[11px] uppercase tracking-wide text-ink-muted">
-              <th className="px-3 py-1.5 text-left font-normal">{dict.panels.holder}</th>
-              <th className="px-3 py-1.5 text-left font-normal">{dict.panels.resource}</th>
-              <th className="px-3 py-1.5 text-left font-normal">{dict.panels.mode}</th>
-              <th className="px-3 py-1.5 text-left font-normal">{dict.panels.duration}</th>
+              <th scope="col" className="px-3 py-1.5 text-left font-normal">{dict.panels.holder}</th>
+              <th scope="col" className="px-3 py-1.5 text-left font-normal">{dict.panels.resource}</th>
+              <th scope="col" className="px-3 py-1.5 text-left font-normal">{dict.panels.mode}</th>
+              <th scope="col" className="px-3 py-1.5 text-left font-normal">{dict.panels.duration}</th>
             </tr>
           </thead>
           <tbody className="font-mono">

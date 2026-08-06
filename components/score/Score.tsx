@@ -14,6 +14,12 @@ import type { DetectedAnomaly } from '@/lib/detect'
  *
  * Nothing is computed here: the component renders a trace. Colours are semantic
  * tokens only, and conductor's red appears on nothing but anomalies and aborts.
+ *
+ * Accessibility: this is one graphic with a written summary, not a grid of
+ * buttons. Marks stay clickable for a mouse, but the keyboard and screen-reader
+ * path is the step list beside it — real buttons, in order, with the same
+ * information. Focusable SVG groups would have produced dozens of tab stops
+ * announcing coordinates, which is worse than a single good description.
  */
 
 const GUTTER = 76
@@ -39,6 +45,8 @@ type Props = {
   readonly anomalies: readonly DetectedAnomaly[]
   readonly onSelectStep: (step: number) => void
   readonly labels: { readonly conductorMark: string }
+  /** Written description of the whole score, for anyone not looking at it. */
+  readonly summary: string
 }
 
 function Marker({ shape, x, y, filled }: { shape: string; x: number; y: number; filled: boolean }) {
@@ -60,7 +68,15 @@ function Marker({ shape, x, y, filled }: { shape: string; x: number; y: number; 
   return <circle cx={x} cy={y} r={6.5} className={`${fill} stroke-current`} strokeWidth={1.5} />
 }
 
-export function Score({ schedule, trace, currentStep, anomalies, onSelectStep, labels }: Props) {
+export function Score({
+  schedule,
+  trace,
+  currentStep,
+  anomalies,
+  onSelectStep,
+  labels,
+  summary,
+}: Props) {
   const width = GUTTER + schedule.steps.length * COLUMN + 16
   const height = TOP + schedule.transactions.length * STAVE_GAP + BOTTOM_PAD
   const columnX = (index: number) => GUTTER + index * COLUMN + COLUMN / 2
@@ -76,7 +92,7 @@ export function Score({ schedule, trace, currentStep, anomalies, onSelectStep, l
         height={height}
         viewBox={`0 0 ${width} ${height}`}
         role="img"
-        aria-label={`Schedule ${schedule.title}, ${schedule.steps.length} steps`}
+        aria-label={summary}
         className="block"
       >
         {/* Bar lines: scaffolding, not content. */}
@@ -164,18 +180,17 @@ export function Score({ schedule, trace, currentStep, anomalies, onSelectStep, l
               key={`op-${step.index}`}
               className={`${tone} cursor-pointer`}
               onClick={() => onSelectStep(step.index)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') onSelectStep(step.index)
-              }}
-              aria-label={`Step ${step.index}, ${step.txn}, ${step.notation}`}
             >
               {involved.has(step.index) ? (
                 <circle cx={x} cy={y} r={14} className="fill-conductor-wash" />
               ) : null}
               {isControl ? (
-                <line x1={x} x2={x} y1={y - 9} y2={y + 9} className="stroke-current" strokeWidth={2.5} />
+                // A commit is one bar and a rollback is two, so the difference
+                // survives without colour.
+                <g className="stroke-current" strokeWidth={2.5}>
+                  <line x1={x - (step.op.type === 'rollback' ? 3 : 0)} x2={x - (step.op.type === 'rollback' ? 3 : 0)} y1={y - 9} y2={y + 9} />
+                  {step.op.type === 'rollback' ? <line x1={x + 3} x2={x + 3} y1={y - 9} y2={y + 9} /> : null}
+                </g>
               ) : (
                 <Marker shape={voice.marker} x={x} y={y} filled={filled} />
               )}
