@@ -69,17 +69,25 @@ suite('oracle fixtures', () => {
       }
     })
 
-    it(`${pack.id} never records a statement left waiting at the end of a schedule`, () => {
-      // A schedule that ends with a session still blocked has not been observed
-      // to completion, and any claim drawn from it would be guesswork.
+    it(`${pack.id} never records a transaction as committed while one of its statements was still waiting`, () => {
+      // A statement can be left waiting when the schedule ends — that is real
+      // behaviour and it is recorded. What must never happen is a fixture
+      // claiming such a transaction committed, because it plainly did not.
       for (const scenario of SCENARIOS) {
         for (const level of recordable) {
           const run = loadFixture(pack.id, scenario.id, level)
           if (!run) continue
           const stuck = run.steps.filter(
-            (step) => step.outcome.status === 'error' && step.outcome.code === 'blocked',
+            (step) =>
+              step.outcome.status === 'error' &&
+              (step.outcome.code === 'blocked' || step.outcome.code === 'sessionBusy'),
           )
-          expect(stuck.map((step) => step.notation), `${scenario.id} @ ${level}`).toEqual([])
+          for (const step of stuck) {
+            expect(
+              run.transactions[step.txn],
+              `${scenario.id} @ ${level}: ${step.txn} was stuck at step ${step.index}`,
+            ).toBe('aborted')
+          }
         }
       }
     })

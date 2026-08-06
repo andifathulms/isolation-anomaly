@@ -32,6 +32,7 @@ export const nonRepeatableRead: Scenario = {
   },
   expectedAt: {
     'postgres-16': ['READ UNCOMMITTED', 'READ COMMITTED'],
+    'mysql-8-innodb': ['READ UNCOMMITTED', 'READ COMMITTED'],
   },
 }
 
@@ -64,5 +65,6 @@ export const readSkew: Scenario = {
   },
   expectedAt: {
     'postgres-16': ['READ UNCOMMITTED', 'READ COMMITTED'],
+    'mysql-8-innodb': ['READ UNCOMMITTED', 'READ COMMITTED'],
   },
 }

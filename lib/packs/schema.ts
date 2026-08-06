@@ -24,6 +24,7 @@ const visibilitySchema = z.object({
   snapshot: z.enum(['statement', 'transaction']),
   readsUncommitted: z.boolean(),
   lockingReadsSeeLatestCommitted: z.boolean(),
+  plainReadsAreLocking: z.boolean(),
 })
 
 const conflictsSchema = z.object({

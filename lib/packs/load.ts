@@ -1,3 +1,4 @@
+import mysql8 from '@/data/packs/mysql-8-innodb.json'
 import postgres16 from '@/data/packs/postgres-16.json'
 import { enginePackSchema } from './schema'
 import type { Citation, EnginePack, LevelEntry, LevelSemantics } from './types'
@@ -8,7 +9,7 @@ import type { IsolationLevel } from '@/lib/schedule/levels'
  * requests. Parsing happens once at module load; `pnpm packs:validate` runs the
  * same schema in the build so a malformed pack never reaches a page.
  */
-const RAW_PACKS: readonly unknown[] = [postgres16]
+const RAW_PACKS: readonly unknown[] = [postgres16, mysql8]
 
 function parse(raw: unknown): EnginePack {
   const result = enginePackSchema.safeParse(raw)

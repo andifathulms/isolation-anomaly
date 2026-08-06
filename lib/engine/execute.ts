@@ -131,6 +131,14 @@ export function execute(
     return set
   }
 
+  const abortedXids = (): ReadonlySet<Xid> => {
+    const set = new Set<Xid>()
+    for (const runtime of runtimes.values()) {
+      if (runtime.status === 'aborted') set.add(runtime.xid)
+    }
+    return set
+  }
+
   const runningXids = (): readonly Xid[] =>
     [...runtimes.values()].filter((runtime) => runtime.status === 'running').map((runtime) => runtime.xid)
 
@@ -170,6 +178,7 @@ export function execute(
     self: runtime.xid,
     committed: snapshotCommitted(runtime, step),
     readsUncommitted: semantics.visibility.value.readsUncommitted,
+    aborted: abortedXids(),
   })
 
   /** The newest version of a key whose creator has committed, tombstone included. */
@@ -326,8 +335,20 @@ export function execute(
       case 'read': {
         const acquired = acquire(runtime, semantics.locks.plainRead.value, { key: op.key }, step)
         if (acquired.type === 'wait') return acquired
-        const value = visibleValue(store, op.key, viewFor(runtime, step))
         runtime.readKeys.add(op.key)
+
+        // Where the engine turns a plain SELECT into a locking read, it reads
+        // the freshest committed row rather than the transaction's snapshot.
+        if (semantics.visibility.value.plainReadsAreLocking) {
+          const newest = newestCommitted(op.key, runtime)
+          if (isStale(newest, runtime, step) && semantics.conflicts.value.lockingReadOnStaleRow === 'abort') {
+            return abort(runtime, step, pack.errors.serializationFailure, 'staleLockingRead')
+          }
+          locks = releaseStatementLocks(locks, runtime.txn)
+          return { type: 'ok', read: { type: 'row', value: newest?.value ?? null }, rowsAffected: null }
+        }
+
+        const value = visibleValue(store, op.key, viewFor(runtime, step))
         locks = releaseStatementLocks(locks, runtime.txn)
         return { type: 'ok', read: { type: 'row', value }, rowsAffected: null }
       }
@@ -345,7 +366,9 @@ export function execute(
         }
         const acquired = acquire(runtime, semantics.locks.plainRead.value, op.predicate, step)
         if (acquired.type === 'wait') return acquired
-        const view = viewFor(runtime, step)
+        const view = semantics.visibility.value.plainReadsAreLocking
+          ? { self: runtime.xid, committed: committedXids(), readsUncommitted: false, aborted: abortedXids() }
+          : viewFor(runtime, step)
         const rows = visibleKeys(store, view)
           .filter((key) => predicateContains(op.predicate, key))
           .map((key) => ({ key, value: visibleValue(store, key, view) as number }))
@@ -446,6 +469,91 @@ export function execute(
     }
   }
 
+  /**
+   * Breaks one deadlock, if the waiting statements form a cycle.
+   *
+   * Both engines modelled here document that they detect deadlocks and roll
+   * back a transaction to break them, and neither promises *which*. This model
+   * picks the transaction whose wait closed the cycle — the one whose arrival
+   * made the deadlock exist — and every schedule shipped with the project is
+   * checked against the real engine to confirm the victim matches. A schedule
+   * where it does not is a schedule this model cannot claim to explain.
+   *
+   * Returns true when a victim was rolled back, so the caller can retry the
+   * statements the released locks may have freed.
+   */
+  const breakDeadlock = (step: number): boolean => {
+    const waiters = schedule.transactions
+      .map((txn) => runtimes.get(txn))
+      .filter((runtime): runtime is Runtime & { pending: NonNullable<Runtime['pending']> } =>
+        runtime !== undefined && runtime.pending !== null,
+      )
+    if (waiters.length < 2) return false
+
+    const waitingFor = new Map<TxnId, readonly TxnId[]>()
+    for (const waiter of waiters) waitingFor.set(waiter.txn, waiter.pending.waitingFor)
+
+    // Any transaction reachable from itself through waits is deadlocked.
+    const cycle = (from: TxnId): readonly TxnId[] | null => {
+      const path: TxnId[] = []
+      const seen = new Set<TxnId>()
+      let current: TxnId | undefined = from
+      while (current !== undefined) {
+        if (seen.has(current)) return path.slice(path.indexOf(current))
+        seen.add(current)
+        path.push(current)
+        current = (waitingFor.get(current) ?? []).find((next) => waitingFor.has(next))
+      }
+      return null
+    }
+
+    for (const waiter of waiters) {
+      const found = cycle(waiter.txn)
+      if (!found || found.length < 2) continue
+      const deadlocked = found
+        .map((txn) => runtimes.get(txn))
+        .filter((runtime): runtime is Runtime & { pending: NonNullable<Runtime['pending']> } =>
+          runtime !== undefined && runtime.pending !== null,
+        )
+        .reduce((latest, candidate) =>
+          candidate.pending.stepIndex > latest.pending.stepIndex ? candidate : latest,
+        )
+      const pendingStep = deadlocked.pending.stepIndex
+      const pendingOp = deadlocked.pending.op
+      const victim: Runtime = deadlocked
+      const shape = pack.errors.deadlock
+      if (!shape) {
+        outcomes.set(pendingStep, {
+          type: 'refused',
+          refusal: {
+            type: 'unmodelledOperation',
+            packId: pack.id,
+            operation: pendingOp.type,
+            gap: `These statements deadlock, and ${pack.engine}'s deadlock behaviour is not declared in the pack.`,
+          },
+        })
+      } else {
+        outcomes.set(pendingStep, {
+          type: 'error',
+          code: shape.code,
+          message: shape.message,
+          cause: 'deadlock',
+        })
+        victim.status = 'aborted'
+        victim.endedAtStep = step
+        victim.error = { code: shape.code, message: shape.message, cause: 'deadlock' }
+        locks = releaseTransactionLocks(locks, victim.txn)
+      }
+      // Deadlock detection is immediate, so a statement that deadlocked in the
+      // step that issued it never waited across a step boundary.
+      if (pendingStep !== step) blockedUntil.set(pendingStep, step)
+      victim.pending = null
+      return true
+    }
+
+    return false
+  }
+
   const captureState = (): WorldState => ({
     chains: toChains(store),
     locks: [...locks],
@@ -492,26 +600,32 @@ export function execute(
     }
 
     // This step may have released a lock a waiting statement needed. Retry to a
-    // fixpoint, because one statement completing can release the next.
-    let progressed = true
-    while (progressed) {
-      progressed = false
-      for (const txn of schedule.transactions) {
-        const waiting = runtimes.get(txn)
-        if (!waiting?.pending) continue
-        const pending = waiting.pending
-        const retry = attempt(txn, pending.op, pending.stepIndex)
-        if (retry.type === 'wait') {
-          waiting.pending = { ...pending, waitingFor: retry.waitingFor }
-          waitResource.set(pending.stepIndex, retry.resource)
-          continue
+    // fixpoint, because one statement completing can release the next, then
+    // break any deadlock the new waits created and retry again.
+    const drainWaiters = () => {
+      let progressed = true
+      while (progressed) {
+        progressed = false
+        for (const txn of schedule.transactions) {
+          const waiting = runtimes.get(txn)
+          if (!waiting?.pending) continue
+          const pending = waiting.pending
+          const retry = attempt(txn, pending.op, pending.stepIndex)
+          if (retry.type === 'wait') {
+            waiting.pending = { ...pending, waitingFor: retry.waitingFor }
+            waitResource.set(pending.stepIndex, retry.resource)
+            continue
+          }
+          outcomes.set(pending.stepIndex, retry)
+          if (pending.stepIndex !== index) blockedUntil.set(pending.stepIndex, index)
+          waiting.pending = null
+          progressed = true
         }
-        outcomes.set(pending.stepIndex, retry)
-        blockedUntil.set(pending.stepIndex, index)
-        waiting.pending = null
-        progressed = true
       }
     }
+
+    drainWaiters()
+    while (breakDeadlock(index)) drainWaiters()
 
     states[index] = captureState()
   })
@@ -586,6 +700,8 @@ function noteFor(outcome: StepOutcome, blockedUntil: number | null, txn: TxnId):
           return `${waited}The locking read found a row committed by another transaction after this transaction's snapshot: ${outcome.code} ${outcome.message}.`
         case 'readWriteDependencies':
           return `${waited}The serialization check found this transaction between two read/write dependencies, so no serial order produces this outcome: ${outcome.code} ${outcome.message}.`
+        case 'deadlock':
+          return `${waited}This statement and another were each waiting for a lock the other held, so the engine broke the deadlock by rolling this transaction back: ${outcome.code} ${outcome.message}.`
         case 'transactionAlreadyAborted':
           return `${waited}The engine had already failed this transaction, so the statement was ignored: ${outcome.code}.`
         default: {

@@ -28,3 +28,20 @@ services:
       interval: 1s
       timeout: 3s
       retries: 30
+
+  mysql:
+    image: mysql:8.4
+    command:
+      - --innodb-deadlock-detect=ON
+      - --innodb-lock-wait-timeout=50
+      - --skip-log-bin
+    environment:
+      MYSQL_ROOT_PASSWORD: oracle
+      MYSQL_DATABASE: oracle
+    ports:
+      - '55336:3306'
+    healthcheck:
+      test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 -uroot -poracle --silent']
+      interval: 2s
+      timeout: 5s
+      retries: 40

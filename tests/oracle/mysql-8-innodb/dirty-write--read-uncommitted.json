@@ -1,0 +1,87 @@
+{
+  "scenarioId": "dirty-write",
+  "packId": "mysql-8-innodb",
+  "engine": "MySQL InnoDB",
+  "engineVersion": "8.4.11",
+  "image": "mysql:8.4",
+  "recordedOn": "2026-08-06",
+  "level": "READ UNCOMMITTED",
+  "steps": [
+    {
+      "index": 0,
+      "txn": "T1",
+      "notation": "b1",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "ok",
+        "read": null,
+        "rowsAffected": null
+      }
+    },
+    {
+      "index": 1,
+      "txn": "T2",
+      "notation": "b2",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "ok",
+        "read": null,
+        "rowsAffected": null
+      }
+    },
+    {
+      "index": 2,
+      "txn": "T1",
+      "notation": "w1[1=10]",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "ok",
+        "read": null,
+        "rowsAffected": 1
+      }
+    },
+    {
+      "index": 3,
+      "txn": "T2",
+      "notation": "w2[1=20]",
+      "blockedUntilStep": 4,
+      "outcome": {
+        "status": "ok",
+        "read": null,
+        "rowsAffected": 1
+      }
+    },
+    {
+      "index": 4,
+      "txn": "T1",
+      "notation": "a1",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "ok",
+        "read": null,
+        "rowsAffected": null
+      }
+    },
+    {
+      "index": 5,
+      "txn": "T2",
+      "notation": "c2",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "ok",
+        "read": null,
+        "rowsAffected": null
+      }
+    }
+  ],
+  "transactions": {
+    "T1": "aborted",
+    "T2": "committed"
+  },
+  "finalState": [
+    {
+      "key": 1,
+      "value": 20
+    }
+  ]
+}

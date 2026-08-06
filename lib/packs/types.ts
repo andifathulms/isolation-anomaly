@@ -45,6 +45,13 @@ export type Visibility = {
    * locking and a non-locking read disagree inside one transaction.
    */
   readonly lockingReadsSeeLatestCommitted: boolean
+  /**
+   * The engine silently turns a plain SELECT into a locking read at this level.
+   * MySQL InnoDB does exactly this at SERIALIZABLE, which is how a level that
+   * looks like snapshot isolation ends up blocking — and why write skew there
+   * ends in a deadlock rather than in a clean serialization failure.
+   */
+  readonly plainReadsAreLocking: boolean
 }
 
 export type StaleRowOutcome =

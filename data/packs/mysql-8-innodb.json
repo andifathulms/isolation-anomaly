@@ -1,0 +1,337 @@
+{
+  "id": "mysql-8-innodb",
+  "engine": "MySQL InnoDB",
+  "version": "8.4",
+  "verifiedOn": "2026-08-06",
+  "docsUrl": "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html",
+  "defaultLevel": "REPEATABLE READ",
+  "summary": "Defaults to REPEATABLE READ, not READ COMMITTED, and its REPEATABLE READ is not PostgreSQL's. A consistent read uses the snapshot from the transaction's first read, but a locking read, UPDATE or DELETE acts on the freshest committed row and never aborts for it — so a lost update that PostgreSQL refuses with 40001 succeeds here. Phantoms are prevented for locking reads by next-key locks, and gap locking is switched off entirely at READ COMMITTED. SERIALIZABLE turns every plain SELECT into SELECT ... FOR SHARE, which is why write skew ends in a deadlock rather than a serialization failure. This model breaks deadlocks by rolling back the transaction whose wait closed the cycle; InnoDB documents only that it picks a small transaction, so every schedule here is checked against the running server.",
+  "errors": {
+    "serializationFailure": {
+      "code": "1213",
+      "message": "Deadlock found when trying to get lock; try restarting transaction",
+      "citation": {
+        "source": "MySQL 8.4 — 17.7.5.2 Deadlock Detection",
+        "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-deadlock-detection.html",
+        "quote": "When deadlock detection is enabled (the default), InnoDB automatically detects transaction deadlocks and rolls back a transaction or transactions to break the deadlock."
+      }
+    },
+    "deadlock": {
+      "code": "1213",
+      "message": "Deadlock found when trying to get lock; try restarting transaction",
+      "citation": {
+        "source": "MySQL 8.4 — 17.7.5.2 Deadlock Detection",
+        "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-deadlock-detection.html",
+        "quote": "InnoDB tries to pick small transactions to roll back, where the size of a transaction is determined by the number of rows inserted, updated, or deleted."
+      }
+    }
+  },
+  "levels": {
+    "READ UNCOMMITTED": {
+      "kind": "modelled",
+      "displayName": "READ UNCOMMITTED",
+      "summary": "Genuinely permits dirty reads, unlike PostgreSQL where the same level name is an alias for READ COMMITTED. A read may see a row version written by a transaction that has not committed and may never commit.",
+      "semantics": {
+        "visibility": {
+          "value": {
+            "snapshot": "statement",
+            "readsUncommitted": true,
+            "lockingReadsSeeLatestCommitted": true,
+            "plainReadsAreLocking": false
+          },
+          "citation": {
+            "source": "MySQL 8.4 — 17.7.2.1 Transaction Isolation Levels",
+            "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html",
+            "quote": "SELECT statements are performed in a nonlocking fashion, but a possible earlier version of a row might be used. Thus, using this isolation level, such reads are not consistent. This is also called a dirty read. Otherwise, this isolation level works like READ COMMITTED."
+          }
+        },
+        "conflicts": {
+          "value": {
+            "writeOnStaleRow": "applyToLatest",
+            "lockingReadOnStaleRow": "readLatest",
+            "writeWriteBlocks": true
+          },
+          "citation": {
+            "source": "MySQL 8.4 — 17.7.2.3 Consistent Nonlocking Reads",
+            "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-consistent-read.html",
+            "quote": "The snapshot of the database state applies to SELECT statements within a transaction, not necessarily to DML statements. If you insert or modify some rows and then commit that transaction, a DELETE or UPDATE statement issued from another concurrent REPEATABLE READ transaction could affect those just-committed rows, even though the session could not query them."
+          }
+        },
+        "locks": {
+          "plainRead": {
+            "value": { "record": "none", "gap": "none", "duration": "statement" },
+            "citation": {
+              "source": "MySQL 8.4 — 17.7.2.1 Transaction Isolation Levels",
+              "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html",
+              "quote": "SELECT statements are performed in a nonlocking fashion, but a possible earlier version of a row might be used."
+            }
+          },
+          "lockingRead": {
+            "value": { "record": "exclusive", "gap": "none", "duration": "transaction" },
+            "citation": {
+              "source": "MySQL 8.4 — 17.7.2.1 Transaction Isolation Levels",
+              "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html",
+              "quote": "For locking reads (SELECT with FOR UPDATE or FOR SHARE), UPDATE statements, and DELETE statements, InnoDB locks only index records, not the gaps before them, and thus permits the free insertion of new records next to locked records."
+            }
+          },
+          "write": {
+            "value": { "record": "exclusive", "gap": "none", "duration": "transaction" },
+            "citation": {
+              "source": "MySQL 8.4 — 17.7.1 InnoDB Locking",
+              "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-locking.html",
+              "quote": "A next-key lock is a combination of a record lock on the index record and a gap lock on the gap before the index record."
+            }
+          },
+          "insert": {
+            "value": { "record": "exclusive", "gap": "insertIntention", "duration": "transaction" },
+            "citation": {
+              "source": "MySQL 8.4 — 17.7.1 InnoDB Locking",
+              "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-locking.html",
+              "quote": "An insert intention lock is a type of gap lock set by INSERT operations prior to row insertion. This lock signals the intent to insert in such a way that multiple transactions inserting into the same index gap need not wait for each other if they are not inserting at the same position within the gap."
+            }
+          }
+        },
+        "serializationCheck": {
+          "value": "none",
+          "citation": {
+            "source": "MySQL 8.4 — 17.7.2.1 Transaction Isolation Levels",
+            "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html",
+            "quote": "Otherwise, this isolation level works like READ COMMITTED."
+          }
+        }
+      }
+    },
+    "READ COMMITTED": {
+      "kind": "modelled",
+      "displayName": "READ COMMITTED (gap locking disabled)",
+      "summary": "Every consistent read takes a fresh snapshot, and gap locking is switched off for searches and index scans — so other sessions can insert into the gaps a locking read has looked at, and phantoms become possible again.",
+      "semantics": {
+        "visibility": {
+          "value": {
+            "snapshot": "statement",
+            "readsUncommitted": false,
+            "lockingReadsSeeLatestCommitted": true,
+            "plainReadsAreLocking": false
+          },
+          "citation": {
+            "source": "MySQL 8.4 — 17.7.2.1 Transaction Isolation Levels",
+            "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html",
+            "quote": "Each consistent read, even within the same transaction, sets and reads its own fresh snapshot."
+          }
+        },
+        "conflicts": {
+          "value": {
+            "writeOnStaleRow": "applyToLatest",
+            "lockingReadOnStaleRow": "readLatest",
+            "writeWriteBlocks": true
+          },
+          "citation": {
+            "source": "MySQL 8.4 — 17.7.2.3 Consistent Nonlocking Reads",
+            "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-consistent-read.html",
+            "quote": "With FOR SHARE, a locking read occurs instead: A SELECT blocks until the transaction containing the freshest rows ends."
+          }
+        },
+        "locks": {
+          "plainRead": {
+            "value": { "record": "none", "gap": "none", "duration": "statement" },
+            "citation": {
+              "source": "MySQL 8.4 — 17.7.2.3 Consistent Nonlocking Reads",
+              "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-consistent-read.html",
+              "quote": "A consistent read means that InnoDB uses multi-versioning to present to a query a snapshot of the database at a point in time. The query sees the changes made by transactions that committed before that point in time, and no changes made by later or uncommitted transactions."
+            }
+          },
+          "lockingRead": {
+            "value": { "record": "exclusive", "gap": "none", "duration": "transaction" },
+            "citation": {
+              "source": "MySQL 8.4 — 17.7.2.1 Transaction Isolation Levels",
+              "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html",
+              "quote": "For locking reads (SELECT with FOR UPDATE or FOR SHARE), UPDATE statements, and DELETE statements, InnoDB locks only index records, not the gaps before them, and thus permits the free insertion of new records next to locked records."
+            }
+          },
+          "write": {
+            "value": { "record": "exclusive", "gap": "none", "duration": "transaction" },
+            "citation": {
+              "source": "MySQL 8.4 — 17.7.1 InnoDB Locking",
+              "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-locking.html",
+              "quote": "Gap locking can be disabled explicitly. This occurs if you change the transaction isolation level to READ COMMITTED. In this case, gap locking is disabled for searches and index scans and is used only for foreign-key constraint checking and duplicate-key checking."
+            }
+          },
+          "insert": {
+            "value": { "record": "exclusive", "gap": "insertIntention", "duration": "transaction" },
+            "citation": {
+              "source": "MySQL 8.4 — 17.7.2.1 Transaction Isolation Levels",
+              "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html",
+              "quote": "Because gap locking is disabled, phantom row problems may occur, as other sessions can insert new rows into the gaps."
+            }
+          }
+        },
+        "serializationCheck": {
+          "value": "none",
+          "citation": {
+            "source": "MySQL 8.4 — 17.7.2.1 Transaction Isolation Levels",
+            "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html",
+            "quote": "Because gap locking is disabled, phantom row problems may occur, as other sessions can insert new rows into the gaps."
+          }
+        }
+      }
+    },
+    "REPEATABLE READ": {
+      "kind": "modelled",
+      "displayName": "REPEATABLE READ (the default, with next-key locking)",
+      "summary": "The default level, and not the same thing as PostgreSQL's. Plain reads share one snapshot taken at the transaction's first read; locking reads and DML act on the freshest committed row instead, and act without complaint — so two transactions can read the same value and both write from it. Range locking reads take next-key locks, which block insertions into the gaps they scanned.",
+      "semantics": {
+        "visibility": {
+          "value": {
+            "snapshot": "transaction",
+            "readsUncommitted": false,
+            "lockingReadsSeeLatestCommitted": true,
+            "plainReadsAreLocking": false
+          },
+          "citation": {
+            "source": "MySQL 8.4 — 17.7.2.3 Consistent Nonlocking Reads",
+            "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-consistent-read.html",
+            "quote": "If the transaction isolation level is REPEATABLE READ (the default level), all consistent reads within the same transaction read the snapshot established by the first such read in that transaction."
+          }
+        },
+        "conflicts": {
+          "value": {
+            "writeOnStaleRow": "applyToLatest",
+            "lockingReadOnStaleRow": "readLatest",
+            "writeWriteBlocks": true
+          },
+          "citation": {
+            "source": "MySQL 8.4 — 17.7.2.3 Consistent Nonlocking Reads",
+            "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-consistent-read.html",
+            "quote": "The snapshot of the database state applies to SELECT statements within a transaction, not necessarily to DML statements. If you insert or modify some rows and then commit that transaction, a DELETE or UPDATE statement issued from another concurrent REPEATABLE READ transaction could affect those just-committed rows, even though the session could not query them."
+          }
+        },
+        "locks": {
+          "plainRead": {
+            "value": { "record": "none", "gap": "none", "duration": "statement" },
+            "citation": {
+              "source": "MySQL 8.4 — 17.7.2.1 Transaction Isolation Levels",
+              "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html",
+              "quote": "Consistent reads within the same transaction read the snapshot established by the first read. This means that if you issue several plain (nonlocking) SELECT statements within the same transaction, these SELECT statements are consistent also with respect to each other."
+            }
+          },
+          "lockingRead": {
+            "value": { "record": "exclusive", "gap": "gap", "duration": "transaction" },
+            "citation": {
+              "source": "MySQL 8.4 — 17.7.2.1 Transaction Isolation Levels",
+              "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html",
+              "quote": "For other search conditions: InnoDB locks the index range scanned, using gap locks or next-key locks to block insertions by other sessions into the gaps covered by the range."
+            }
+          },
+          "write": {
+            "value": { "record": "exclusive", "gap": "none", "duration": "transaction" },
+            "citation": {
+              "source": "MySQL 8.4 — 17.7.2.1 Transaction Isolation Levels",
+              "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html",
+              "quote": "For a unique index with a unique search condition: InnoDB locks only the index record found, not the gap before it."
+            }
+          },
+          "insert": {
+            "value": { "record": "exclusive", "gap": "insertIntention", "duration": "transaction" },
+            "citation": {
+              "source": "MySQL 8.4 — 17.7.1 InnoDB Locking",
+              "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-locking.html",
+              "quote": "A gap lock is a lock on a gap between index records, or a lock on the gap before the first or after the last index record. For example, SELECT c1 FROM t WHERE c1 BETWEEN 10 and 20 FOR UPDATE; prevents other transactions from inserting a value of 15 into column t.c1, whether or not there was already any such value in the column, because the gaps between all existing values in the range are locked."
+            }
+          }
+        },
+        "serializationCheck": {
+          "value": "none",
+          "citation": {
+            "source": "MySQL 8.4 — 17.7.1 InnoDB Locking",
+            "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-locking.html",
+            "quote": "Gap locks in InnoDB are \"purely inhibitive\", which means that their only purpose is to prevent other transactions from inserting to the gap. Gap locks can co-exist."
+          }
+        }
+      }
+    },
+    "SNAPSHOT": {
+      "kind": "unsupported",
+      "displayName": "SNAPSHOT (no such level name)",
+      "summary": "MySQL implements the four standard level names and has no level called SNAPSHOT. What other engines call SNAPSHOT is closest to InnoDB's REPEATABLE READ for plain reads — but not for locking reads or DML, which see the freshest committed row. Select REPEATABLE READ and read that difference.",
+      "citation": {
+        "source": "MySQL 8.4 — 17.7.2.1 Transaction Isolation Levels",
+        "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html",
+        "quote": "InnoDB offers all four transaction isolation levels described by the SQL:1992 standard: READ UNCOMMITTED, READ COMMITTED, REPEATABLE READ, and SERIALIZABLE."
+      }
+    },
+    "SERIALIZABLE": {
+      "kind": "modelled",
+      "displayName": "SERIALIZABLE (plain SELECT becomes SELECT ... FOR SHARE)",
+      "summary": "REPEATABLE READ with every plain SELECT silently promoted to a locking read. There is no serialization check and nothing is aborted for a read/write dependency: the shared next-key locks simply make the conflicting interleaving impossible, and a schedule that would have been write skew deadlocks instead.",
+      "semantics": {
+        "visibility": {
+          "value": {
+            "snapshot": "transaction",
+            "readsUncommitted": false,
+            "lockingReadsSeeLatestCommitted": true,
+            "plainReadsAreLocking": true
+          },
+          "citation": {
+            "source": "MySQL 8.4 — 17.7.2.1 Transaction Isolation Levels",
+            "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html",
+            "quote": "This level is like REPEATABLE READ, but InnoDB implicitly converts all plain SELECT statements to SELECT ... FOR SHARE if autocommit is disabled."
+          }
+        },
+        "conflicts": {
+          "value": {
+            "writeOnStaleRow": "applyToLatest",
+            "lockingReadOnStaleRow": "readLatest",
+            "writeWriteBlocks": true
+          },
+          "citation": {
+            "source": "MySQL 8.4 — 17.7.2.3 Consistent Nonlocking Reads",
+            "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-consistent-read.html",
+            "quote": "With FOR SHARE, a locking read occurs instead: A SELECT blocks until the transaction containing the freshest rows ends."
+          }
+        },
+        "locks": {
+          "plainRead": {
+            "value": { "record": "shared", "gap": "gap", "duration": "transaction" },
+            "citation": {
+              "source": "MySQL 8.4 — 17.7.2.1 Transaction Isolation Levels",
+              "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html",
+              "quote": "This level is like REPEATABLE READ, but InnoDB implicitly converts all plain SELECT statements to SELECT ... FOR SHARE if autocommit is disabled."
+            }
+          },
+          "lockingRead": {
+            "value": { "record": "exclusive", "gap": "gap", "duration": "transaction" },
+            "citation": {
+              "source": "MySQL 8.4 — 17.7.2.1 Transaction Isolation Levels",
+              "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html",
+              "quote": "For other search conditions: InnoDB locks the index range scanned, using gap locks or next-key locks to block insertions by other sessions into the gaps covered by the range."
+            }
+          },
+          "write": {
+            "value": { "record": "exclusive", "gap": "none", "duration": "transaction" },
+            "citation": {
+              "source": "MySQL 8.4 — 17.7.2.1 Transaction Isolation Levels",
+              "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html",
+              "quote": "For a unique index with a unique search condition: InnoDB locks only the index record found, not the gap before it."
+            }
+          },
+          "insert": {
+            "value": { "record": "exclusive", "gap": "insertIntention", "duration": "transaction" },
+            "citation": {
+              "source": "MySQL 8.4 — 17.7.1 InnoDB Locking",
+              "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-locking.html",
+              "quote": "An insert intention lock is a type of gap lock set by INSERT operations prior to row insertion. This lock signals the intent to insert in such a way that multiple transactions inserting into the same index gap need not wait for each other if they are not inserting at the same position within the gap."
+            }
+          }
+        },
+        "serializationCheck": {
+          "value": "none",
+          "citation": {
+            "source": "MySQL 8.4 — 17.7.5.2 Deadlock Detection",
+            "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-deadlock-detection.html",
+            "quote": "When deadlock detection is enabled (the default), InnoDB automatically detects transaction deadlocks and rolls back a transaction or transactions to break the deadlock."
+          }
+        }
+      }
+    }
+  }
+}

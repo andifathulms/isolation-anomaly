@@ -29,7 +29,13 @@ function projectOutcome(outcome: StepOutcome): OracleStepOutcome {
         message: `still waiting for ${outcome.waitingFor.join(', ')} when the schedule ended.`,
       }
     case 'refused':
-      return { status: 'error', code: 'refused', message: outcome.refusal.gap }
+      return {
+        status: 'error',
+        // A session that cannot accept a statement is reported by the harness
+        // under this name too, so the two are comparable.
+        code: outcome.refusal.type === 'sessionBusy' ? 'sessionBusy' : 'refused',
+        message: outcome.refusal.gap,
+      }
     default: {
       const exhaustive: never = outcome
       return exhaustive

@@ -65,7 +65,8 @@
           "value": {
             "snapshot": "statement",
             "readsUncommitted": false,
-            "lockingReadsSeeLatestCommitted": true
+            "lockingReadsSeeLatestCommitted": true,
+            "plainReadsAreLocking": false
           },
           "citation": {
             "source": "PostgreSQL 16 — 13.2.1. Read Committed Isolation Level",
@@ -154,7 +155,8 @@
           "value": {
             "snapshot": "transaction",
             "readsUncommitted": false,
-            "lockingReadsSeeLatestCommitted": true
+            "lockingReadsSeeLatestCommitted": true,
+            "plainReadsAreLocking": false
           },
           "citation": {
             "source": "PostgreSQL 16 — 13.2.2. Repeatable Read Isolation Level",
@@ -253,7 +255,8 @@
           "value": {
             "snapshot": "transaction",
             "readsUncommitted": false,
-            "lockingReadsSeeLatestCommitted": true
+            "lockingReadsSeeLatestCommitted": true,
+            "plainReadsAreLocking": false
           },
           "citation": {
             "source": "PostgreSQL 16 — 13.2.3. Serializable Isolation Level",

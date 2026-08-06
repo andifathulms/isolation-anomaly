@@ -12,7 +12,7 @@ export const lostUpdate: Scenario = {
   framing:
     'Ten units in stock. Two orders each read the stock level, subtract one, and write the result back. Nine units are recorded, and one unit has been sold twice.',
   lesson:
-    'Neither transaction did anything wrong on its own, no error was raised, and the count is wrong. READ COMMITTED re-applies the second write to the newly committed version, so it writes 9 over 9. REPEATABLE READ refuses instead, aborting with 40001 — an error your code can retry.',
+    'Neither transaction did anything wrong on its own, no error was raised, and the count is wrong. READ COMMITTED re-applies the second write to the newly committed version, so it writes 9 over 9. REPEATABLE READ refuses instead, aborting with 40001 — an error your code can retry. MySQL InnoDB permits it at REPEATABLE READ too: its DML always acts on the freshest committed row and never raises a serialization error, so the same schedule that fails loudly on PostgreSQL succeeds quietly there.',
   anomaly: 'lost-update',
   schedule: {
     id: 'lost-update',
@@ -32,6 +32,7 @@ export const lostUpdate: Scenario = {
   },
   expectedAt: {
     'postgres-16': ['READ UNCOMMITTED', 'READ COMMITTED'],
+    'mysql-8-innodb': ['READ UNCOMMITTED', 'READ COMMITTED', 'REPEATABLE READ'],
   },
 }
 
@@ -61,5 +62,6 @@ export const lostUpdateLocked: Scenario = {
   },
   expectedAt: {
     'postgres-16': [],
+    'mysql-8-innodb': [],
   },
 }

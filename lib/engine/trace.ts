@@ -90,6 +90,7 @@ export type WorldState = {
 }
 
 export type AbortCause =
+  | 'deadlock'
   | 'staleWrite'
   | 'staleLockingRead'
   | 'readWriteDependencies'

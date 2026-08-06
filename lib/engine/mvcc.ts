@@ -52,22 +52,24 @@ export type View = {
   readonly self: Xid
   readonly committed: ReadonlySet<Xid>
   readonly readsUncommitted: boolean
+  /**
+   * Transactions the engine has rolled back. A dirty read sees work that has
+   * not committed *yet*; it never sees work that was undone, because those
+   * versions are dead however permissive the reader is.
+   */
+  readonly aborted: ReadonlySet<Xid>
+}
+
+/** Whether this view accepts a version written by the given transaction. */
+function accepts(xid: Xid, view: View): boolean {
+  if (xid === BOOTSTRAP_XID || xid === view.self) return true
+  return view.readsUncommitted ? !view.aborted.has(xid) : view.committed.has(xid)
 }
 
 function isVisible(version: RowVersion, view: View): boolean {
-  if (view.readsUncommitted) {
-    // A reader that accepts uncommitted data takes whatever is newest,
-    // regardless of who wrote it or whether they are still running.
-    return version.xmax === null
-  }
-
-  const createdVisibly =
-    version.xmin === BOOTSTRAP_XID || version.xmin === view.self || view.committed.has(version.xmin)
-  if (!createdVisibly) return false
-
+  if (!accepts(version.xmin, view)) return false
   if (version.xmax === null) return true
-  const deletedVisibly = version.xmax === view.self || view.committed.has(version.xmax)
-  return !deletedVisibly
+  return !accepts(version.xmax, view)
 }
 
 /** The version of `key` this view sees, or null if it sees no live row. */
@@ -131,22 +133,6 @@ export function appendVersion(
   return version
 }
 
-/**
- * Undoes a transaction's versions on rollback. Versions are not removed — the
- * chain is history, and an aborted version stays visible in the panel as a
- * version nobody can see, which is exactly what an aborted write is.
- */
-export function releaseSupersededBy(store: VersionStore, xid: Xid): void {
-  for (const [key, chain] of store.chains) {
-    store.chains.set(
-      key,
-      chain.map((version) =>
-        version.xmax === xid ? { ...version, xmax: null, deletedAtStep: null } : version,
-      ),
-    )
-  }
-}
-
 export function toChains(store: VersionStore): readonly VersionChain[] {
   return [...store.chains.entries()]
     .sort((a, b) => a[0] - b[0])
@@ -155,7 +141,7 @@ export function toChains(store: VersionStore): readonly VersionChain[] {
 
 /** The table as a reader outside every transaction would see it. */
 export function committedRows(store: VersionStore, committed: ReadonlySet<Xid>): readonly InitialRow[] {
-  const view: View = { self: -1, committed, readsUncommitted: false }
+  const view: View = { self: -1, committed, readsUncommitted: false, aborted: new Set() }
   return visibleKeys(store, view).map((key) => ({
     key,
     value: visibleValue(store, key, view) as Value,

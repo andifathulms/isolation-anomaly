@@ -49,10 +49,13 @@ export function createPostgresDriver(): OracleDriver {
     },
 
     async openSession(txn): Promise<OracleSession> {
+      // The level travels on BEGIN, so the session itself needs no preparation.
       const client = new Client(CONNECTION)
       await client.connect()
+      const pid = await client.query<{ pid: number }>('SELECT pg_backend_pid() AS pid')
       return {
         txn,
+        id: Number(pid.rows[0]?.pid ?? 0),
         send(statement: string, expect: ReadShape): Promise<StatementResult> {
           return client.query(statement).then((result): StatementResult => {
             const tag = result.command ?? null
@@ -106,6 +109,23 @@ export function createPostgresDriver(): OracleDriver {
         'SELECT k, v FROM items ORDER BY k',
       )
       return result.rows.map((row): InitialRow => ({ key: Number(row.k), value: Number(row.v) }))
+    },
+
+    async isWaitingOnLock(sessionId: number) {
+      const client = await adminClient()
+      const result = await client.query<{ waiting: string }>(
+        `SELECT count(*) AS waiting FROM pg_stat_activity
+          WHERE pid = $1 AND wait_event_type = 'Lock'`,
+        [sessionId],
+      )
+      return Number(result.rows[0]?.waiting ?? 0) > 0
+    },
+
+    errorAbortsTransaction() {
+      // "current transaction is aborted, commands ignored until end of
+      // transaction block" — any error puts the block in a failed state, and
+      // COMMIT then answers with the tag ROLLBACK.
+      return true
     },
 
     errorCode(error: unknown) {

@@ -26,6 +26,8 @@ export type StatementResult = {
 /** A single connection, standing in for one transaction's session. */
 export type OracleSession = {
   readonly txn: string
+  /** The engine's own id for this connection, used to ask whether it is waiting. */
+  readonly id: number
   /**
    * Sends a statement and returns its promise without awaiting it. The harness
    * races it against a timer to tell "returned" from "waiting on a lock".
@@ -44,7 +46,14 @@ export type OracleDriver = {
   serverVersion(): Promise<string>
   /** Drops and recreates the modelled table with these rows. */
   reset(rows: readonly InitialRow[]): Promise<void>
-  openSession(txn: string): Promise<OracleSession>
+  /**
+   * One connection, standing in for one transaction's session. The level is
+   * passed because engines differ in where it is set — PostgreSQL takes it on
+   * BEGIN, MySQL on the session, and InnoDB's SERIALIZABLE also depends on
+   * autocommit being off, which is a property of the session rather than of the
+   * transaction.
+   */
+  openSession(txn: string, level: IsolationLevel): Promise<OracleSession>
   /** The engine's dialect for starting a transaction at a level. */
   beginStatement(level: IsolationLevel): string
   commitStatement(): string
@@ -53,6 +62,24 @@ export type OracleDriver = {
   statementFor(op: Operation): string | null
   /** Committed table contents, ordered by key. */
   finalState(): Promise<readonly InitialRow[]>
+  /**
+   * Whether the engine reports that this session is waiting on a lock.
+   *
+   * This is what makes a recorded wait evidence rather than a guess: instead of
+   * inferring "blocked" from a statement being slow, the harness asks the server
+   * — pg_stat_activity for PostgreSQL, performance_schema.data_lock_waits for
+   * InnoDB — and records the wait the engine says is happening.
+   */
+  isWaitingOnLock(sessionId: number): Promise<boolean>
+  /**
+   * Whether an error with this code left the whole transaction rolled back, as
+   * opposed to failing only the statement. The engines differ, and the
+   * difference decides what a later COMMIT means: PostgreSQL fails every
+   * statement after an error until the block ends, while InnoDB rolls back the
+   * transaction on a deadlock but keeps going after a lock wait timeout — so a
+   * COMMIT that returns OK may be committing nothing at all.
+   */
+  errorAbortsTransaction(code: string): boolean
   /** SQLSTATE or engine code for an error object thrown by the client. */
   errorCode(error: unknown): string
   errorMessage(error: unknown): string

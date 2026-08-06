@@ -35,6 +35,7 @@ export const phantomRead: Scenario = {
   },
   expectedAt: {
     'postgres-16': ['READ UNCOMMITTED', 'READ COMMITTED'],
+    'mysql-8-innodb': ['READ UNCOMMITTED', 'READ COMMITTED'],
   },
 }
 
@@ -64,5 +65,6 @@ export const phantomInsertRace: Scenario = {
   },
   expectedAt: {
     'postgres-16': ['READ UNCOMMITTED', 'READ COMMITTED', 'REPEATABLE READ'],
+    'mysql-8-innodb': ['READ UNCOMMITTED', 'READ COMMITTED', 'REPEATABLE READ'],
   },
 }

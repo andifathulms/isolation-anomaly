@@ -12,7 +12,7 @@ export const dirtyRead: Scenario = {
   framing:
     'A refund is being processed. The refund transaction has already reduced the balance to 0 when a reporting query reads it, and then the refund fails and rolls back.',
   lesson:
-    'ANSI defines READ UNCOMMITTED as the level that permits this. PostgreSQL accepts the name and gives you READ COMMITTED, so the reporting query sees 100 at every level — the balance that was actually committed.',
+    'ANSI defines READ UNCOMMITTED as the level that permits this. PostgreSQL accepts the name and gives you READ COMMITTED, so the reporting query sees 100 at every level — the balance that was actually committed. MySQL InnoDB is the contrast: its READ UNCOMMITTED is real, and the reporting query there reads 0 — a balance that never existed.',
   anomaly: 'dirty-read',
   schedule: {
     id: 'dirty-read',
@@ -31,6 +31,7 @@ export const dirtyRead: Scenario = {
   },
   expectedAt: {
     'postgres-16': [],
+    'mysql-8-innodb': ['READ UNCOMMITTED'],
   },
 }
 
@@ -58,5 +59,6 @@ export const dirtyWrite: Scenario = {
   },
   expectedAt: {
     'postgres-16': [],
+    'mysql-8-innodb': [],
   },
 }
