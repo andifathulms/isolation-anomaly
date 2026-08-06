@@ -14,8 +14,8 @@ export default function MatrixPage({ params }: { params: { locale: string } }) {
 
   return (
     <SiteChrome locale={params.locale} active="matrix">
-      <h1 className="font-prose text-3xl">{dict.matrix.heading}</h1>
-      <p className="mt-2 max-w-prose text-ink-muted">{dict.matrix.lead}</p>
+      <h1 className="font-prose text-title">{dict.matrix.heading}</h1>
+      <p className="mt-3 max-w-reading text-pretty leading-relaxed text-ink-muted">{dict.matrix.lead}</p>
       <div className="mt-8">
         <Matrix dict={dict} locale={params.locale} />
       </div>

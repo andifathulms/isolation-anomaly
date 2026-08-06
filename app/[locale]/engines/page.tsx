@@ -41,7 +41,7 @@ function Rules({
   return (
     <div className="mt-3 space-y-4">
       <div>
-        <h4 className="font-control text-xs uppercase tracking-wide text-ink-muted">{labels.reads}</h4>
+        <h4 className="eyebrow">{labels.reads}</h4>
         <p className="font-mono text-sm">
           snapshot: {visibility.snapshot} · readsUncommitted: {String(visibility.readsUncommitted)} ·
           lockingReadsSeeLatestCommitted: {String(visibility.lockingReadsSeeLatestCommitted)}
@@ -50,7 +50,7 @@ function Rules({
       </div>
 
       <div>
-        <h4 className="font-control text-xs uppercase tracking-wide text-ink-muted">{labels.conflicts}</h4>
+        <h4 className="eyebrow">{labels.conflicts}</h4>
         <p className="font-mono text-sm">
           writeOnStaleRow: {conflicts.writeOnStaleRow} · lockingReadOnStaleRow:{' '}
           {conflicts.lockingReadOnStaleRow} · writeWriteBlocks: {String(conflicts.writeWriteBlocks)}
@@ -59,7 +59,7 @@ function Rules({
       </div>
 
       <div>
-        <h4 className="font-control text-xs uppercase tracking-wide text-ink-muted">{labels.locksTaken}</h4>
+        <h4 className="eyebrow">{labels.locksTaken}</h4>
         <ul className="mt-1 space-y-2">
           {Object.entries(semantics.locks).map(([name, rule]) => (
             <li key={name}>
@@ -73,7 +73,7 @@ function Rules({
       </div>
 
       <div>
-        <h4 className="font-control text-xs uppercase tracking-wide text-ink-muted">
+        <h4 className="eyebrow">
           {labels.serializationCheck}
         </h4>
         <p className="font-mono text-sm">{semantics.serializationCheck.value}</p>
@@ -93,19 +93,19 @@ export default function EnginesPage({ params }: { params: { locale: string } }) 
 
   return (
     <SiteChrome locale={params.locale} active="engines">
-      <h1 className="font-prose text-3xl">{dict.engines.heading}</h1>
-      <p className="mt-2 max-w-prose text-ink-muted">{dict.engines.lead}</p>
+      <h1 className="font-prose text-title">{dict.engines.heading}</h1>
+      <p className="mt-3 max-w-reading text-pretty leading-relaxed text-ink-muted">{dict.engines.lead}</p>
 
       <div className="mt-10 space-y-16">
         {PACKS.map((pack) => (
           <section key={pack.id}>
             <div className="flex flex-wrap items-baseline gap-x-3">
-              <h2 className="font-prose text-2xl">
+              <h2 className="font-prose text-title">
                 {pack.engine} {pack.version}
               </h2>
               <code className="font-mono text-xs text-ink-muted">{pack.id}</code>
             </div>
-            <p className="mt-2 max-w-prose text-sm">{pack.summary}</p>
+            <p className="mt-2 max-w-reading text-sm leading-relaxed">{pack.summary}</p>
             <p className="mt-2 font-mono text-xs text-ink-muted">
               {dict.engines.verified} {pack.verifiedOn} · {dict.engines.defaultLevel} {pack.defaultLevel} ·{' '}
               <a
@@ -125,7 +125,7 @@ export default function EnginesPage({ params }: { params: { locale: string } }) 
                   <article key={level} className="border-t border-staff-faint pt-4">
                     <div className="flex flex-wrap items-baseline gap-x-3">
                       <h3 className="font-mono text-lg">{level}</h3>
-                      <span className="font-control text-[11px] uppercase tracking-wide text-ink-muted">
+                      <span className="eyebrow">
                         {entry.kind === 'modelled'
                           ? dict.engines.modelled
                           : entry.kind === 'alias'
@@ -134,7 +134,7 @@ export default function EnginesPage({ params }: { params: { locale: string } }) 
                       </span>
                     </div>
                     <p className="mt-1 font-prose text-sm">{entry.displayName}</p>
-                    <p className="mt-1 max-w-prose text-sm text-ink-muted">{entry.summary}</p>
+                    <p className="mt-1 max-w-reading text-sm leading-relaxed text-ink-muted">{entry.summary}</p>
 
                     {entry.kind === 'modelled' ? (
                       <Rules semantics={entry.semantics} labels={dict.engines} />
@@ -147,7 +147,7 @@ export default function EnginesPage({ params }: { params: { locale: string } }) 
             </div>
 
             <div className="mt-8 border-t border-staff-faint pt-4">
-              <h3 className="font-prose text-lg">{dict.engines.errors}</h3>
+              <h3 className="font-prose text-section">{dict.engines.errors}</h3>
               <ul className="mt-2 space-y-3">
                 {Object.entries(pack.errors).map(([name, shape]) =>
                   shape ? (
@@ -162,7 +162,7 @@ export default function EnginesPage({ params }: { params: { locale: string } }) 
               </ul>
             </div>
 
-            <p className="mt-6 font-control text-xs uppercase tracking-wide text-ink-muted">
+            <p className="mt-6 eyebrow">
               {dict.engines.citations}: {packCitations(pack).length}
             </p>
           </section>

@@ -17,7 +17,7 @@ export function StepList({
   readonly dict: Dictionary
 }) {
   return (
-    <ol className="divide-y divide-staff-faint rounded-sm border border-staff-faint bg-manuscript-raised">
+    <ol className="leaf divide-y divide-staff-faint overflow-hidden">
       {trace.steps.map((step) => {
         const selected = step.index === currentStep
         const failed = step.outcome.type === 'error' || step.outcome.type === 'blocked'
@@ -27,11 +27,14 @@ export function StepList({
               type="button"
               onClick={() => onSelectStep(step.index)}
               aria-current={selected}
-              className={`flex w-full flex-wrap items-baseline gap-x-3 px-3 py-2 text-left ${
-                selected ? 'bg-manuscript-sunk' : ''
-              }`}
+              className={`flex w-full flex-wrap items-baseline gap-x-3 border-l-2 px-3 py-2 text-left
+                transition-colors ${
+                  selected
+                    ? 'border-l-ink bg-manuscript-sunk'
+                    : 'border-l-transparent hover:bg-manuscript-sunk/50'
+                }`}
             >
-              <span className="w-6 font-mono text-xs text-ink-muted">{step.index}</span>
+              <span className="w-6 font-mono text-xs text-ink-soft">{step.index}</span>
               <span className="w-10 font-mono text-sm">{step.txn}</span>
               <span className="font-mono text-sm">{step.notation}</span>
               <span className="text-sm text-ink-muted">{describe(step.op)}</span>

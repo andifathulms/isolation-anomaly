@@ -65,8 +65,8 @@ function blankOperation(type: OperationType, previous: Operation): Operation {
   }
 }
 
-const control = 'rounded-sm border border-staff bg-manuscript-raised px-1.5 py-1 font-mono text-sm'
-const button = 'rounded-sm border border-staff px-2 py-0.5 font-control text-xs'
+const control = 'rounded-md border border-staff bg-manuscript-raised px-2 py-1 font-mono text-sm'
+const button = 'rounded-md border border-staff px-2 py-1 font-control text-xs transition-colors hover:bg-manuscript-sunk'
 
 export function Editor({
   schedule,
@@ -101,9 +101,9 @@ export function Editor({
   const setInitial = (rows: readonly InitialRow[]) => onChange({ ...schedule, initial: rows })
 
   return (
-    <div className="space-y-6 rounded-sm border border-staff-faint bg-manuscript-raised p-4">
+    <div className="leaf space-y-6 p-4">
       <section>
-        <h3 className="font-prose text-lg">{dict.panels.committedTable}</h3>
+        <h3 className="font-prose text-section">{dict.panels.committedTable}</h3>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           {schedule.initial.map((row, index) => (
             <span key={index} className="flex items-center gap-1">
@@ -160,7 +160,7 @@ export function Editor({
 
       <section>
         <div className="flex flex-wrap items-baseline gap-3">
-          <h3 className="font-prose text-lg">{dict.controls.step}s</h3>
+          <h3 className="font-prose text-section">{dict.controls.step}s</h3>
           <button type="button" className={button} onClick={addTransaction}>
             + transaction
           </button>

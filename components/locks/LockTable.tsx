@@ -28,17 +28,17 @@ export function LockTable({
 }) {
   return (
     <section aria-labelledby="locks-heading">
-      <h3 id="locks-heading" className="font-prose text-lg">
+      <h3 id="locks-heading" className="font-prose text-section">
         {dict.panels.locks}
       </h3>
-      <p className="mt-1 max-w-prose text-sm text-ink-muted">{dict.panels.locksHint}</p>
+      <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">{dict.panels.locksHint}</p>
 
       {locks.length === 0 ? (
-        <p className="mt-3 font-mono text-sm text-ink-muted">{dict.panels.locksEmpty}</p>
+        <p className="mt-3 font-mono text-sm text-ink-soft">{dict.panels.locksEmpty}</p>
       ) : (
-        <table className="mt-3 w-full rounded-sm border border-staff-faint bg-manuscript-raised text-sm">
-          <thead>
-            <tr className="font-control text-[11px] uppercase tracking-wide text-ink-muted">
+        <table className="leaf mt-4 w-full overflow-hidden text-sm">
+          <thead className="bg-manuscript-sunk">
+            <tr className="eyebrow">
               <th scope="col" className="px-3 py-1.5 text-left font-normal">{dict.panels.holder}</th>
               <th scope="col" className="px-3 py-1.5 text-left font-normal">{dict.panels.resource}</th>
               <th scope="col" className="px-3 py-1.5 text-left font-normal">{dict.panels.mode}</th>
@@ -59,7 +59,7 @@ export function LockTable({
       )}
 
       {waits.length > 0 ? (
-        <ul className="mt-3 space-y-1 font-mono text-sm">
+        <ul className="mt-3 space-y-1 font-mono text-xs">
           {waits.map((wait) => (
             <li key={`${wait.txn}-${wait.stepIndex}`} className="text-ink-muted">
               {wait.txn} ({dict.panels.atStep} {wait.stepIndex}) {dict.panels.waitingFor}{' '}

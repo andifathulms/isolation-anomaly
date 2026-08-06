@@ -19,22 +19,22 @@ export function SnapshotPanel({
 
   return (
     <section aria-labelledby="snapshots-heading">
-      <h3 id="snapshots-heading" className="font-prose text-lg">
+      <h3 id="snapshots-heading" className="font-prose text-section">
         {dict.panels.snapshots}
       </h3>
-      <p className="mt-1 max-w-prose text-sm text-ink-muted">{dict.panels.snapshotsHint}</p>
+      <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">{dict.panels.snapshotsHint}</p>
 
       {withSnapshots.length === 0 ? (
-        <p className="mt-3 font-mono text-sm text-ink-muted">{dict.panels.snapshotsEmpty}</p>
+        <p className="mt-3 font-mono text-sm text-ink-soft">{dict.panels.snapshotsEmpty}</p>
       ) : (
-        <ul className="mt-3 space-y-2">
+        <ul className="mt-4 space-y-2">
           {withSnapshots.map((txn) => {
             const snapshot = txn.snapshot
             if (!snapshot) return null
             return (
               <li
                 key={txn.txn}
-                className="rounded-sm border border-staff-faint bg-manuscript-raised px-3 py-2 font-mono text-sm"
+                className="leaf px-3 py-2 font-mono text-sm"
               >
                 <div className="flex flex-wrap items-baseline gap-x-2">
                   <span>{txn.txn}</span>
@@ -61,7 +61,7 @@ export function SnapshotPanel({
       )}
 
       <div className="mt-4">
-        <h4 className="font-control text-xs uppercase tracking-wide text-ink-muted">
+        <h4 className="eyebrow">
           {dict.panels.committedTable}
         </h4>
         <p className="mt-1 font-mono text-sm">

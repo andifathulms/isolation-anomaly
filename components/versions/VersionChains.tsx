@@ -22,25 +22,25 @@ export function VersionChains({
 
   return (
     <section aria-labelledby="versions-heading">
-      <h3 id="versions-heading" className="font-prose text-lg">
+      <h3 id="versions-heading" className="font-prose text-section">
         {dict.panels.versions}
       </h3>
-      <p className="mt-1 max-w-prose text-sm text-ink-muted">{dict.panels.versionsHint}</p>
+      <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">{dict.panels.versionsHint}</p>
       {chains.length === 0 ? (
-        <p className="mt-3 font-mono text-sm text-ink-muted">{dict.panels.empty}</p>
+        <p className="mt-3 font-mono text-sm text-ink-soft">{dict.panels.empty}</p>
       ) : (
-        <div className="mt-3 space-y-3">
+        <div className="mt-4 space-y-3">
           {chains.map((chain) => (
-            <div key={chain.key} className="rounded-sm border border-staff-faint bg-manuscript-raised">
-              <div className="flex items-baseline gap-2 border-b border-staff-faint px-3 py-1.5">
-                <span className="font-control text-xs uppercase tracking-wide text-ink-muted">
+            <div key={chain.key} className="leaf overflow-hidden">
+              <div className="flex items-baseline gap-2 border-b border-staff-faint bg-manuscript-sunk px-3 py-2">
+                <span className="eyebrow">
                   {dict.panels.key}
                 </span>
                 <span className="font-mono text-sm">{chain.key}</span>
               </div>
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="font-control text-[11px] uppercase tracking-wide text-ink-muted">
+                  <tr className="eyebrow">
                     <th scope="col" className="px-3 py-1 text-left font-normal">{dict.panels.value}</th>
                     <th scope="col" className="px-3 py-1 text-left font-normal">{dict.panels.createdBy}</th>
                     <th scope="col" className="px-3 py-1 text-left font-normal">{dict.panels.deletedBy}</th>
@@ -77,7 +77,7 @@ export function VersionChains({
                           ) : null}
                         </td>
                         <td className="px-3 py-1">
-                          <span className="font-control text-[11px] uppercase tracking-wide text-ink-muted">
+                          <span className="eyebrow">
                             {state}
                           </span>
                         </td>

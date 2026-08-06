@@ -14,8 +14,8 @@ export default function GraphPage({ params }: { params: { locale: string } }) {
 
   return (
     <SiteChrome locale={params.locale} active="graph">
-      <h1 className="font-prose text-3xl">{dict.graph.heading}</h1>
-      <p className="mt-2 max-w-prose text-ink-muted">{dict.graph.lead}</p>
+      <h1 className="font-prose text-title">{dict.graph.heading}</h1>
+      <p className="mt-3 max-w-reading text-pretty leading-relaxed text-ink-muted">{dict.graph.lead}</p>
       <div className="mt-8">
         <ConflictGraphView dict={dict} locale={params.locale} />
       </div>

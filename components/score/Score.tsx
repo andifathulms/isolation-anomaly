@@ -106,7 +106,7 @@ export function Score({
   const involved = new Set(anomalies.flatMap((found) => found.steps))
 
   return (
-    <div className="overflow-x-auto rounded-sm border border-staff-faint bg-manuscript-raised shadow-leaf">
+    <div className="leaf overflow-x-auto">
       <svg
         width={width}
         height={height}

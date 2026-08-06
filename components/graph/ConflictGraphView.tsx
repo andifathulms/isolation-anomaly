@@ -69,13 +69,13 @@ export function ConflictGraphView({
     <div className="space-y-6">
       <div className="flex flex-wrap items-end gap-4">
         <label className="flex flex-col gap-1">
-          <span className="font-control text-xs uppercase tracking-wide text-ink-muted">
+          <span className="eyebrow">
             {dict.controls.scenario}
           </span>
           <select
             value={scenarioId}
             onChange={(event) => setScenarioId(event.target.value)}
-            className="min-w-64 rounded-sm border border-staff bg-manuscript-raised px-2 py-1.5 font-control text-sm"
+            className="control max-w-full sm:min-w-64"
           >
             {SCENARIOS.map((candidate) => (
               <option key={candidate.id} value={candidate.id}>
@@ -85,13 +85,13 @@ export function ConflictGraphView({
           </select>
         </label>
         <label className="flex flex-col gap-1">
-          <span className="font-control text-xs uppercase tracking-wide text-ink-muted">
+          <span className="eyebrow">
             {dict.controls.engine}
           </span>
           <select
             value={packId}
             onChange={(event) => setPackId(event.target.value)}
-            className="rounded-sm border border-staff bg-manuscript-raised px-2 py-1.5 font-control text-sm"
+            className="control max-w-full"
           >
             {PACKS.map((candidate) => (
               <option key={candidate.id} value={candidate.id}>
@@ -101,13 +101,13 @@ export function ConflictGraphView({
           </select>
         </label>
         <label className="flex flex-col gap-1">
-          <span className="font-control text-xs uppercase tracking-wide text-ink-muted">
+          <span className="eyebrow">
             {dict.controls.level}
           </span>
           <select
             value={level}
             onChange={(event) => setLevel(event.target.value as IsolationLevel)}
-            className="rounded-sm border border-staff bg-manuscript-raised px-2 py-1.5 font-mono text-sm"
+            className="control max-w-full font-mono"
           >
             {LEVELS.map((candidate) => (
               <option key={candidate} value={candidate}>
@@ -126,7 +126,7 @@ export function ConflictGraphView({
             width={SIZE}
             height={SIZE}
             viewBox={`0 0 ${SIZE} ${SIZE}`}
-            className="rounded-sm border border-staff-faint bg-manuscript-raised"
+            className="leaf"
             role="img"
             aria-label="Conflict graph"
           >
@@ -177,7 +177,7 @@ export function ConflictGraphView({
             <h2 className={`font-prose text-xl ${data.cycle ? 'text-conductor' : ''}`}>
               {data.cycle ? dict.graph.cycle : dict.graph.noCycle}
             </h2>
-            <p className="max-w-prose text-sm">
+            <p className="max-w-reading text-sm leading-relaxed">
               {data.cycle ? explainCycle(data.cycle) : dict.graph.noCycleBody}
             </p>
             {!data.cycle && data.orders.length > 0 ? (
@@ -189,7 +189,7 @@ export function ConflictGraphView({
             ) : null}
 
             <div>
-              <h3 className="font-control text-xs uppercase tracking-wide text-ink-muted">
+              <h3 className="eyebrow">
                 {dict.graph.edges}
               </h3>
               {data.graph.edges.length === 0 ? (
@@ -212,7 +212,7 @@ export function ConflictGraphView({
         </div>
       )}
 
-      <p className="max-w-prose text-sm text-ink-muted">{dict.graph.lead}</p>
+      <p className="max-w-reading text-sm leading-relaxed text-ink-muted">{dict.graph.lead}</p>
     </div>
   )
 }
