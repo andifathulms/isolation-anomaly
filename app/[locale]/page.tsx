@@ -4,6 +4,7 @@ import { SiteChrome } from '@/components/SiteChrome'
 import { dictionary } from '@/lib/i18n/dictionaries'
 import { isLocale } from '@/lib/i18n/locales'
 import { ANOMALIES, ANOMALY_IDS } from '@/lib/detect'
+import { anomalyText } from '@/lib/i18n/content'
 
 export default function HomePage({ params }: { params: { locale: string } }) {
   if (!isLocale(params.locale)) notFound()
@@ -55,7 +56,7 @@ export default function HomePage({ params }: { params: { locale: string } }) {
             return (
               <li key={id} className="flex flex-wrap items-baseline gap-x-2">
                 <code className="font-mono text-sm">{definition.label}</code>
-                <span className="font-prose">{definition.name}</span>
+                <span className="font-prose">{anomalyText(locale, id).name}</span>
                 <span className="font-control text-[11px] uppercase tracking-wide text-ink-muted">
                   {definition.inAnsiList ? dict.anomaly.inAnsi : dict.anomaly.notInAnsi}
                 </span>

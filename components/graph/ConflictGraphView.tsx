@@ -8,6 +8,8 @@ import { execute } from '@/lib/engine'
 import { buildConflictGraph, edgesOnCycle, explainCycle, findCycle } from '@/lib/serial'
 import { equivalentSerialOrders } from '@/lib/serial'
 import type { Dictionary } from '@/lib/i18n/dictionaries'
+import { scenarioText } from '@/lib/i18n/content'
+import type { Locale } from '@/lib/i18n/locales'
 
 /**
  * The conflict graph — PRD §5.5. No layout library: transactions sit on a
@@ -20,7 +22,13 @@ import type { Dictionary } from '@/lib/i18n/dictionaries'
 const SIZE = 320
 const RADIUS = 108
 
-export function ConflictGraphView({ dict }: { readonly dict: Dictionary }) {
+export function ConflictGraphView({
+  dict,
+  locale,
+}: {
+  readonly dict: Dictionary
+  readonly locale: Locale
+}) {
   const [scenarioId, setScenarioId] = useState('write-skew')
   const [packId, setPackId] = useState(PACKS[0]?.id ?? 'postgres-16')
   const [level, setLevel] = useState<IsolationLevel>('REPEATABLE READ')
@@ -71,7 +79,7 @@ export function ConflictGraphView({ dict }: { readonly dict: Dictionary }) {
           >
             {SCENARIOS.map((candidate) => (
               <option key={candidate.id} value={candidate.id}>
-                {candidate.title}
+                {scenarioText(locale, candidate).title}
               </option>
             ))}
           </select>

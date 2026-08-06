@@ -9,6 +9,8 @@ import { detect } from '@/lib/detect'
 import { buildConflictGraph, explainCycle, findCycle } from '@/lib/serial'
 import { decodeShareState, encodeShareState, type ShareState } from '@/lib/share'
 import type { Dictionary } from '@/lib/i18n/dictionaries'
+import { scenarioText } from '@/lib/i18n/content'
+import type { Locale } from '@/lib/i18n/locales'
 import { Editor } from './Editor'
 import { Score } from './Score'
 import { StepList } from './StepList'
@@ -26,9 +28,11 @@ import { LockTable } from '@/components/locks/LockTable'
  */
 export function Workbench({
   dict,
+  locale,
   initialScenarioId,
 }: {
   readonly dict: Dictionary
+  readonly locale: Locale
   readonly initialScenarioId: string
 }) {
   const fallback: ShareState = useMemo(
@@ -120,7 +124,7 @@ export function Workbench({
             {state.schedule ? <option value="">shared schedule</option> : null}
             {SCENARIOS.map((candidate) => (
               <option key={candidate.id} value={candidate.id}>
-                {candidate.title}
+                {scenarioText(locale, candidate).title}
               </option>
             ))}
           </select>
@@ -291,7 +295,7 @@ export function Workbench({
             <p className="max-w-prose border-l-2 border-staff pl-3 text-sm text-ink-muted">{current.note}</p>
           ) : null}
 
-          <AnomalyCallout anomalies={anomalies} dict={dict} />
+          <AnomalyCallout anomalies={anomalies} dict={dict} locale={locale} />
 
           <div className="grid gap-8 lg:grid-cols-3">
             <VersionChains chains={world.chains} transactions={world.transactions} dict={dict} />
@@ -323,18 +327,18 @@ export function Workbench({
 
           {scenario ? (
             <section className="max-w-prose space-y-2 border-t border-staff-faint pt-6">
-              <h3 className="font-prose text-lg">{scenario.title}</h3>
+              <h3 className="font-prose text-lg">{scenarioText(locale, scenario).title}</h3>
               <p className="text-sm">
                 <span className="font-control text-xs uppercase tracking-wide text-ink-muted">
                   {dict.scenarios.framing}:{' '}
                 </span>
-                {scenario.framing}
+                {scenarioText(locale, scenario).framing}
               </p>
               <p className="text-sm">
                 <span className="font-control text-xs uppercase tracking-wide text-ink-muted">
                   {dict.scenarios.lesson}:{' '}
                 </span>
-                {scenario.lesson}
+                {scenarioText(locale, scenario).lesson}
               </p>
             </section>
           ) : null}

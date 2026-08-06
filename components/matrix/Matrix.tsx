@@ -7,9 +7,9 @@ import { PACKS } from '@/lib/packs'
 import { SCENARIOS } from '@/lib/scenarios'
 import { execute } from '@/lib/engine'
 import { detect } from '@/lib/detect'
-import { ANOMALIES } from '@/lib/detect'
 import type { Dictionary } from '@/lib/i18n/dictionaries'
 import type { Locale } from '@/lib/i18n/locales'
+import { anomalyText, scenarioText } from '@/lib/i18n/content'
 
 /**
  * The engine matrix — PRD §5.4. The same schedule across every engine and
@@ -79,7 +79,7 @@ export function Matrix({ dict, locale }: { readonly dict: Dictionary; readonly l
         >
           {SCENARIOS.map((candidate) => (
             <option key={candidate.id} value={candidate.id}>
-              {candidate.title}
+              {scenarioText(locale, candidate).title}
             </option>
           ))}
         </select>
@@ -89,7 +89,7 @@ export function Matrix({ dict, locale }: { readonly dict: Dictionary; readonly l
         <span className="font-control text-xs uppercase tracking-wide text-ink-muted">
           {dict.scenarios.documents}:{' '}
         </span>
-        {ANOMALIES[scenario.anomaly].name} — {scenario.framing}
+        {anomalyText(locale, scenario.anomaly).name} — {scenarioText(locale, scenario).framing}
       </p>
 
       <div className="overflow-x-auto rounded-sm border border-staff-faint bg-manuscript-raised">

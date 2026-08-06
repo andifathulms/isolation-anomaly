@@ -2,6 +2,8 @@
 
 import { ANOMALIES, type DetectedAnomaly } from '@/lib/detect'
 import type { Dictionary } from '@/lib/i18n/dictionaries'
+import { anomalyText } from '@/lib/i18n/content'
+import type { Locale } from '@/lib/i18n/locales'
 
 /**
  * Names the anomaly, cites its definition, and explains the mechanism in one
@@ -10,9 +12,11 @@ import type { Dictionary } from '@/lib/i18n/dictionaries'
 export function AnomalyCallout({
   anomalies,
   dict,
+  locale,
 }: {
   readonly anomalies: readonly DetectedAnomaly[]
   readonly dict: Dictionary
+  readonly locale: Locale
 }) {
   if (anomalies.length === 0) {
     return (
@@ -27,13 +31,14 @@ export function AnomalyCallout({
     <div className="space-y-4">
       {anomalies.map((found, index) => {
         const definition = ANOMALIES[found.id]
+        const text = anomalyText(locale, found.id)
         return (
           <section
             key={`${found.id}-${index}`}
             className="rounded-sm border-l-2 border-conductor bg-conductor-wash/40 px-4 py-3"
           >
             <div className="flex flex-wrap items-baseline gap-x-3">
-              <h3 className="font-prose text-lg text-conductor">{definition.name}</h3>
+              <h3 className="font-prose text-lg text-conductor">{text.name}</h3>
               <code className="font-mono text-xs text-ink-muted">{definition.label}</code>
               <span className="font-control text-[11px] uppercase tracking-wide text-ink-muted">
                 {definition.inAnsiList ? dict.anomaly.inAnsi : dict.anomaly.notInAnsi}
@@ -53,13 +58,13 @@ export function AnomalyCallout({
                 <dt className="font-control text-[11px] uppercase tracking-wide text-ink-muted">
                   {dict.anomaly.definition}
                 </dt>
-                <dd className="mt-0.5 text-ink-muted">{definition.definition}</dd>
+                <dd className="mt-0.5 text-ink-muted">{text.definition}</dd>
               </div>
               <div>
                 <dt className="font-control text-[11px] uppercase tracking-wide text-ink-muted">
                   {dict.anomaly.stakes}
                 </dt>
-                <dd className="mt-0.5 text-ink-muted">{definition.stakes}</dd>
+                <dd className="mt-0.5 text-ink-muted">{text.stakes}</dd>
               </div>
             </dl>
 

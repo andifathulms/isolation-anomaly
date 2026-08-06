@@ -42,7 +42,11 @@ Where the model will not answer: SQL Server picks its deadlock victim by interna
 
 ## Language
 
-English is the default locale; Indonesian is available at `/id/`. Database terminology stays in English in both — you will meet `dirty read`, `snapshot`, `gap lock`, and `serializable` in that form in the documentation and in error messages.
+English is the default locale; Indonesian is available at `/id/`, and it is a real second locale: the anomaly definitions and every scenario's framing and lesson are translated, not just the chrome. Tests fail if new content is added without its Indonesian text.
+
+Database terminology stays in English in both — you will meet `dirty read`, `snapshot`, `gap lock`, `write skew` and `serializable` in that form in the documentation and in error messages, and a reader who learned them translated could not then find them there. That rule is enforced by a test too.
+
+What remains in English on the Indonesian pages: the engine pack rules and their citations, because each sits beside a verbatim quote from the vendor's documentation and translating the explanation away from the quote would make the quote harder to check, not easier.
 
 ## Stack
 

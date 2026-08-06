@@ -19,7 +19,7 @@ export default function SchedulePage({ params }: { params: { locale: string } })
       <h1 className="font-prose text-3xl">{dict.nav.schedule}</h1>
       <p className="mt-2 max-w-prose text-ink-muted">{dict.site.tagline}</p>
       <div className="mt-8">
-        <Workbench dict={dict} initialScenarioId={first?.id ?? 'write-skew'} />
+        <Workbench dict={dict} locale={params.locale} initialScenarioId={first?.id ?? 'write-skew'} />
       </div>
     </SiteChrome>
   )

@@ -5,6 +5,7 @@ import { dictionary } from '@/lib/i18n/dictionaries'
 import { LOCALES, isLocale } from '@/lib/i18n/locales'
 import { SCENARIOS } from '@/lib/scenarios'
 import { ANOMALIES } from '@/lib/detect'
+import { anomalyText, scenarioText } from '@/lib/i18n/content'
 import { PACKS } from '@/lib/packs'
 import { LEVEL_ABBREVIATIONS } from '@/lib/schedule'
 import { notate } from '@/lib/schedule'
@@ -31,15 +32,16 @@ export default function ScenariosPage({ params }: { params: { locale: string } }
       <ul className="mt-10 space-y-10">
         {SCENARIOS.map((scenario) => {
           const definition = ANOMALIES[scenario.anomaly]
+          const text = scenarioText(locale, scenario)
           return (
             <li key={scenario.id} className="border-t border-staff-faint pt-6">
               <div className="flex flex-wrap items-baseline gap-x-3">
-                <h2 className="font-prose text-2xl">{scenario.title}</h2>
+                <h2 className="font-prose text-2xl">{text.title}</h2>
                 <code className="font-mono text-xs text-ink-muted">{scenario.id}</code>
               </div>
 
               <p className="mt-1 font-control text-sm text-ink-muted">
-                {dict.scenarios.documents}: <span className="font-prose text-ink">{definition.name}</span>{' '}
+                {dict.scenarios.documents}: <span className="font-prose text-ink">{anomalyText(locale, scenario.anomaly).name}</span>{' '}
                 <code className="font-mono text-xs">{definition.label}</code>{' '}
                 {definition.inAnsiList ? dict.anomaly.inAnsi : dict.anomaly.notInAnsi}
               </p>
@@ -50,13 +52,13 @@ export default function ScenariosPage({ params }: { params: { locale: string } }
                     <span className="font-control text-xs uppercase tracking-wide text-ink-muted">
                       {dict.scenarios.framing}:{' '}
                     </span>
-                    {scenario.framing}
+                    {text.framing}
                   </p>
                   <p className="text-sm">
                     <span className="font-control text-xs uppercase tracking-wide text-ink-muted">
                       {dict.scenarios.lesson}:{' '}
                     </span>
-                    {scenario.lesson}
+                    {text.lesson}
                   </p>
                   <Link
                     href={`/${locale}/schedule/#s=${scenario.id}&p=${PACKS[0]?.id ?? 'postgres-16'}&l=${
