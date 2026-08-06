@@ -661,9 +661,11 @@ export function execute(
         victim.error = { code: shape.code, message: shape.message, cause: 'deadlock' }
         locks = releaseTransactionLocks(locks, victim.txn)
       }
-      // Deadlock detection is immediate, so a statement that deadlocked in the
-      // step that issued it never waited across a step boundary.
-      if (pendingStep !== step) blockedUntil.set(pendingStep, step)
+      // Whether the failed statement waited is the engine's business: InnoDB
+      // notices the cycle at once, while PostgreSQL waits on the lock before it
+      // even looks — so on PostgreSQL the statement did wait, within its own step.
+      const waitsFirst = (pack.deadlockDetection?.value ?? 'immediate') === 'afterLockTimeout'
+      if (pendingStep !== step || waitsFirst) blockedUntil.set(pendingStep, step)
       victim.pending = null
       return true
     }

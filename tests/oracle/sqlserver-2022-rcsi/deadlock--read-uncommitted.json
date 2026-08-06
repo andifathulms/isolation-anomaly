@@ -1,0 +1,122 @@
+{
+  "scenarioId": "deadlock",
+  "packId": "sqlserver-2022-rcsi",
+  "engine": "Microsoft SQL Server",
+  "engineVersion": "16.0.4265.3",
+  "image": "mcr.microsoft.com/mssql/server:2022-latest",
+  "recordedOn": "2026-08-06",
+  "level": "READ UNCOMMITTED",
+  "steps": [
+    {
+      "index": 0,
+      "txn": "T1",
+      "notation": "b1",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "ok",
+        "read": null,
+        "rowsAffected": null
+      }
+    },
+    {
+      "index": 1,
+      "txn": "T2",
+      "notation": "b2",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "ok",
+        "read": null,
+        "rowsAffected": null
+      }
+    },
+    {
+      "index": 2,
+      "txn": "T1",
+      "notation": "r1[1]•",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "ok",
+        "read": {
+          "type": "row",
+          "value": 100
+        },
+        "rowsAffected": null
+      }
+    },
+    {
+      "index": 3,
+      "txn": "T2",
+      "notation": "r2[2]•",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "ok",
+        "read": {
+          "type": "row",
+          "value": 100
+        },
+        "rowsAffected": null
+      }
+    },
+    {
+      "index": 4,
+      "txn": "T1",
+      "notation": "r1[2]•",
+      "blockedUntilStep": 5,
+      "outcome": {
+        "status": "ok",
+        "read": {
+          "type": "row",
+          "value": 100
+        },
+        "rowsAffected": null
+      }
+    },
+    {
+      "index": 5,
+      "txn": "T2",
+      "notation": "r2[1]•",
+      "blockedUntilStep": 5,
+      "outcome": {
+        "status": "error",
+        "code": "1205",
+        "message": "Transaction (Process ID 83) was deadlocked on lock resources with another process and has been chosen as the deadlock victim. Rerun the transaction."
+      }
+    },
+    {
+      "index": 6,
+      "txn": "T1",
+      "notation": "c1",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "ok",
+        "read": null,
+        "rowsAffected": null
+      }
+    },
+    {
+      "index": 7,
+      "txn": "T2",
+      "notation": "c2",
+      "blockedUntilStep": null,
+      "outcome": {
+        "status": "error",
+        "code": "3902",
+        "message": "The COMMIT TRANSACTION request has no corresponding BEGIN TRANSACTION."
+      }
+    }
+  ],
+  "transactions": {
+    "T1": "committed",
+    "T2": "aborted"
+  },
+  "finalState": [
+    {
+      "key": 1,
+      "value": 100
+    },
+    {
+      "key": 2,
+      "value": 100
+    }
+  ]
+}

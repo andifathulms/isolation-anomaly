@@ -113,6 +113,17 @@ export type FailureScope =
    */
   | 'statementThenPoisoned'
 
+export type DeadlockDetection =
+  /** The engine notices the cycle as soon as it forms, so nothing waits first. */
+  | 'immediate'
+  /**
+   * The engine waits on the lock for a while before it even looks for a
+   * deadlock, so the statement demonstrably waited before it failed. PostgreSQL
+   * does this on purpose — the check is expensive and deadlocks are assumed
+   * rare — and how long is a setting.
+   */
+  | 'afterLockTimeout'
+
 export type AfterAbort =
   /** Every statement fails until the transaction block ends. */
   | 'rejectStatements'
@@ -211,6 +222,8 @@ export type EnginePack = {
    * it is set to whatever that engine's recordings show.
    */
   readonly deadlockVictim?: Rule<DeadlockVictim>
+  /** Whether a deadlocked statement waits before it is told, observable as a wait. */
+  readonly deadlockDetection?: Rule<DeadlockDetection>
   /**
    * What the session does with further statements after the engine has rolled
    * the transaction back. PostgreSQL rejects them until the block ends; SQL

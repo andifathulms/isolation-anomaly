@@ -20,7 +20,12 @@ export type Scenario = {
   readonly framing: string
   /** What the reader should take away, in one or two sentences. */
   readonly lesson: string
-  readonly anomaly: AnomalyId
+  /**
+   * The anomaly this schedule is built to produce, or null when the schedule
+   * exists to show what an engine *does* instead — a deadlock is a response,
+   * not a phenomenon in the catalogue.
+   */
+  readonly anomaly: AnomalyId | null
   readonly schedule: Schedule
   readonly expectedAt: Readonly<Record<string, readonly IsolationLevel[]>>
 }

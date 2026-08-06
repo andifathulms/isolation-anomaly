@@ -352,5 +352,13 @@
       "url": "https://www.postgresql.org/docs/16/errcodes-appendix.html",
       "quote": "Class 25 — Invalid Transaction State ... 25P02  in_failed_sql_transaction"
     }
+  },
+  "deadlockDetection": {
+    "value": "afterLockTimeout",
+    "citation": {
+      "source": "PostgreSQL 16 — 20.12. Lock Management",
+      "url": "https://www.postgresql.org/docs/16/runtime-config-locks.html",
+      "quote": "This is the amount of time to wait on a lock before checking to see if there is a deadlock condition. The check for deadlock is relatively expensive, so the server doesn't run it every time it waits for a lock."
+    }
   }
 }

@@ -172,3 +172,58 @@ suite('what one database option does to SQL Server', () => {
     expect(versioned.finalState).toEqual(locking.finalState)
   })
 })
+
+suite('what the deadlock scenario proves about naming a victim', () => {
+  // This is the evidence behind two packs declaring their victim unmodelled, and
+  // two others declaring the last waiter. It is recorded rather than reasoned.
+  const victimOf = (packId: string, level: string): string | null => {
+    const run = loadFixture(packId, 'deadlock', level)
+    if (!run) return null
+    const codes = ['40P01', '1213', '1205', '60']
+    const failed = run.steps.find(
+      (step) => step.outcome.status === 'error' && codes.includes(step.outcome.code),
+    )
+    return failed?.txn ?? null
+  }
+
+  it('is consistent on PostgreSQL and MySQL: the transaction whose wait closed the cycle', () => {
+    for (const level of ['READ UNCOMMITTED', 'READ COMMITTED', 'REPEATABLE READ', 'SERIALIZABLE']) {
+      expect(victimOf('postgres-16', level), `postgres @ ${level}`).toBe('T2')
+      expect(victimOf('mysql-8-innodb', level), `mysql @ ${level}`).toBe('T2')
+    }
+  })
+
+  it('is not consistent on SQL Server, which is why the model refuses to name it', () => {
+    const levels = ['READ UNCOMMITTED', 'READ COMMITTED', 'REPEATABLE READ', 'SNAPSHOT', 'SERIALIZABLE']
+    const victims = levels.flatMap((level) => [
+      victimOf('sqlserver-2022', level),
+      victimOf('sqlserver-2022-rcsi', level),
+    ])
+    // The same schedule on the same server loses a different transaction
+    // depending on the level, and the two database options disagree with each
+    // other as well. No rule over waiting order reproduces that.
+    expect(new Set(victims.filter(Boolean)).size, 'SQL Server picked the same victim every time').toBe(2)
+  })
+
+  it('leaves the table untouched everywhere, because nobody finished', () => {
+    for (const packId of ['postgres-16', 'mysql-8-innodb', 'sqlserver-2022', 'oracle-23ai']) {
+      for (const level of ['READ COMMITTED', 'SERIALIZABLE']) {
+        const run = loadFixture(packId, 'deadlock', level)
+        if (!run) continue
+        expect(run.finalState, `${packId} @ ${level}`).toEqual([
+          { key: 1, value: 100 },
+          { key: 2, value: 100 },
+        ])
+      }
+    }
+  })
+
+  it('rolls back only the statement on Oracle, so both transactions survive', () => {
+    const run = loadFixture('oracle-23ai', 'deadlock', 'READ COMMITTED')
+    expect(run).not.toBeNull()
+    if (!run) return
+    // ORA-00060 ends the statement, not the transaction — both still commit,
+    // having done nothing.
+    expect(run.transactions).toEqual({ T1: 'committed', T2: 'committed' })
+  })
+})

@@ -2,6 +2,7 @@ export type {
   AfterAbort,
   Citation,
   Conflicts,
+  DeadlockDetection,
   DeadlockVictim,
   EngineErrorShape,
   EnginePack,

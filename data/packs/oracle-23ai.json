@@ -5,7 +5,7 @@
   "verifiedOn": "2026-08-06",
   "docsUrl": "https://docs.oracle.com/en/database/oracle/oracle-database/23/cncpt/data-concurrency-and-consistency.html",
   "defaultLevel": "READ COMMITTED",
-  "summary": "Oracle has two isolation levels, not five. READ UNCOMMITTED and REPEATABLE READ do not exist — asking for them is refused here rather than mapped to something else — and dirty reads are impossible at any level. What Oracle calls SERIALIZABLE is snapshot isolation: it gives the transaction one point in time, raises ORA-08177 if you write a row someone else committed since, and permits write skew despite the name. That is the sharpest naming problem in the whole project: a developer who chooses SERIALIZABLE here because the word means something in a textbook has not got what the textbook describes. One more thing Oracle alone does: ORA-08177 rolls back the statement and leaves the transaction open, so a COMMIT that follows commits the work done before the failure.",
+  "summary": "Oracle has two isolation levels, not five. READ UNCOMMITTED and REPEATABLE READ do not exist — asking for them is refused here rather than mapped to something else — and dirty reads are impossible at any level. What Oracle calls SERIALIZABLE is snapshot isolation: it gives the transaction one point in time, raises ORA-08177 if you write a row someone else committed since, and permits write skew despite the name. That is the sharpest naming problem in the whole project: a developer who chooses SERIALIZABLE here because the word means something in a textbook has not got what the textbook describes. One more thing Oracle alone does: ORA-08177 rolls back the statement and leaves the transaction open, so a COMMIT that follows commits the work done before the failure. Oracle also declines to promise which session loses a deadlock — \"either session could get the error\" — so a deadlock is refused here rather than guessed, and only the statement would be rolled back in any case.",
   "errors": {
     "serializationFailure": {
       "code": "8177",
@@ -14,6 +14,15 @@
         "source": "Oracle Database 23ai — Data Concurrency and Consistency",
         "url": "https://docs.oracle.com/en/database/oracle/oracle-database/23/cncpt/data-concurrency-and-consistency.html",
         "quote": "Oracle AI Database permits a serializable transaction to modify a row only if changes to the row made by other transactions were already committed when the serializable transaction began. The database generates an error when a serializable transaction tries to update or delete data changed by a different transaction that committed after the serializable transaction began."
+      }
+    },
+    "deadlock": {
+      "code": "60",
+      "message": "ORA-00060: deadlock detected while waiting for resource",
+      "citation": {
+        "source": "Oracle Database 23ai — Data Concurrency and Consistency",
+        "url": "https://docs.oracle.com/en/database/oracle/oracle-database/23/cncpt/data-concurrency-and-consistency.html",
+        "quote": "Oracle AI Database automatically detects deadlocks and resolves them by rolling back one statement involved in the deadlock, releasing one set of the conflicting row locks."
       }
     }
   },
@@ -235,6 +244,14 @@
           }
         }
       }
+    }
+  },
+  "deadlockVictim": {
+    "value": "unmodelled",
+    "citation": {
+      "source": "Oracle Database 23ai — Data Concurrency and Consistency",
+      "url": "https://docs.oracle.com/en/database/oracle/oracle-database/23/cncpt/data-concurrency-and-consistency.html",
+      "quote": "Only one session in the deadlock actually gets the deadlock error, but either session could get the error."
     }
   }
 }

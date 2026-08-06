@@ -104,6 +104,7 @@ export const enginePackSchema = z
     }),
     deadlockVictim: rule(z.enum(['firstWaiter', 'lastWaiter', 'unmodelled'])).optional(),
     afterAbort: rule(z.enum(['rejectStatements', 'autocommitStatements'])).optional(),
+    deadlockDetection: rule(z.enum(['immediate', 'afterLockTimeout'])).optional(),
     failureScope: rule(z.enum(['transaction', 'statementThenPoisoned'])).optional(),
     levels: z.object(
       Object.fromEntries(LEVELS.map((level) => [level, levelEntrySchema])) as Record<

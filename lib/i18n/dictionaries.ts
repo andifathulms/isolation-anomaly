@@ -113,7 +113,10 @@ export type Dictionary = {
     | 'readDocs',
     string
   >
-  readonly scenarios: Record<'heading' | 'lead' | 'documents' | 'permittedAt' | 'never' | 'open' | 'framing' | 'lesson', string>
+  readonly scenarios: Record<
+    'heading' | 'lead' | 'documents' | 'permittedAt' | 'never' | 'open' | 'framing' | 'lesson' | 'noAnomaly',
+    string
+  >
   readonly refusal: Record<'heading' | 'body', string>
   readonly editor: Record<'edit' | 'done' | 'invalid' | 'dragHint', string>
 }
@@ -274,6 +277,7 @@ const en: Dictionary = {
     open: 'Open in the score',
     framing: 'The situation',
     lesson: 'What it teaches',
+    noAnomaly: 'Documents an engine’s response rather than an anomaly',
   },
   refusal: {
     heading: 'Refused',
@@ -444,6 +448,7 @@ const id: Dictionary = {
     open: 'Buka di partitur',
     framing: 'Situasinya',
     lesson: 'Pelajarannya',
+    noAnomaly: 'Mendokumentasikan respons mesin, bukan sebuah anomali',
   },
   refusal: {
     heading: 'Ditolak',

@@ -14,7 +14,7 @@ This models **documented behaviour for a fixed operation set at specific engine 
 
 Start with [the on-call roster emptying at REPEATABLE READ](https://andifathulms.github.io/isolation-anomaly/en/schedule/#s=write-skew&p=postgres-16&l=RR&i=5) — two doctors, each checking that the other is on call, both going off call, both committing. Then switch the level to SERIALIZABLE and watch the same schedule get refused, or switch the engine to MySQL and watch it deadlock instead.
 
-Ten scenarios, each with the framing that makes the stakes obvious, executed against five engine packs at every isolation level. Six pages: an overview, the score with stepping and state panels, the scenario library, the cross-engine matrix, the conflict graph, and the engine packs with every citation printed beside the rule it justifies.
+Eleven scenarios, each with the framing that makes the stakes obvious, executed against five engine packs at every isolation level. Six pages: an overview, the score with stepping and state panels, the scenario library, the cross-engine matrix, the conflict graph, and the engine packs with every citation printed beside the rule it justifies.
 
 ## Why
 
@@ -40,7 +40,11 @@ One schedule — two doctors, each checking the other is on call, each going off
 
 There are two SQL Server packs, differing only in one database option: `READ_COMMITTED_SNAPSHOT` off (the default) and on. With it on, `READ COMMITTED` stops taking shared locks and hands each statement a versioned snapshot instead — the values read are the same and what changes is who waits for whom. It ships as a separate pack rather than a flag, because an option that changes what a level *means* deserves its own citations and its own recordings.
 
-Where the model will not answer: SQL Server picks its deadlock victim by internal cost estimate, and the same schedule loses T1 at `REPEATABLE READ` and T2 at `SERIALIZABLE`. No rule over waiting order reproduces that, so those runs are **refused** with the gap named rather than guessed. Five of the 150 recorded runs are refused, and the test suite checks each refusal is justified by a deadlock in the recording.
+One scenario documents a response rather than an anomaly: two transfers locking the same accounts in opposite order. No isolation level prevents it — locking in a consistent order is the application's job — and the four engines answer differently. It exists to test a claim rather than teach one, and it changed the code: it proved PostgreSQL and MySQL roll back the transaction whose wait closed the cycle, and it caught PostgreSQL waiting on the lock before it even looks for a deadlock, which is now a cited pack rule.
+
+Where the model will not answer: **who loses a deadlock on SQL Server or Oracle.** SQL Server picks by internal cost estimate — the recordings show the same schedule losing a different transaction depending on the level, and the two database options disagreeing with each other — and Oracle's documentation says outright that "either session could get the error". Those runs are **refused** with the gap named and the vendor's own sentence quoted, rather than guessed. The test suite checks that every refusal is justified by a deadlock in the recording, so refusing cannot become a way to dodge a hard case.
+
+Oracle is also the only engine here that rolls back the *statement* rather than the transaction: after `ORA-08177` or `ORA-00060` both transactions are still open and can commit what they did beforehand.
 
 ## Language
 

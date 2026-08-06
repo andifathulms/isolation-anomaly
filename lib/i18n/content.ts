@@ -152,6 +152,13 @@ const SCENARIOS_ID: Readonly<Record<string, ScenarioText>> = {
     lesson:
       'Kedua range read tidak mengembalikan apa pun, dan kedua insert berhasil, jadi kalender berakhir dengan dua pemesanan padahal setiap pemesan yakin hanya akan ada satu. Tidak ada baris yang ditulis dua kali, jadi tidak ada yang berkonflik — ini write skew yang berpakaian phantom, dan hanya SERIALIZABLE yang menghentikannya.',
   },
+  deadlock: {
+    title: 'Dua transfer yang me-lock rekening yang sama dengan urutan berlawanan',
+    framing:
+      'Dua transfer berjalan bersamaan. Yang satu memindahkan uang dari rekening 1 ke rekening 2 dan me-lock keduanya dengan urutan itu; yang lain memindahkan dari 2 ke 1 dan me-lock dengan urutan sebaliknya. Masing-masing memegang apa yang berikutnya dibutuhkan yang lain.',
+    lesson:
+      'Tidak ada transaksi yang melakukan hal aneh, dan tidak ada isolation level yang mencegah ini — me-lock dengan urutan yang konsisten adalah tugas aplikasi. Yang berbeda adalah jawaban mesinnya. PostgreSQL dan MySQL InnoDB me-rollback satu transaksi dan menyebutkannya, sehingga yang lain bisa lanjut. SQL Server memilih korbannya berdasarkan perkiraan biaya internal, dan Oracle menyatakan terang-terangan bahwa session mana pun bisa mendapat error itu — jadi untuk ketiganya model ini menolak menyebut siapa yang kalah daripada mengarangnya, dan Oracle pun hanya me-rollback statement-nya, membiarkan transaksinya tetap terbuka.',
+  },
 }
 
 export function anomalyText(locale: Locale, id: AnomalyId): AnomalyText {

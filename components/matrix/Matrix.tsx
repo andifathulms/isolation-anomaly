@@ -89,7 +89,8 @@ export function Matrix({ dict, locale }: { readonly dict: Dictionary; readonly l
         <span className="font-control text-xs uppercase tracking-wide text-ink-muted">
           {dict.scenarios.documents}:{' '}
         </span>
-        {anomalyText(locale, scenario.anomaly).name} — {scenarioText(locale, scenario).framing}
+        {scenario.anomaly ? `${anomalyText(locale, scenario.anomaly).name} — ` : ''}
+        {scenarioText(locale, scenario).framing}
       </p>
 
       <div className="overflow-x-auto rounded-sm border border-staff-faint bg-manuscript-raised">

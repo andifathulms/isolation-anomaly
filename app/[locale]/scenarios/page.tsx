@@ -31,7 +31,7 @@ export default function ScenariosPage({ params }: { params: { locale: string } }
 
       <ul className="mt-10 space-y-10">
         {SCENARIOS.map((scenario) => {
-          const definition = ANOMALIES[scenario.anomaly]
+          const definition = scenario.anomaly ? ANOMALIES[scenario.anomaly] : null
           const text = scenarioText(locale, scenario)
           return (
             <li key={scenario.id} className="border-t border-staff-faint pt-6">
@@ -40,11 +40,16 @@ export default function ScenariosPage({ params }: { params: { locale: string } }
                 <code className="font-mono text-xs text-ink-muted">{scenario.id}</code>
               </div>
 
-              <p className="mt-1 font-control text-sm text-ink-muted">
-                {dict.scenarios.documents}: <span className="font-prose text-ink">{anomalyText(locale, scenario.anomaly).name}</span>{' '}
-                <code className="font-mono text-xs">{definition.label}</code>{' '}
-                {definition.inAnsiList ? dict.anomaly.inAnsi : dict.anomaly.notInAnsi}
-              </p>
+              {definition && scenario.anomaly ? (
+                <p className="mt-1 font-control text-sm text-ink-muted">
+                  {dict.scenarios.documents}:{' '}
+                  <span className="font-prose text-ink">{anomalyText(locale, scenario.anomaly).name}</span>{' '}
+                  <code className="font-mono text-xs">{definition.label}</code>{' '}
+                  {definition.inAnsiList ? dict.anomaly.inAnsi : dict.anomaly.notInAnsi}
+                </p>
+              ) : (
+                <p className="mt-1 font-control text-sm text-ink-muted">{dict.scenarios.noAnomaly}</p>
+              )}
 
               <div className="mt-4 grid gap-6 lg:grid-cols-2">
                 <div className="space-y-3">

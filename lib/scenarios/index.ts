@@ -3,6 +3,7 @@ import { lostUpdate, lostUpdateLocked } from '@/data/scenarios/lost-updates'
 import { nonRepeatableRead, readSkew } from '@/data/scenarios/repeatability'
 import { phantomInsertRace, phantomRead } from '@/data/scenarios/phantoms'
 import { writeSkew, writeSkewLocked } from '@/data/scenarios/write-skew'
+import { deadlock } from '@/data/scenarios/deadlock'
 import type { Scenario } from './types'
 
 export type { Scenario } from './types'
@@ -23,6 +24,8 @@ export const SCENARIOS: readonly Scenario[] = [
   writeSkew,
   writeSkewLocked,
   phantomInsertRace,
+  // Last, because it is the one that documents a response rather than an anomaly.
+  deadlock,
 ]
 
 export function getScenario(id: string): Scenario | null {
