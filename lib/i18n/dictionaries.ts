@@ -51,6 +51,9 @@ export type Dictionary = {
     | 'oracleBody'
     | 'ctaSchedule'
     | 'ctaScenarios'
+    | 'ctaCaption'
+    | 'figureAlt'
+    | 'figureCaption'
     | 'anomalyListHeading'
     | 'notationHint',
     string
@@ -218,7 +221,7 @@ const en: Dictionary = {
     title: 'Isolation Anomaly',
     tagline: 'Watch two transactions quietly corrupt each other.',
     standfirst:
-      'Run them side by side, one step at a time, and see exactly where the database gave a wrong answer — then change the engine or the isolation level and watch the same steps come out differently.',
+      'An interactive database simulator. Run two transactions side by side, one step at a time, and see exactly where the database gave a wrong answer — then change the engine or the isolation level and watch the same steps come out differently.',
     disclaimer:
       'This models documented behaviour for a fixed set of operations at specific engine versions. It is not a database. Anything outside the modelled set is refused rather than approximated, and every engine claim links to the vendor documentation behind it.',
     disclaimerHeading: 'What this is, precisely',
@@ -230,7 +233,7 @@ const en: Dictionary = {
     menu: 'Sections',
   },
   home: {
-    eyebrow: 'Start here',
+    eyebrow: 'Interactive · Runs in your browser · No signup',
     lead:
       'Every application developer picks an isolation level, usually by accepting the default, and almost none can say what it protects them from.',
     plainHeading: 'In plain terms',
@@ -264,8 +267,13 @@ const en: Dictionary = {
     oracleHeading: 'Checked against real databases',
     oracleBody:
       'Every schedule here has been executed against the real engine in a container, and what it did — values read, waits, error codes, which transaction was aborted, the final table — is committed as a fixture the model is tested against. When the model and the database disagree, the model is wrong.',
-    ctaSchedule: 'Run the doctors failure',
-    ctaScenarios: 'Browse all the failures',
+    ctaSchedule: 'See it happen: two doctors, both go off call',
+    ctaScenarios: 'Browse all 11 failures',
+    ctaCaption: 'Opens the schedule below, running on PostgreSQL 16 at REPEATABLE READ.',
+    figureAlt:
+      'A schedule of two transactions on parallel staves. T1 and T2 each read the on-call roster and see the same two doctors, then each writes a different row taking one doctor off call, and both commit. A red mark sits over step 5, where the anomaly became unavoidable.',
+    figureCaption:
+      'Two transactions, eight steps, left to right. Both read the roster and see the same two doctors; each then writes a different row. Nothing collides, both commit, and the red mark is where it became unavoidable.',
     anomalyListHeading: 'The failures this site can name',
     notationHint:
       'The formula beside each name is the standard shorthand for a schedule: r is a read, w is a write, c a commit; the number is which transaction did it, and the letter in brackets is which row. So w1[x] r2[x] reads “transaction 1 writes row x, then transaction 2 reads row x”.',
@@ -479,7 +487,7 @@ const id: Dictionary = {
     title: 'Isolation Anomaly',
     tagline: 'Lihat dua transaksi diam-diam saling merusak.',
     standfirst:
-      'Jalankan keduanya berdampingan, selangkah demi selangkah, dan lihat persis di mana basis data memberi jawaban yang salah — lalu ganti mesin atau isolation level-nya dan lihat langkah yang sama berakhir berbeda.',
+      'Simulator basis data yang interaktif. Jalankan dua transaksi berdampingan, selangkah demi selangkah, dan lihat persis di mana basis data memberi jawaban yang salah — lalu ganti mesin atau isolation level-nya dan lihat langkah yang sama berakhir berbeda.',
     disclaimer:
       'Ini memodelkan perilaku yang terdokumentasi untuk sekumpulan operasi tetap pada versi mesin tertentu. Ini bukan basis data. Apa pun di luar himpunan yang dimodelkan ditolak, bukan didekati, dan setiap klaim tentang mesin tertaut ke dokumentasi vendornya.',
     disclaimerHeading: 'Apa ini, tepatnya',
@@ -491,7 +499,7 @@ const id: Dictionary = {
     menu: 'Bagian',
   },
   home: {
-    eyebrow: 'Mulai di sini',
+    eyebrow: 'Interaktif · Berjalan di peramban · Tanpa daftar akun',
     lead:
       'Setiap pengembang aplikasi memilih isolation level, biasanya dengan menerima nilai bawaan, dan hampir tidak ada yang bisa menjelaskan dari apa level itu melindunginya.',
     plainHeading: 'Dengan bahasa sederhana',
@@ -525,8 +533,13 @@ const id: Dictionary = {
     oracleHeading: 'Diuji terhadap basis data sungguhan',
     oracleBody:
       'Setiap jadwal di sini telah dijalankan terhadap mesin sungguhan di dalam container, dan apa yang dilakukannya — nilai yang dibaca, penungguan, kode kesalahan, transaksi mana yang dibatalkan, tabel akhirnya — disimpan sebagai fixture yang menguji model ini. Bila model dan basis data berbeda, modelnya yang salah.',
-    ctaSchedule: 'Jalankan kasus dua dokter',
-    ctaScenarios: 'Telusuri semua kegagalannya',
+    ctaSchedule: 'Lihat langsung: dua dokter, dua-duanya berhenti berjaga',
+    ctaScenarios: 'Telusuri 11 kegagalannya',
+    ctaCaption: 'Membuka schedule di bawah, berjalan pada PostgreSQL 16 di REPEATABLE READ.',
+    figureAlt:
+      'Sebuah schedule berisi dua transaksi pada dua garis paranada sejajar. T1 dan T2 masing-masing membaca daftar jaga dan melihat dua dokter yang sama, lalu masing-masing menulis baris yang berbeda untuk menghentikan satu dokter dari jaga, dan keduanya commit. Tanda merah berada di langkah 5, tempat anomali menjadi tak terhindarkan.',
+    figureCaption:
+      'Dua transaksi, delapan langkah, dari kiri ke kanan. Keduanya membaca daftar jaga dan melihat dua dokter yang sama; masing-masing lalu menulis baris yang berbeda. Tidak ada yang bertabrakan, keduanya commit, dan tanda merah menandai titik saat hal itu tak lagi terhindarkan.',
     anomalyListHeading: 'Kegagalan yang bisa disebut namanya di sini',
     notationHint:
       'Rumus di samping tiap nama adalah notasi baku untuk sebuah jadwal: r berarti baca, w berarti tulis, c berarti commit; angkanya menunjukkan transaksi mana yang melakukannya, dan huruf dalam kurung siku menunjukkan barisnya. Jadi w1[x] r2[x] dibaca “transaksi 1 menulis baris x, lalu transaksi 2 membaca baris x”.',

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { SiteChrome } from '@/components/SiteChrome'
+import { HeroFigure } from '@/components/score/HeroFigure'
 import { dictionary } from '@/lib/i18n/dictionaries'
 import { isLocale } from '@/lib/i18n/locales'
 import { ANOMALIES, ANOMALY_IDS } from '@/lib/detect'
@@ -45,7 +46,26 @@ export default function HomePage({ params }: { params: { locale: string } }) {
             {dict.home.ctaScenarios}
           </Link>
         </div>
+        <p className="mt-3 text-caption text-ink-soft">{dict.home.ctaCaption}</p>
       </section>
+
+      {/*
+        The thing itself, before any more prose about it. A still of the score
+        at the run the primary action opens — same notation, same voices, same
+        reserved red — so the notation is already familiar on arrival.
+      */}
+      <figure className="mt-10">
+        <HeroFigure
+          labels={{
+            alt: dict.home.figureAlt,
+            conductorMark: dict.anomaly.found.toLowerCase(),
+            committed: dict.outcome.committed,
+          }}
+        />
+        <figcaption className="mt-3 max-w-reading text-caption text-ink-muted">
+          {dict.home.figureCaption}
+        </figcaption>
+      </figure>
 
       <section className="mt-16 max-w-reading">
         <h2 className="font-prose text-title">{dict.home.plainHeading}</h2>
