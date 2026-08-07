@@ -2,14 +2,8 @@
 
 import { useMemo, useState } from 'react'
 import { LEVELS, type IsolationLevel } from '@/lib/schedule'
-import { PACKS, requirePack } from '@/lib/packs'
-import { SCENARIOS } from '@/lib/scenarios'
-import { execute } from '@/lib/engine'
-import { buildConflictGraph, edgesOnCycle, explainCycle, findCycle } from '@/lib/serial'
-import { equivalentSerialOrders } from '@/lib/serial'
+import { graphKey, type GraphData } from '@/lib/precompute/shape'
 import type { Dictionary } from '@/lib/i18n/dictionaries'
-import { scenarioText } from '@/lib/i18n/content'
-import type { Locale } from '@/lib/i18n/locales'
 
 /**
  * The conflict graph — PRD §5.5. No layout library: transactions sit on a
@@ -17,41 +11,37 @@ import type { Locale } from '@/lib/i18n/locales'
  * force simulation would produce.
  *
  * The cycle is drawn in conductor's red, because a cycle *is* the anomaly.
+ *
+ * Every combination is worked out at build time (lib/precompute.ts): the three
+ * selects choose among fixed lists, so there is nothing here the executor could
+ * be asked at runtime that is not already known. It used to run the executor,
+ * the conflict-graph builder and the brute-force serializability checker in the
+ * browser, which pulled in all five engine packs and their 164 vendor citations
+ * to draw a circle with arrows on it.
  */
 
 const SIZE = 320
 const RADIUS = 108
 
 export function ConflictGraphView({
+  data: precomputed,
   dict,
-  locale,
 }: {
+  readonly data: GraphData
   readonly dict: Dictionary
-  readonly locale: Locale
 }) {
   const [scenarioId, setScenarioId] = useState('write-skew')
-  const [packId, setPackId] = useState(PACKS[0]?.id ?? 'postgres-16')
+  const [packId, setPackId] = useState(precomputed.packs[0]?.id ?? 'postgres-16')
   const [level, setLevel] = useState<IsolationLevel>('REPEATABLE READ')
 
-  const scenario = SCENARIOS.find((candidate) => candidate.id === scenarioId) ?? SCENARIOS[0]
-  const pack = requirePack(packId)
+  const scenario = precomputed.scenarios.find((candidate) => candidate.id === scenarioId)
+  const pack = precomputed.packs.find((candidate) => candidate.id === packId) ?? precomputed.packs[0]
 
-  const data = useMemo(() => {
-    if (!scenario) return null
-    const result = execute(scenario.schedule, pack, level)
-    if (result.type !== 'trace') return null
-    const graph = buildConflictGraph(result.trace)
-    const cycle = findCycle(graph)
-    return {
-      graph,
-      cycle,
-      onCycle: cycle ? edgesOnCycle(graph, cycle) : [],
-      orders: equivalentSerialOrders(graph),
-    }
-  }, [scenario, pack, level])
+  const run = precomputed.runs[graphKey(scenarioId, packId, level)]
+  const data = run && run.kind === 'ran' ? run : null
 
   const positions = useMemo(() => {
-    const nodes = data?.graph.nodes ?? []
+    const nodes = data?.nodes ?? []
     const map = new Map<string, { x: number; y: number }>()
     nodes.forEach((node, index) => {
       const angle = (index / Math.max(nodes.length, 1)) * Math.PI * 2 - Math.PI / 2
@@ -64,6 +54,7 @@ export function ConflictGraphView({
   }, [data])
 
   const kindLabel = (kind: 'ww' | 'wr' | 'rw') => dict.graph[kind]
+  if (!pack) return null
 
   return (
     <div className="space-y-6">
@@ -77,9 +68,9 @@ export function ConflictGraphView({
             onChange={(event) => setScenarioId(event.target.value)}
             className="control max-w-full sm:min-w-64"
           >
-            {SCENARIOS.map((candidate) => (
+            {precomputed.scenarios.map((candidate) => (
               <option key={candidate.id} value={candidate.id}>
-                {scenarioText(locale, candidate).title}
+                {candidate.title}
               </option>
             ))}
           </select>
@@ -93,7 +84,7 @@ export function ConflictGraphView({
             onChange={(event) => setPackId(event.target.value)}
             className="control max-w-full"
           >
-            {PACKS.map((candidate) => (
+            {precomputed.packs.map((candidate) => (
               <option key={candidate.id} value={candidate.id}>
                 {candidate.engine} {candidate.version}
               </option>
@@ -120,7 +111,7 @@ export function ConflictGraphView({
 
       {/* Three selects rebuild the graph with nothing else to say they did. */}
       <p aria-live="polite" className="sr-only">
-        {dict.a11y.updated}: {scenario ? scenarioText(locale, scenario).title : ''} — {pack.engine}{' '}
+        {dict.a11y.updated}: {scenario?.title ?? ''} — {pack.engine}{' '}
         {pack.version} — {level}
       </p>
 
@@ -147,11 +138,11 @@ export function ConflictGraphView({
               </marker>
             </defs>
 
-            {data.graph.edges.map((edge, index) => {
+            {data.edges.map((edge, index) => {
               const from = positions.get(edge.from)
               const to = positions.get(edge.to)
               if (!from || !to) return null
-              const onCycle = data.onCycle.includes(edge)
+              const onCycle = data.onCycle.includes(index)
               // Bow the edges apart so both directions of a mutual conflict show.
               const midX = (from.x + to.x) / 2 + (to.y - from.y) * 0.18
               const midY = (from.y + to.y) / 2 - (to.x - from.x) * 0.18
@@ -170,7 +161,7 @@ export function ConflictGraphView({
               )
             })}
 
-            {data.graph.nodes.map((node) => {
+            {data.nodes.map((node) => {
               const at = positions.get(node)
               if (!at) return null
               return (
@@ -189,11 +180,11 @@ export function ConflictGraphView({
               {data.cycle ? dict.graph.cycle : dict.graph.noCycle}
             </h2>
             <p className="max-w-reading text-body">
-              {data.cycle ? explainCycle(data.cycle) : dict.graph.noCycleBody}
+              {data.cycle ? data.explanation : dict.graph.noCycleBody}
             </p>
             {!data.cycle && data.orders.length > 0 ? (
               <ul className="space-y-0.5 font-mono text-caption">
-                {data.orders.slice(0, 4).map((order) => (
+                {data.orders.map((order) => (
                   <li key={order.join('>')}>{order.join(' → ')}</li>
                 ))}
               </ul>
@@ -203,11 +194,11 @@ export function ConflictGraphView({
               <h3 className="eyebrow">
                 {dict.graph.edges}
               </h3>
-              {data.graph.edges.length === 0 ? (
+              {data.edges.length === 0 ? (
                 <p className="mt-1 text-caption text-ink-muted">{dict.graph.noEdges}</p>
               ) : (
                 <ul className="mt-1 space-y-1 text-caption">
-                  {data.graph.edges.map((edge, index) => (
+                  {data.edges.map((edge, index) => (
                     <li key={`${edge.from}-${edge.to}-${edge.kind}-${index}`} className="font-mono">
                       {edge.from} → {edge.to}
                       <span className="ml-2 font-prose text-ink-muted">

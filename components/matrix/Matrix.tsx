@@ -1,15 +1,11 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { LEVELS, LEVEL_ABBREVIATIONS } from '@/lib/schedule'
-import { PACKS } from '@/lib/packs'
-import { SCENARIOS } from '@/lib/scenarios'
-import { execute } from '@/lib/engine'
-import { detect } from '@/lib/detect'
+import type { MatrixScenario } from '@/lib/precompute/shape'
 import type { Dictionary } from '@/lib/i18n/dictionaries'
 import type { Locale } from '@/lib/i18n/locales'
-import { anomalyText, scenarioText } from '@/lib/i18n/content'
 
 /**
  * The engine matrix — PRD §5.4. The same schedule across every engine and
@@ -17,54 +13,28 @@ import { anomalyText, scenarioText } from '@/lib/i18n/content'
  *
  * A grid where a developer can see at a glance that their default configuration
  * permits the thing they assumed was impossible. The disagreement is the lesson.
+ *
+ * Every cell is worked out at build time (lib/precompute.ts) and handed here as
+ * data. This used to run the executor, the detector and all five engine packs in
+ * the browser in order to render a grid whose contents cannot change — nothing
+ * on this page alters a schedule, so nothing on this page needs an engine.
  */
 
-type Cell =
-  | { readonly kind: 'refused'; readonly why: string }
-  | {
-      readonly kind: 'ran'
-      readonly anomalies: readonly string[]
-      readonly aborted: readonly string[]
-      readonly errorCodes: readonly string[]
-      readonly alias: string | null
-    }
-
-export function Matrix({ dict, locale }: { readonly dict: Dictionary; readonly locale: Locale }) {
+export function Matrix({
+  scenarios,
+  dict,
+  locale,
+}: {
+  readonly scenarios: readonly MatrixScenario[]
+  readonly dict: Dictionary
+  readonly locale: Locale
+}) {
   const [scenarioId, setScenarioId] = useState(
-    SCENARIOS.find((scenario) => scenario.id === 'write-skew')?.id ?? SCENARIOS[0]?.id ?? '',
+    scenarios.find((scenario) => scenario.id === 'write-skew')?.id ?? scenarios[0]?.id ?? '',
   )
-  const scenario = SCENARIOS.find((candidate) => candidate.id === scenarioId) ?? SCENARIOS[0]
-
-  const rows = useMemo(() => {
-    if (!scenario) return []
-    return PACKS.map((pack) => ({
-      pack,
-      cells: LEVELS.map((level): Cell => {
-        const result = execute(scenario.schedule, pack, level)
-        if (result.type === 'refused') {
-          return { kind: 'refused', why: result.refusal.gap }
-        }
-        const entry = pack.levels[level]
-        return {
-          kind: 'ran',
-          anomalies: [...new Set(detect(result.trace).map((found) => found.id))],
-          aborted: result.trace.transactions
-            .filter((txn) => txn.outcome === 'aborted')
-            .map((txn) => txn.txn),
-          errorCodes: [
-            ...new Set(
-              result.trace.transactions
-                .map((txn) => txn.error?.code)
-                .filter((code): code is string => typeof code === 'string'),
-            ),
-          ],
-          alias: entry.kind === 'alias' ? entry.of : null,
-        }
-      }),
-    }))
-  }, [scenario])
-
+  const scenario = scenarios.find((candidate) => candidate.id === scenarioId) ?? scenarios[0]
   if (!scenario) return null
+
 
   return (
     <div className="space-y-6">
@@ -77,9 +47,9 @@ export function Matrix({ dict, locale }: { readonly dict: Dictionary; readonly l
           onChange={(event) => setScenarioId(event.target.value)}
           className="control max-w-full sm:min-w-72"
         >
-          {SCENARIOS.map((candidate) => (
+          {scenarios.map((candidate) => (
             <option key={candidate.id} value={candidate.id}>
-              {scenarioText(locale, candidate).title}
+              {candidate.title}
             </option>
           ))}
         </select>
@@ -89,20 +59,20 @@ export function Matrix({ dict, locale }: { readonly dict: Dictionary; readonly l
         <span className="eyebrow">
           {dict.scenarios.documents}:{' '}
         </span>
-        {scenario.anomaly ? `${anomalyText(locale, scenario.anomaly).name} — ` : ''}
-        {scenarioText(locale, scenario).framing}
+        {scenario.anomalyName ? `${scenario.anomalyName} — ` : ''}
+        {scenario.framing}
       </p>
 
       {/* The select rebuilds the whole grid with no other signal that it did. */}
       <p aria-live="polite" className="sr-only">
-        {dict.a11y.updated}: {scenarioText(locale, scenario).title}
+        {dict.a11y.updated}: {scenario.title}
       </p>
 
       <div className="leaf scroll-region" tabIndex={0} role="group" aria-label={dict.a11y.matrixRegion}>
         <table className="w-full text-caption">
           {/* Named, so the grid is not just "table" when it is reached. */}
           <caption className="sr-only">
-            {scenarioText(locale, scenario).title} — {dict.a11y.matrixCaption}
+            {scenario.title} — {dict.a11y.matrixCaption}
           </caption>
           <thead className="bg-manuscript-sunk">
             <tr className="border-b border-staff-faint">
@@ -122,16 +92,16 @@ export function Matrix({ dict, locale }: { readonly dict: Dictionary; readonly l
             </tr>
           </thead>
           <tbody>
-            {rows.map(({ pack, cells }) => (
-              <tr key={pack.id} className="border-b border-staff-faint/60 align-top last:border-b-0">
+            {scenario.rows.map((row) => (
+              <tr key={row.packId} className="border-b border-staff-faint/60 align-top last:border-b-0">
                 {/* Two packs share the engine name and version and differ only
                     in an option, so the id is the row's real identity and the
                     summary explains the difference on hover. */}
-                <th scope="row" className="px-3 py-3 text-left font-prose font-normal" title={pack.summary}>
-                  {pack.engine} {pack.version}
-                  <span className="block font-mono text-micro text-ink-soft">{pack.id}</span>
+                <th scope="row" className="px-3 py-3 text-left font-prose font-normal" title={row.summary}>
+                  {row.engine} {row.version}
+                  <span className="block font-mono text-micro text-ink-soft">{row.packId}</span>
                 </th>
-                {cells.map((cell, index) => {
+                {row.cells.map((cell, index) => {
                   const level = LEVELS[index] ?? 'READ COMMITTED'
                   if (cell.kind === 'refused') {
                     return (
@@ -144,14 +114,14 @@ export function Matrix({ dict, locale }: { readonly dict: Dictionary; readonly l
                   return (
                     <td key={level} className="p-1">
                       <Link
-                        href={`/${locale}/schedule/#s=${scenario.id}&p=${pack.id}&l=${LEVEL_ABBREVIATIONS[level]}&i=0`}
+                        href={`/${locale}/schedule/#s=${scenario.id}&p=${row.packId}&l=${LEVEL_ABBREVIATIONS[level]}&i=0`}
                         /*
                          * A link cannot inherit its table headers the way a data
                          * cell does, so 25 of these all announced as "anomaly,
                          * write-skew" with nothing to tell them apart. The row
                          * and column go into the name.
                          */
-                        aria-label={`${pack.engine} ${pack.version}, ${level}: ${
+                        aria-label={`${row.engine} ${row.version}, ${level}: ${
                           anomalous
                             ? `${dict.matrix.anomalyAt} ${cell.anomalies.join(', ')}`
                             : cell.aborted.length > 0

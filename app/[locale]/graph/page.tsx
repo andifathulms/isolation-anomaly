@@ -4,6 +4,7 @@ import { ConflictGraphView } from '@/components/graph/ConflictGraphView'
 import { dictionary } from '@/lib/i18n/dictionaries'
 import { metadataFor } from '@/lib/i18n/metadata'
 import { LOCALES, isLocale } from '@/lib/i18n/locales'
+import { graphData } from '@/lib/precompute'
 
 export function generateStaticParams() {
   return LOCALES.map((locale) => ({ locale }))
@@ -24,7 +25,7 @@ export default function GraphPage({ params }: { params: { locale: string } }) {
       <h1 className="font-prose text-title">{dict.graph.heading}</h1>
       <p className="mt-3 max-w-reading text-pretty leading-relaxed text-ink-muted">{dict.graph.lead}</p>
       <div className="mt-8">
-        <ConflictGraphView dict={dict} locale={params.locale} />
+        <ConflictGraphView data={graphData(params.locale)} dict={dict} />
       </div>
     </SiteChrome>
   )

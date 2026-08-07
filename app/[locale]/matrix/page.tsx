@@ -4,6 +4,7 @@ import { Matrix } from '@/components/matrix/Matrix'
 import { dictionary } from '@/lib/i18n/dictionaries'
 import { metadataFor } from '@/lib/i18n/metadata'
 import { LOCALES, isLocale } from '@/lib/i18n/locales'
+import { matrixData } from '@/lib/precompute'
 
 export function generateStaticParams() {
   return LOCALES.map((locale) => ({ locale }))
@@ -24,7 +25,7 @@ export default function MatrixPage({ params }: { params: { locale: string } }) {
       <h1 className="font-prose text-title">{dict.matrix.heading}</h1>
       <p className="mt-3 max-w-reading text-pretty leading-relaxed text-ink-muted">{dict.matrix.lead}</p>
       <div className="mt-8">
-        <Matrix dict={dict} locale={params.locale} />
+        <Matrix scenarios={matrixData(params.locale)} dict={dict} locale={params.locale} />
       </div>
     </SiteChrome>
   )
