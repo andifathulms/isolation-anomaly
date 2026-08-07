@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { LEVELS, moveStep, validateSchedule, type IsolationLevel, type Schedule } from '@/lib/schedule'
+import { LEVELS, moveStep, notate, validateSchedule, type IsolationLevel, type Schedule } from '@/lib/schedule'
 import { PACKS, requirePack } from '@/lib/packs'
 import { resolveLevel } from '@/lib/packs/load'
 import { SCENARIOS, getScenario } from '@/lib/scenarios'
@@ -21,6 +21,8 @@ import { AnomalyCallout } from './AnomalyCallout'
 import { WhyRead } from './WhyRead'
 import { LevelStrip } from './LevelStrip'
 import { InterleavingSpace } from './InterleavingSpace'
+import { TheRecording } from './TheRecording'
+import { recordingKey, type Recordings } from '@/lib/precompute/shape'
 import { KeyLegend } from './KeyLegend'
 import { SnapshotPanel } from './SnapshotPanel'
 import { VersionChains } from '@/components/versions/VersionChains'
@@ -47,10 +49,13 @@ export function Workbench({
   dict,
   locale,
   initialScenarioId,
+  recordings,
 }: {
   readonly dict: Dictionary
   readonly locale: Locale
   readonly initialScenarioId: string
+  /** Every recorded run, read off disk at build time. */
+  readonly recordings: Recordings
 }) {
   const fallback: ShareState = useMemo(
     () => ({
@@ -184,6 +189,20 @@ export function Workbench({
   const legend = scenario ? scenarioLegend(locale, scenario) : null
   // The rules this level actually runs, so the panels can state the test they show.
   const semantics = resolveLevel(pack, state.level)?.semantics ?? null
+
+  /*
+   * Only a library scenario has a recording. An edited schedule was never run
+   * against a real engine, and saying nothing is the honest answer — the panel
+   * below says so rather than quietly showing the unedited scenario's evidence.
+   */
+  const recording = scenario
+    ? (recordings.entries[recordingKey(scenario.id, pack.id, state.level)] ?? null)
+    : null
+
+  // The recording does not repeat the notation; the schedule already has it.
+  const notations = schedule.steps.map((step) =>
+    notate(step.op, schedule.transactions.indexOf(step.txn)),
+  )
 
   /**
    * Anomalies whose cause step the run has actually reached.
@@ -349,6 +368,16 @@ export function Workbench({
               </footer>
             </blockquote>
           ) : null}
+
+          {/*
+            The recording still shows when the model refuses — that pairing is
+            the most honest thing on the page. A declared boundary from the
+            outside looks like this: the engine did something, and this model
+            will not tell you it knows which.
+          */}
+          <div className="mt-6">
+            <TheRecording recording={recording} trace={null} notations={notations} dict={dict} />
+          </div>
         </section>
       ) : null}
 
@@ -531,6 +560,9 @@ export function Workbench({
 
           {/* Not just this ordering — all of them. */}
           <InterleavingSpace schedule={schedule} pack={pack} level={state.level} dict={dict} />
+
+          {/* The evidence, beside the claim. */}
+          <TheRecording recording={recording} trace={trace} notations={notations} dict={dict} />
 
           {/* Where the other levels stop agreeing with this one. */}
           <LevelStrip

@@ -17,6 +17,7 @@ import {
 import { anomalyText, scenarioText } from '@/lib/i18n/content'
 
 export * from './shape'
+export { recordings } from './recordings'
 
 /**
  * The matrix and the graph, worked out at build time.

@@ -98,3 +98,36 @@ export type LevelClasses = {
   /** How many schedules the grouping is evidence over. */
   readonly scenarioCount: number
 }
+
+/**
+ * One recorded run of one schedule against one real engine, projected to what
+ * the page shows. The full fixtures live in tests/oracle and stay there; this
+ * is the part a reader looks at.
+ */
+export type Recording = {
+  /** Exactly what the running server reported, not the pack's version field. */
+  readonly engineVersion: string
+  readonly image: string
+  readonly recordedOn: string
+  readonly steps: readonly {
+    readonly index: number
+    /* No `notation` — the schedule is already on the page and carries it. It
+       cost 1.4 kB gzipped across 220 recordings to say it twice. */
+    readonly blockedUntilStep: number | null
+    readonly status: 'ok' | 'error'
+    readonly read: string | null
+    readonly code: string | null
+    readonly message: string | null
+  }[]
+  readonly transactions: Readonly<Record<string, 'committed' | 'aborted'>>
+  readonly finalState: readonly string[]
+}
+
+export type Recordings = {
+  /** Keyed `scenarioId|packId|level`. */
+  readonly entries: Readonly<Record<string, Recording>>
+  readonly count: number
+}
+
+export const recordingKey = (scenarioId: string, packId: string, level: string): string =>
+  `${scenarioId}|${packId}|${level}`

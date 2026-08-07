@@ -292,6 +292,11 @@ export type Dictionary = {
     'heading' | 'lead' | 'caveat' | 'permits' | 'permitsNothing' | 'abortsIn' | 'unsupported',
     string
   >
+  /** The recorded run from the real engine, shown beside the model's. */
+  readonly recording: Record<
+    'heading' | 'hint' | 'none' | 'recordedOn' | 'engineSaid' | 'modelSays' | 'refused' | 'refusedNote' | 'gate',
+    string
+  >
   readonly space: Record<
     'heading' | 'hint' | 'none' | 'abortedInstead' | 'tooMany' | 'notProbability',
     string
@@ -656,6 +661,21 @@ const en: Dictionary = {
     permitsNothing: 'no anomaly in any schedule',
     abortsIn: 'aborts a transaction in {n}',
     unsupported: 'Names these engines do not implement at all',
+  },
+  recording: {
+    heading: 'What the real engine did',
+    hint:
+      'These exact statements were run against this engine in a container, and what it did was written down. Not a re-enactment — the recording below is the evidence the model is built to match.',
+    none:
+      'This combination has not been recorded. Nothing on this page is claimed to have been checked against a running engine.',
+    recordedOn: 'recorded',
+    engineSaid: 'The engine returned',
+    modelSays: 'This model says',
+    refused: 'refused',
+    refusedNote:
+      'The engine did something here and this model declines to say what. That is a declared boundary rather than a gap: where the vendor states the outcome is not determined by the schedule, guessing would be worse than refusing.',
+    gate:
+      'The two columns agree because the build fails otherwise — pnpm test:oracle compares every recorded run against the model field by field, and a disagreement is the model’s to fix, never the recording’s.',
   },
   space: {
     heading: 'Every ordering of these statements',
@@ -1043,6 +1063,21 @@ const id: Dictionary = {
     permitsNothing: 'tidak ada anomali pada schedule mana pun',
     abortsIn: 'meng-abort sebuah transaksi pada {n}',
     unsupported: 'Nama yang sama sekali tidak diimplementasikan mesin-mesin ini',
+  },
+  recording: {
+    heading: 'Apa yang dilakukan mesin sungguhan',
+    hint:
+      'Statement yang persis sama ini dijalankan terhadap mesin ini di dalam container, lalu apa yang dilakukannya dicatat. Bukan pemeragaan ulang — rekaman di bawah adalah bukti yang harus dicocoki oleh model.',
+    none:
+      'Kombinasi ini belum pernah direkam. Tidak ada satu pun di halaman ini yang diklaim sudah diperiksa terhadap mesin yang berjalan.',
+    recordedOn: 'direkam',
+    engineSaid: 'Mesin mengembalikan',
+    modelSays: 'Model ini menyatakan',
+    refused: 'ditolak',
+    refusedNote:
+      'Mesin melakukan sesuatu di sini dan model ini menolak menyebutkan apa. Itu batas yang dinyatakan, bukan lubang: ketika vendor menyatakan hasilnya tidak ditentukan oleh schedule, menebak akan lebih buruk daripada menolak.',
+    gate:
+      'Kedua kolom itu sepakat karena build-nya gagal kalau tidak — pnpm test:oracle membandingkan setiap eksekusi yang direkam dengan model, kolom demi kolom, dan ketidaksepakatan adalah kesalahan model, tidak pernah kesalahan rekaman.',
   },
   space: {
     heading: 'Semua urutan penyisipan statement ini',

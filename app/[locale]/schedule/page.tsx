@@ -5,6 +5,7 @@ import { dictionary } from '@/lib/i18n/dictionaries'
 import { metadataFor } from '@/lib/i18n/metadata'
 import { LOCALES, isLocale } from '@/lib/i18n/locales'
 import { SCENARIOS } from '@/lib/scenarios'
+import { recordings } from '@/lib/precompute'
 
 export function generateStaticParams() {
   return LOCALES.map((locale) => ({ locale }))
@@ -26,7 +27,12 @@ export default function SchedulePage({ params }: { params: { locale: string } })
       <h1 className="font-prose text-title">{dict.schedule.heading}</h1>
       <p className="mt-3 max-w-reading text-pretty leading-relaxed text-ink-muted">{dict.schedule.lead}</p>
       <div className="mt-8">
-        <Workbench dict={dict} locale={params.locale} initialScenarioId={first?.id ?? 'write-skew'} />
+        <Workbench
+          dict={dict}
+          locale={params.locale}
+          initialScenarioId={first?.id ?? 'write-skew'}
+          recordings={recordings()}
+        />
       </div>
     </SiteChrome>
   )
