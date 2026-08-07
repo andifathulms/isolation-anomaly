@@ -61,11 +61,13 @@
     --shadow-cast: 29 27 23;
 
     /*
-     * The sticky header's height, in one place. The workbench's control bar
-     * sticks directly beneath it and used to hardcode 5.1rem of its own, so the
-     * two drifted apart whenever the header's nav row wrapped — in Indonesian,
-     * or at 200% zoom. The header also takes this as a `min-height`, so the seam
-     * can never open even if the two are read at different moments.
+     * The sticky header's height, which the workbench's control bar sticks
+     * beneath. This value is only the starting point: it covers first paint and
+     * a reader without JavaScript, and components/HeaderHeight.tsx overwrites it
+     * with the header's measured height from mount onwards. CSS cannot measure
+     * an element, and every way this height actually changes — the nav row
+     * wrapping in Indonesian, Faustina loading and reflowing the title, 200%
+     * zoom — is invisible to a constant.
      */
     --header-height: 5.1rem;
 

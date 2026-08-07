@@ -4,6 +4,7 @@ import { dictionary } from '@/lib/i18n/dictionaries'
 import { ThemeToggle } from './ThemeToggle'
 import { MakerSignature } from './MakerSignature'
 import { BrandMark } from './BrandMark'
+import { HeaderHeight } from './HeaderHeight'
 
 /**
  * Header, navigation and the standing statement about what this is — every page
@@ -12,8 +13,9 @@ import { BrandMark } from './BrandMark'
  * The header is two rows rather than one wrapping row: identity and settings on
  * top, sections beneath. At the old single-row arrangement the six section links
  * wrapped into the title on a phone and the whole thing read as a word soup.
- * The section row scrolls sideways instead of wrapping, so the header keeps a
- * fixed height and the page below it never jumps.
+ * The section row scrolls sideways instead of wrapping, so the header stays two
+ * rows and the page below it never jumps. Its measured height is published as
+ * `--header-height` for the one thing that sticks beneath it.
  */
 export function SiteChrome({
   locale,
@@ -52,11 +54,20 @@ export function SiteChrome({
         {dict.site.skipToContent}
       </a>
 
-      {/* Opaque rather than translucent: at 90% the page's ruled ground and the
-          score's own marks ghosted through the header as it scrolled past. */}
-      {/* `min-h` is the same `--header-height` the workbench's control bar
-          sticks beneath, so the two cannot drift apart when this wraps. */}
-      <header className="sticky top-0 z-30 min-h-[var(--header-height)] border-b border-staff-faint bg-manuscript">
+      {/*
+        Opaque rather than translucent: at 90% the page's ruled ground and the
+        score's own marks ghosted through the header as it scrolled past.
+
+        `--header-height` is what the workbench's control bar sticks beneath, and
+        HeaderHeight publishes this element's measured height into it.
+
+        Deliberately no `min-height` of its own: it would be fed by the value it
+        produces, so the header could only ever ratchet taller — switch to a
+        locale with a shorter nav row and the floor from the longer one would
+        hold it stretched. The stylesheet's starting value covers first paint
+        and a reader without JavaScript; measurement covers everyone else.
+      */}
+      <header id="site-header" className="sticky top-0 z-30 border-b border-staff-faint bg-manuscript">
         <div className="mx-auto flex max-w-6xl items-center gap-x-4 px-4 pt-3 sm:px-6">
           <Link
             href={`${base}/`}
@@ -122,6 +133,8 @@ export function SiteChrome({
           </ul>
         </nav>
       </header>
+
+      <HeaderHeight target="site-header" />
 
       <main id="content" className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6 sm:py-14">
         {children}
