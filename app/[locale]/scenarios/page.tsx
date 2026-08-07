@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { SiteChrome } from '@/components/SiteChrome'
 import { dictionary } from '@/lib/i18n/dictionaries'
+import { metadataFor } from '@/lib/i18n/metadata'
 import { LOCALES, isLocale } from '@/lib/i18n/locales'
 import { SCENARIOS } from '@/lib/scenarios'
 import { ANOMALIES } from '@/lib/detect'
@@ -12,6 +13,12 @@ import { notate } from '@/lib/schedule'
 
 export function generateStaticParams() {
   return LOCALES.map((locale) => ({ locale }))
+}
+
+/** Title and description are the page's own heading and lead — one source. */
+export function generateMetadata({ params }: { params: { locale: string } }) {
+  if (!isLocale(params.locale)) return {}
+  return metadataFor(params.locale, 'scenarios')
 }
 
 /**

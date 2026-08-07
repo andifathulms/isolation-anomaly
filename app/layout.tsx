@@ -93,8 +93,17 @@ export const viewport: Viewport = {
  * Resolve the theme before first paint. A static export has no server to read
  * the preference on, so the alternative is a flash of the wrong manuscript.
  * Kept to one statement, inlined, and deliberately dependency-free.
+ *
+ * It also corrects `<html lang>` from the path. A static export has one root
+ * layout for every route, so the element below is compiled with a single
+ * hardcoded `lang` and the Indonesian pages inherited `en`. The locale subtree
+ * carries `lang` on its own wrapper as well, which is what assistive technology
+ * reads for the content itself; this fixes the document-level declaration for
+ * everything that looks there instead. Without JavaScript the wrapper still
+ * carries it and the root element still says `en` — the one part of this a
+ * static export cannot do properly.
  */
-const THEME_SCRIPT = `(function(){try{var s=localStorage.getItem('theme');var d=s==='dark'||(!s&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light'}catch(e){document.documentElement.dataset.theme='light'}})()`
+const THEME_SCRIPT = `(function(){try{var s=localStorage.getItem('theme');var d=s==='dark'||(!s&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light'}catch(e){document.documentElement.dataset.theme='light'}try{var m=location.pathname.match(/\\/(en|id)(\\/|$)/);if(m)document.documentElement.lang=m[1]}catch(e){}})()`
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

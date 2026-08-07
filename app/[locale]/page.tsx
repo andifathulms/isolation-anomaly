@@ -4,9 +4,16 @@ import { SiteChrome } from '@/components/SiteChrome'
 import { HeroFigure } from '@/components/score/HeroFigure'
 import { WorkedExample } from '@/components/WorkedExample'
 import { dictionary } from '@/lib/i18n/dictionaries'
+import { metadataFor } from '@/lib/i18n/metadata'
 import { isLocale } from '@/lib/i18n/locales'
 import { ANOMALIES, ANOMALY_IDS } from '@/lib/detect'
 import { anomalyText } from '@/lib/i18n/content'
+
+/** Title and description are the page's own heading and lead — one source. */
+export function generateMetadata({ params }: { params: { locale: string } }) {
+  if (!isLocale(params.locale)) return {}
+  return metadataFor(params.locale, null)
+}
 
 /**
  * The overview. A reader arriving here has usually never heard the phrase
