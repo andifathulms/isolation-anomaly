@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Dictionary } from '@/lib/i18n/dictionaries'
 
 const STORAGE_KEY = 'tour-seen'
@@ -20,6 +20,8 @@ export function Tour({ dict }: { readonly dict: Dictionary }) {
   // Starts hidden. Anything else flashes the panel at every returning reader
   // for as long as it takes the effect to read storage.
   const [visible, setVisible] = useState(false)
+  const headingRef = useRef<HTMLHeadingElement>(null)
+  const dismissed = useRef(false)
 
   useEffect(() => {
     try {
@@ -29,12 +31,35 @@ export function Tour({ dict }: { readonly dict: Dictionary }) {
     }
   }, [])
 
+  /**
+   * Advancing a beat replaces the heading and body under a button that keeps
+   * its own label, so nothing tells a screen reader anything changed. Moving
+   * focus to the new heading announces it and puts the reader at the top of
+   * what they are meant to read next. Skipped on the first render, where the
+   * panel appearing must not steal focus from the page.
+   */
+  useEffect(() => {
+    if (beat > 0) headingRef.current?.focus()
+  }, [beat])
+
+  /**
+   * Dismissal unmounts the focused button, which drops focus to the document.
+   * The panel sits directly above the controls, so the reader is handed the
+   * first of them rather than the top of the page.
+   */
+  useEffect(() => {
+    if (!dismissed.current) return
+    const next = document.querySelector<HTMLElement>('main select, main button')
+    next?.focus()
+  }, [visible])
+
   const dismiss = () => {
     try {
       window.localStorage.setItem(STORAGE_KEY, '1')
     } catch {
       // Nothing to remember it with; the panel simply returns next time.
     }
+    dismissed.current = true
     setVisible(false)
   }
 
@@ -50,8 +75,10 @@ export function Tour({ dict }: { readonly dict: Dictionary }) {
   const last = beat === beats.length - 1
 
   return (
+    // Labelled by its own heading rather than a copy of it: an `aria-label`
+    // holding the same string made every screen reader say it twice.
     <aside
-      aria-label={current.heading}
+      aria-labelledby="tour-heading"
       className="leaf border-l-2 border-l-voiceA px-4 py-4 sm:px-5"
     >
       <div className="flex items-baseline justify-between gap-4">
@@ -68,7 +95,11 @@ export function Tour({ dict }: { readonly dict: Dictionary }) {
         </div>
       </div>
 
-      <h2 className="mt-2 font-prose text-section">{current.heading}</h2>
+      {/* `tabIndex={-1}` so focus can be moved here on a beat change without
+          adding a tab stop to the ordinary sequence. */}
+      <h2 id="tour-heading" ref={headingRef} tabIndex={-1} className="mt-2 font-prose text-section">
+        {current.heading}
+      </h2>
       <p className="mt-2 max-w-reading text-body text-ink-muted">{current.body}</p>
 
       <div className="mt-4 flex flex-wrap items-center gap-2">

@@ -52,15 +52,18 @@ export function HeroFigure({
     readonly alt: string
     readonly conductorMark: string
     readonly committed: string
+    readonly region: string
   }
 }) {
   return (
-    <div className="leaf overflow-x-auto">
+    /* Focusable for the same reason the real score is: it scrolls sideways and
+       contains nothing tabbable. */
+    <div className="leaf scroll-region" tabIndex={0} role="group" aria-label={labels.region}>
       <svg
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         role="img"
         aria-label={labels.alt}
-        className="block h-auto w-full min-w-[30rem]"
+        className="block h-auto w-full min-w-[22rem]"
       >
         {/* Bar lines: scaffolding, not content. */}
         {Array.from({ length: STEPS + 1 }, (_, index) => (

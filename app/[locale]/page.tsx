@@ -60,6 +60,7 @@ export default function HomePage({ params }: { params: { locale: string } }) {
             alt: dict.home.figureAlt,
             conductorMark: dict.anomaly.found.toLowerCase(),
             committed: dict.outcome.committed,
+            region: dict.a11y.figureRegion,
           }}
         />
         <figcaption className="mt-3 max-w-reading text-caption text-ink-muted">

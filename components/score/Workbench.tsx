@@ -9,7 +9,7 @@ import { detect } from '@/lib/detect'
 import { buildConflictGraph, explainCycle, findCycle } from '@/lib/serial'
 import { decodeShareState, encodeShareState, type ShareState } from '@/lib/share'
 import type { Dictionary } from '@/lib/i18n/dictionaries'
-import { scenarioText } from '@/lib/i18n/content'
+import { anomalyText, scenarioText } from '@/lib/i18n/content'
 import type { Locale } from '@/lib/i18n/locales'
 import { Editor } from './Editor'
 import { Score } from './Score'
@@ -62,6 +62,27 @@ export function Workbench({
   const [copied, setCopied] = useState(false)
   const [editing, setEditing] = useState(false)
   const [playing, setPlaying] = useState(false)
+  const [stillness, setStillness] = useState(false)
+
+  /**
+   * Autoplay is the one thing on the site that moves without being asked to
+   * again — a `setTimeout`, so the reduced-motion rules in the stylesheet never
+   * touched it. Where the preference is set, Play is not offered: stepping is a
+   * complete equivalent, and it is the reader who decides when the score moves.
+   *
+   * Read from a media query listener rather than once, because the preference
+   * can be changed while the page is open.
+   */
+  useEffect(() => {
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const read = () => {
+      setStillness(query.matches)
+      if (query.matches) setPlaying(false)
+    }
+    read()
+    query.addEventListener('change', read)
+    return () => query.removeEventListener('change', read)
+  }, [])
 
   // Read the hash on mount and whenever it changes, so a pasted link works.
   useEffect(() => {
@@ -106,9 +127,15 @@ export function Workbench({
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      // Alt+← is Back and Cmd+← is Back; both used to step the score on their
+      // way out of the page. A modified arrow is never meant for us.
+      if (event.altKey || event.metaKey || event.ctrlKey || event.shiftKey) return
       if (event.target instanceof HTMLElement && ['INPUT', 'SELECT', 'TEXTAREA'].includes(event.target.tagName)) {
         return
       }
+      // Inside a region that scrolls sideways, the arrows belong to the region:
+      // it is the only way a keyboard can reach the right-hand end of a score.
+      if (event.target instanceof HTMLElement && event.target.closest('.scroll-region')) return
       if (event.key === 'ArrowRight') {
         setPlaying(false)
         goTo(step + 1)
@@ -150,8 +177,31 @@ export function Workbench({
   const current = trace?.steps[step]
   const context = `${pack.engine} ${pack.version} · ${state.level}`
 
+  /**
+   * The verdict, as one sentence, in a region that is always mounted.
+   *
+   * The callout used to carry `aria-live` on whichever of its two branches was
+   * rendered — so changing the level swapped the live element rather than
+   * updating it, and a live region inserted at the same moment as its content
+   * is not reliably announced by NVDA or VoiceOver. The most important sentence
+   * on the page was silent. Here it is one persistent node whose text changes.
+   */
+  const verdict = trace
+    ? anomalies.length > 0
+      ? `${dict.anomaly.foundHeadline} — ${anomalies
+          .map((found) => anomalyText(locale, found.id).name)
+          .join(', ')} — ${context}`
+      : `${dict.anomaly.noneHeadline} — ${context}`
+    : result?.type === 'refused'
+      ? `${dict.refusal.heading} — ${context}`
+      : ''
+
   return (
     <div className="space-y-8">
+      <p aria-live="polite" className="sr-only">
+        {verdict}
+      </p>
+
       <Tour dict={dict} />
 
       {/*
@@ -160,12 +210,14 @@ export function Workbench({
         the outcome change is the core loop, and it used to require scrolling
         back to the top of the page. It sits slightly under the header's own
         height so the two never separate and let content show through the seam.
+        The offset is `--header-height`, which the header also takes as a
+        `min-height`, so the two cannot drift apart when the nav row wraps.
 
         Static below `sm`: stacked on a phone the three selects are four rows
         tall, and pinning that to the top would leave almost no room for the
         score it is supposed to be controlling.
       */}
-      <div className="z-20 -mx-4 border-y border-staff-faint bg-manuscript px-4 py-3 sm:sticky sm:top-[5.1rem] sm:-mx-6 sm:px-6">
+      <div className="z-20 -mx-4 border-y border-staff-faint bg-manuscript px-4 py-3 sm:sticky sm:top-[var(--header-height)] sm:-mx-6 sm:px-6">
         <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
           <p className="eyebrow w-full sm:sr-only">{dict.controls.setup}</p>
 
@@ -309,7 +361,7 @@ export function Workbench({
               const next = moveStep(schedule, from, to)
               if (next !== schedule) change({ schedule: next, scenarioId: null, step: to })
             }}
-            labels={{ conductorMark: dict.anomaly.found.toLowerCase() }}
+            labels={{ conductorMark: dict.anomaly.found.toLowerCase(), region: dict.a11y.scoreRegion }}
             summary={summary}
           />
 
@@ -343,20 +395,22 @@ export function Workbench({
               ← <span className="hidden sm:inline">{dict.controls.previous}</span>
             </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                if (step >= maxStep) goTo(0)
-                setPlaying(!playing)
-              }}
-              aria-pressed={playing}
-              className="control control-strong"
-            >
-              {playing ? '❚❚' : '▶'}{' '}
-              <span className="hidden sm:inline">
-                {playing ? dict.controls.pause : step >= maxStep ? dict.controls.replay : dict.controls.play}
-              </span>
-            </button>
+            {stillness ? null : (
+              <button
+                type="button"
+                onClick={() => {
+                  if (step >= maxStep) goTo(0)
+                  setPlaying(!playing)
+                }}
+                aria-pressed={playing}
+                className="control control-strong"
+              >
+                {playing ? '❚❚' : '▶'}{' '}
+                <span className="hidden sm:inline">
+                  {playing ? dict.controls.pause : step >= maxStep ? dict.controls.replay : dict.controls.play}
+                </span>
+              </button>
+            )}
 
             <button
               type="button"

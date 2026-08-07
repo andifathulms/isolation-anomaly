@@ -53,7 +53,7 @@ type Props = {
   readonly onSelectStep: (step: number) => void
   /** Omitted when the score is read-only. */
   readonly onMoveStep?: (from: number, to: number) => void
-  readonly labels: { readonly conductorMark: string }
+  readonly labels: { readonly conductorMark: string; readonly region: string }
   /** Written description of the whole score, for anyone not looking at it. */
   readonly summary: string
 }
@@ -106,7 +106,20 @@ export function Score({
   const involved = new Set(anomalies.flatMap((found) => found.steps))
 
   return (
-    <div className="leaf overflow-x-auto">
+    /*
+     * A tab stop, because this box scrolls sideways and holds nothing focusable
+     * — the marks are deliberately not buttons. Without one there is no keyboard
+     * route to the right-hand end of a wide score at all, which on a narrow
+     * window is where the conductor's mark tends to be. `group` is the standard
+     * scrollable-region pattern: focusable, named, and left to the browser's own
+     * arrow-key scrolling.
+     */
+    <div
+      className="leaf scroll-region"
+      tabIndex={0}
+      role="group"
+      aria-label={labels.region}
+    >
       <svg
         width={width}
         height={height}
