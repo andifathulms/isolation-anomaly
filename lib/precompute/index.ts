@@ -5,7 +5,15 @@ import { execute } from '@/lib/engine'
 import { detectedIds } from '@/lib/detect'
 import { buildConflictGraph, edgesOnCycle, equivalentSerialOrders, explainCycle, findCycle } from '@/lib/serial'
 import type { Locale } from '@/lib/i18n/locales'
-import { graphKey, type GraphData, type GraphRun, type MatrixCell, type MatrixScenario } from './shape'
+import {
+  graphKey,
+  type GraphData,
+  type GraphRun,
+  type LevelClass,
+  type LevelClasses,
+  type MatrixCell,
+  type MatrixScenario,
+} from './shape'
 import { anomalyText, scenarioText } from '@/lib/i18n/content'
 
 export * from './shape'
@@ -107,5 +115,121 @@ export function graphData(locale: Locale): GraphData {
     })),
     packs: PACKS.map((pack) => ({ id: pack.id, engine: pack.engine, version: pack.version })),
     runs,
+  }
+}
+
+/**
+ * Which of the twenty-odd level names across five engines actually behave the
+ * same as each other.
+ *
+ * PRD §1's third gap is that the level names mean different things in different
+ * engines and nobody says so. The matrix demonstrates that one schedule at a
+ * time; nothing in the app has ever stated it. This is the only place it can be
+ * computed rather than asserted — five cited packs behind one shared executor,
+ * so "these two names are indistinguishable" is a result and not an opinion.
+ *
+ * The signature is the observable outcome of every library scenario: which
+ * anomalies occurred, which transactions aborted, with which error codes, and
+ * whether the run was refused. Two (pack, level) pairs land in the same class
+ * when every one of those matches across all eleven schedules.
+ *
+ * What this is not: proof of equivalence. Eleven schedules agreeing is evidence
+ * over eleven schedules. A twelfth could split any class here, and the page says
+ * so where the classes are shown.
+ */
+export function levelClasses(): LevelClasses {
+  const bySignature = new Map<string, LevelClass['members'][number][]>()
+  const facts = new Map<string, { permits: Set<string>; aborts: number; refuses: number }>()
+
+  for (const pack of PACKS) {
+    for (const level of LEVELS) {
+      const parts: string[] = []
+      const permits = new Set<string>()
+      let aborts = 0
+      let refuses = 0
+
+      for (const scenario of SCENARIOS) {
+        const result = execute(scenario.schedule, pack, level)
+        if (result.type === 'refused') {
+          parts.push(`${scenario.id}:refused:${result.refusal.type}`)
+          refuses += 1
+          continue
+        }
+        const found = detectedIds(result.trace)
+        found.forEach((id) => permits.add(id))
+        if (result.trace.transactions.some((txn) => txn.outcome === 'aborted')) aborts += 1
+
+        /*
+         * The signature is what the application saw: the value every statement
+         * returned, which transactions committed, and the table left behind.
+         *
+         * One thing is deliberately excluded: the error code. 40001 and
+         * ORA-08177 are the same event spelled in two dialects, and grouping by
+         * them means nothing ever matches — the full oracle projection produces
+         * a page of singletons and says nothing at all.
+         *
+         * Waits are in, and getting that wrong the other way was instructive.
+         * With only anomalies and outcomes, SQL Server's READ COMMITTED merged
+         * with the same level under RCSI. Over this library those two return
+         * identical values in every scenario and differ in exactly one wait —
+         * so by values alone the claim is true and still misleading, because
+         * not blocking readers is the entire point of RCSI. A difference the
+         * harness recorded from a real engine does not get dropped for tidiness.
+         */
+        const values = result.trace.steps.map((step) =>
+          step.outcome.type === 'ok' && step.outcome.read
+            ? step.outcome.read.type === 'row'
+              ? `${step.outcome.read.value}`
+              : step.outcome.read.rows.map((row) => `${row.key}=${row.value}`).join(',')
+            : step.outcome.type,
+        )
+        const waits = result.trace.steps.map((step) => step.blockedUntilStep ?? '-')
+        const outcomes = result.trace.transactions.map((txn) => `${txn.txn}:${txn.outcome}`)
+        const table = result.trace.finalState.map((row) => `${row.key}=${row.value}`).join(',')
+        parts.push(
+          `${scenario.id}:${found.join(',')}:${values.join('|')}:${waits.join(',')}:${outcomes.join(',')}:${table}`,
+        )
+      }
+
+      const signature = parts.join('|')
+      const entry = pack.levels[level]
+      const member = {
+        packId: pack.id,
+        engine: pack.engine,
+        version: pack.version,
+        level,
+        aliasOf: entry.kind === 'alias' ? entry.of : null,
+      }
+      bySignature.set(signature, [...(bySignature.get(signature) ?? []), member])
+      if (!facts.has(signature)) facts.set(signature, { permits, aborts, refuses })
+    }
+  }
+
+  const all = [...bySignature.entries()].map(([signature, members]) => {
+    const fact = facts.get(signature)
+    return {
+      id: members.map((m) => `${m.packId}:${m.level}`).join('+'),
+      members,
+      permits: [...(fact?.permits ?? [])].sort(),
+      aborts: fact?.aborts ?? 0,
+      refuses: fact?.refuses ?? 0,
+    }
+  })
+
+  // A level an engine does not implement refuses every schedule. Those are not
+  // a shared behaviour — they are an absence, and grouping them together would
+  // claim that PostgreSQL's missing SNAPSHOT and Oracle's missing REPEATABLE
+  // READ are the same thing rather than both being nothing.
+  const unsupported = all
+    .filter((entry) => entry.refuses === SCENARIOS.length)
+    .flatMap((entry) => entry.members)
+    .map(({ packId, engine, version, level }) => ({ packId, engine, version, level }))
+
+  return {
+    classes: all
+      .filter((entry) => entry.refuses < SCENARIOS.length)
+      .sort((a, b) => b.members.length - a.members.length || a.id.localeCompare(b.id)),
+    unsupported,
+    scenarioCount: SCENARIOS.length,
   }
 }

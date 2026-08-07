@@ -62,3 +62,39 @@ export type GraphData = {
 
 export const graphKey = (scenarioId: string, packId: string, level: IsolationLevel): string =>
   `${scenarioId}|${packId}|${level}`
+
+/**
+ * A group of (engine, level) pairs that no schedule in the library can tell
+ * apart.
+ *
+ * Deliberately not called "equivalent". Agreeing on eleven schedules is not
+ * proof of agreeing in general, and the difference between those two claims is
+ * exactly the kind of thing this project exists not to blur — so the wording on
+ * screen, the type name and this comment all say *indistinguishable here*.
+ */
+export type LevelClass = {
+  /** Stable id, derived from the members, so the ordering is deterministic. */
+  readonly id: string
+  readonly members: readonly {
+    readonly packId: string
+    readonly engine: string
+    readonly version: string
+    readonly level: string
+    /** The level this pack declares it actually runs, when it is an alias. */
+    readonly aliasOf: string | null
+  }[]
+  /** Anomaly ids permitted somewhere in the library by this behaviour. */
+  readonly permits: readonly string[]
+  /** How many library scenarios this behaviour aborts a transaction in. */
+  readonly aborts: number
+  /** How many it refuses outright. */
+  readonly refuses: number
+}
+
+export type LevelClasses = {
+  readonly classes: readonly LevelClass[]
+  /** Names an engine does not implement at all — not a behaviour, an absence. */
+  readonly unsupported: readonly { readonly packId: string; readonly engine: string; readonly version: string; readonly level: string }[]
+  /** How many schedules the grouping is evidence over. */
+  readonly scenarioCount: number
+}

@@ -287,6 +287,11 @@ export type Dictionary = {
   >
   /** The level comparison strip — where the other levels stop agreeing. */
   /** The interleaving space — every legal ordering, counted, never rated. */
+  /** Level names grouped by behaviour rather than by name. */
+  readonly classes: Record<
+    'heading' | 'lead' | 'caveat' | 'permits' | 'permitsNothing' | 'abortsIn' | 'unsupported',
+    string
+  >
   readonly space: Record<
     'heading' | 'hint' | 'none' | 'abortedInstead' | 'tooMany' | 'notProbability',
     string
@@ -640,6 +645,17 @@ const en: Dictionary = {
     contrastBody:
       'Nothing about the schedule changes — same statements, same order, same data. Only the isolation level is different, and the run below is produced the same way as the one above.',
     contrastOutcome: 'One doctor is still on call, because the database refused the second commit rather than allowing it.',
+  },
+  classes: {
+    heading: 'Which level names cannot be told apart',
+    lead:
+      'Every level of every engine here, run against all {count} schedules in the library and grouped by what the application saw: the value each statement returned, where it waited, which transactions committed, and the table left behind. Only the error codes are ignored — 40001 and ORA-08177 are the same event in two dialects.',
+    caveat:
+      'This is evidence over {count} schedules, not a proof of equivalence. Two levels in the same group agreed on every one of them; a twelfth schedule could still tell them apart. Read each group as “nothing here distinguishes these”, never as “these are the same level”.',
+    permits: 'Permits somewhere in the library:',
+    permitsNothing: 'no anomaly in any schedule',
+    abortsIn: 'aborts a transaction in {n}',
+    unsupported: 'Names these engines do not implement at all',
   },
   space: {
     heading: 'Every ordering of these statements',
@@ -1016,6 +1032,17 @@ const id: Dictionary = {
     contrastBody:
       'Tidak ada yang berubah pada schedule-nya — statement yang sama, urutan yang sama, data yang sama. Hanya isolation level-nya yang berbeda, dan eksekusi di bawah ini dihasilkan dengan cara yang sama seperti yang di atas.',
     contrastOutcome: 'Satu dokter tetap berjaga, karena basis data menolak commit yang kedua alih-alih mengizinkannya.',
+  },
+  classes: {
+    heading: 'Nama level mana yang tidak bisa dibedakan',
+    lead:
+      'Setiap level pada setiap mesin di sini dijalankan terhadap seluruh {count} schedule di pustaka ini, lalu dikelompokkan berdasarkan apa yang dilihat aplikasi: nilai yang dikembalikan tiap statement, di mana ia menunggu, transaksi mana yang commit, dan tabel yang ditinggalkannya. Hanya kode error yang diabaikan — 40001 dan ORA-08177 adalah peristiwa yang sama dalam dua dialek.',
+    caveat:
+      'Ini adalah bukti atas {count} schedule, bukan pembuktian kesetaraan. Dua level dalam satu kelompok sepakat pada semuanya; schedule kedua belas masih bisa membedakannya. Bacalah tiap kelompok sebagai “tidak ada di sini yang membedakan keduanya”, bukan sebagai “keduanya level yang sama”.',
+    permits: 'Mengizinkan di suatu tempat dalam pustaka:',
+    permitsNothing: 'tidak ada anomali pada schedule mana pun',
+    abortsIn: 'meng-abort sebuah transaksi pada {n}',
+    unsupported: 'Nama yang sama sekali tidak diimplementasikan mesin-mesin ini',
   },
   space: {
     heading: 'Semua urutan penyisipan statement ini',
