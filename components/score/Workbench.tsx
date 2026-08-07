@@ -20,6 +20,7 @@ import { Tour } from './Tour'
 import { AnomalyCallout } from './AnomalyCallout'
 import { WhyRead } from './WhyRead'
 import { LevelStrip } from './LevelStrip'
+import { InterleavingSpace } from './InterleavingSpace'
 import { KeyLegend } from './KeyLegend'
 import { SnapshotPanel } from './SnapshotPanel'
 import { VersionChains } from '@/components/versions/VersionChains'
@@ -527,6 +528,9 @@ export function Workbench({
               />
             </div>
           </section>
+
+          {/* Not just this ordering — all of them. */}
+          <InterleavingSpace schedule={schedule} pack={pack} level={state.level} dict={dict} />
 
           {/* Where the other levels stop agreeing with this one. */}
           <LevelStrip

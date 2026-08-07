@@ -286,6 +286,11 @@ export type Dictionary = {
     string
   >
   /** The level comparison strip — where the other levels stop agreeing. */
+  /** The interleaving space — every legal ordering, counted, never rated. */
+  readonly space: Record<
+    'heading' | 'hint' | 'none' | 'abortedInstead' | 'tooMany' | 'notProbability',
+    string
+  >
   readonly levels: Record<'heading' | 'hint' | 'current' | 'identical' | 'divergesAt', string>
   readonly a11y: Record<
     'scoreRegion' | 'figureRegion' | 'matrixRegion' | 'theme' | 'updated' | 'stateColumn' | 'matrixCaption',
@@ -635,6 +640,17 @@ const en: Dictionary = {
     contrastBody:
       'Nothing about the schedule changes — same statements, same order, same data. Only the isolation level is different, and the run below is produced the same way as the one above.',
     contrastOutcome: 'One doctor is still on call, because the database refused the second commit rather than allowing it.',
+  },
+  space: {
+    heading: 'Every ordering of these statements',
+    hint:
+      'Each session issues its own statements in order, so the only freedom is how the two interleave — {total} orderings in total. Every one of them was run at every level of this engine.',
+    none: 'no anomaly in any ordering',
+    abortedInstead: 'aborted instead',
+    tooMany:
+      'This schedule has {total} legal orderings — too many to run them all here. Rather than count some of them and present it as if it were all of them, this says nothing.',
+    notProbability:
+      'These are counts of orderings, not likelihoods. Real interleavings are not evenly distributed, and nothing here says how often anything happens under load — only what is possible at all.',
   },
   levels: {
     heading: 'The same schedule at the other levels',
@@ -1000,6 +1016,17 @@ const id: Dictionary = {
     contrastBody:
       'Tidak ada yang berubah pada schedule-nya — statement yang sama, urutan yang sama, data yang sama. Hanya isolation level-nya yang berbeda, dan eksekusi di bawah ini dihasilkan dengan cara yang sama seperti yang di atas.',
     contrastOutcome: 'Satu dokter tetap berjaga, karena basis data menolak commit yang kedua alih-alih mengizinkannya.',
+  },
+  space: {
+    heading: 'Semua urutan penyisipan statement ini',
+    hint:
+      'Setiap session mengirim statement-nya sendiri secara berurutan, jadi satu-satunya kebebasan adalah bagaimana keduanya disisipkan — total {total} urutan. Semuanya dijalankan pada setiap level mesin ini.',
+    none: 'tidak ada anomali pada urutan mana pun',
+    abortedInstead: 'malah di-abort',
+    tooMany:
+      'Schedule ini punya {total} urutan yang sah — terlalu banyak untuk dijalankan semuanya di sini. Daripada menghitung sebagiannya lalu menyajikannya seolah-olah itu semuanya, bagian ini memilih tidak mengatakan apa pun.',
+    notProbability:
+      'Ini adalah cacah urutan, bukan peluang. Urutan penyisipan di dunia nyata tidak terdistribusi merata, dan tidak ada satu pun di sini yang menyatakan seberapa sering sesuatu terjadi di bawah beban — hanya apa yang mungkin terjadi sama sekali.',
   },
   levels: {
     heading: 'Schedule yang sama pada level lainnya',
