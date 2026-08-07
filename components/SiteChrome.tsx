@@ -26,13 +26,19 @@ export function SiteChrome({
 }) {
   const dict = dictionary(locale)
   const base = `/${locale}`
+  /**
+   * Six links at one weight made the tool itself as easy to miss as the
+   * citations page. `primary` marks the two pages where a visitor actually does
+   * something; the reference pages stay quieter. Order is unchanged, and so is
+   * every destination — this is emphasis, not a reorganisation.
+   */
   const links = [
-    { key: 'home' as const, href: `${base}/` },
-    { key: 'schedule' as const, href: `${base}/schedule/` },
-    { key: 'scenarios' as const, href: `${base}/scenarios/` },
-    { key: 'matrix' as const, href: `${base}/matrix/` },
-    { key: 'graph' as const, href: `${base}/graph/` },
-    { key: 'engines' as const, href: `${base}/engines/` },
+    { key: 'home' as const, href: `${base}/`, primary: false },
+    { key: 'schedule' as const, href: `${base}/schedule/`, primary: true },
+    { key: 'scenarios' as const, href: `${base}/scenarios/`, primary: true },
+    { key: 'matrix' as const, href: `${base}/matrix/`, primary: false },
+    { key: 'graph' as const, href: `${base}/graph/`, primary: false },
+    { key: 'engines' as const, href: `${base}/engines/`, primary: false },
   ]
 
   return (
@@ -95,9 +101,13 @@ export function SiteChrome({
                   href={link.href}
                   aria-current={link.key === active ? 'page' : undefined}
                   className={`block border-b-2 pb-1.5 font-control text-caption transition-colors ${
+                    link.primary ? 'font-medium' : ''
+                  } ${
                     link.key === active
                       ? 'border-conductor text-ink'
-                      : 'border-transparent text-ink-muted hover:border-staff hover:text-ink'
+                      : link.primary
+                        ? 'border-transparent text-ink hover:border-staff'
+                        : 'border-transparent text-ink-muted hover:border-staff hover:text-ink'
                   }`}
                 >
                   {dict.nav[link.key]}

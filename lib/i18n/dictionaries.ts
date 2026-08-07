@@ -58,6 +58,10 @@ export type Dictionary = {
     | 'notationHint',
     string
   >
+  /** The tool's own page. Every other page has a lead; this one borrowed the
+   * site standfirst, so arriving from the landing page reprinted the sentence
+   * you had just read. */
+  readonly schedule: Record<'heading' | 'lead', string>
   readonly controls: Record<
     | 'engine'
     | 'level'
@@ -277,6 +281,11 @@ const en: Dictionary = {
     anomalyListHeading: 'The failures this site can name',
     notationHint:
       'The formula beside each name is the standard shorthand for a schedule: r is a read, w is a write, c a commit; the number is which transaction did it, and the letter in brackets is which row. So w1[x] r2[x] reads “transaction 1 writes row x, then transaction 2 reads row x”.',
+  },
+  schedule: {
+    heading: 'Step through the failure',
+    lead:
+      'Press Next to advance one statement at a time. The score shows who did what and when; the panels below show what the engine held at that exact moment. Change the engine or the isolation level and the same steps re-run instantly.',
   },
   controls: {
     engine: 'Engine',
@@ -543,6 +552,11 @@ const id: Dictionary = {
     anomalyListHeading: 'Kegagalan yang bisa disebut namanya di sini',
     notationHint:
       'Rumus di samping tiap nama adalah notasi baku untuk sebuah jadwal: r berarti baca, w berarti tulis, c berarti commit; angkanya menunjukkan transaksi mana yang melakukannya, dan huruf dalam kurung siku menunjukkan barisnya. Jadi w1[x] r2[x] dibaca “transaksi 1 menulis baris x, lalu transaksi 2 membaca baris x”.',
+  },
+  schedule: {
+    heading: 'Telusuri kegagalannya langkah demi langkah',
+    lead:
+      'Tekan Langkah berikutnya untuk maju satu pernyataan. Skor menunjukkan siapa melakukan apa dan kapan; panel di bawahnya menunjukkan apa yang dipegang mesin pada saat itu juga. Ganti mesin atau isolation level-nya dan langkah yang sama langsung dijalankan ulang.',
   },
   controls: {
     engine: 'Mesin',
