@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import type { Dictionary } from '@/lib/i18n/dictionaries'
 
 /**
@@ -10,9 +11,13 @@ import type { Dictionary } from '@/lib/i18n/dictionaries'
  * approximates the thing it explains is worse than no key — the reader learns a
  * shape that is not on screen.
  *
- * Collapsed by default: it is scaffolding a reader needs once and then never
- * again, and the score is the thing that should own the space.
+ * Open on a first visit, collapsed afterwards. It is scaffolding a reader needs
+ * once and then never again — but "once" has to actually happen, and collapsed
+ * by default meant a newcomer met `r1[P:1..2]` with the key to it one click
+ * away, below the score and below the verdict. Closing it is remembered.
  */
+
+const STORAGE_KEY = 'legend-seen'
 
 /*
  * Decorative. The glyph draws what the `<dt>` immediately beside it already
@@ -29,6 +34,26 @@ function Glyph({ children }: { children: React.ReactNode; label: string }) {
 }
 
 export function ScoreLegend({ dict }: { readonly dict: Dictionary }) {
+  // Starts closed so a returning reader never sees it flash open.
+  const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    try {
+      if (!window.localStorage.getItem(STORAGE_KEY)) setOpen(true)
+    } catch {
+      // No storage: the key opens every time, which is the harmless direction.
+      setOpen(true)
+    }
+  }, [])
+
+  const remember = () => {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, '1')
+    } catch {
+      // Nothing to remember it with.
+    }
+  }
+
   const entries = [
     {
       term: dict.legend.voices,
@@ -157,7 +182,15 @@ export function ScoreLegend({ dict }: { readonly dict: Dictionary }) {
   ]
 
   return (
-    <details className="group leaf overflow-hidden">
+    <details
+      className="group leaf overflow-hidden"
+      open={open}
+      onToggle={(event) => {
+        const next = event.currentTarget.open
+        setOpen(next)
+        if (!next) remember()
+      }}
+    >
       <summary
         className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 font-control text-caption
           transition-colors hover:bg-manuscript-sunk [&::-webkit-details-marker]:hidden"

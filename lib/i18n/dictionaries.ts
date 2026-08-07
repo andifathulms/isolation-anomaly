@@ -280,6 +280,8 @@ export type Dictionary = {
     'heading' | 'intro' | 'outcome' | 'close' | 'contrastHeading' | 'contrastBody' | 'contrastOutcome',
     string
   >
+  /** The level comparison strip — where the other levels stop agreeing. */
+  readonly levels: Record<'heading' | 'hint' | 'current' | 'identical' | 'divergesAt', string>
   readonly a11y: Record<
     'scoreRegion' | 'figureRegion' | 'matrixRegion' | 'theme' | 'updated' | 'stateColumn' | 'matrixCaption',
     string
@@ -621,6 +623,14 @@ const en: Dictionary = {
     contrastBody:
       'Nothing about the schedule changes — same statements, same order, same data. Only the isolation level is different, and the run below is produced the same way as the one above.',
     contrastOutcome: 'One doctor is still on call, because the database refused the second commit rather than allowing it.',
+  },
+  levels: {
+    heading: 'The same schedule at the other levels',
+    hint:
+      'Every level of this engine, run on these exact statements, with the first step at which it stops agreeing with the run above. Pick one to switch to it.',
+    current: 'the run above',
+    identical: 'identical throughout',
+    divergesAt: 'parts company at step',
   },
   a11y: {
     scoreRegion: 'The score, as a scrolling region. Use the arrow keys to reach later steps.',
@@ -971,6 +981,14 @@ const id: Dictionary = {
     contrastBody:
       'Tidak ada yang berubah pada schedule-nya — statement yang sama, urutan yang sama, data yang sama. Hanya isolation level-nya yang berbeda, dan eksekusi di bawah ini dihasilkan dengan cara yang sama seperti yang di atas.',
     contrastOutcome: 'Satu dokter tetap berjaga, karena basis data menolak commit yang kedua alih-alih mengizinkannya.',
+  },
+  levels: {
+    heading: 'Schedule yang sama pada level lainnya',
+    hint:
+      'Setiap level pada mesin ini, dijalankan atas statement yang persis sama, beserta langkah pertama yang membuatnya tidak lagi sama dengan eksekusi di atas. Pilih salah satu untuk berpindah ke sana.',
+    current: 'eksekusi di atas',
+    identical: 'sama persis sepanjang eksekusi',
+    divergesAt: 'mulai berbeda pada langkah',
   },
   a11y: {
     scoreRegion: 'Skor, sebagai area yang bisa digulir. Gunakan tombol panah untuk mencapai langkah berikutnya.',

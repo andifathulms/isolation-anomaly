@@ -19,6 +19,7 @@ import { StepList } from './StepList'
 import { Tour } from './Tour'
 import { AnomalyCallout } from './AnomalyCallout'
 import { WhyRead } from './WhyRead'
+import { LevelStrip } from './LevelStrip'
 import { KeyLegend } from './KeyLegend'
 import { SnapshotPanel } from './SnapshotPanel'
 import { VersionChains } from '@/components/versions/VersionChains'
@@ -522,6 +523,15 @@ export function Workbench({
               />
             </div>
           </section>
+
+          {/* Where the other levels stop agreeing with this one. */}
+          <LevelStrip
+            schedule={schedule}
+            pack={pack}
+            level={state.level}
+            onPick={(next) => change({ level: next, step: 0 })}
+            dict={dict}
+          />
 
           <nav aria-label={dict.controls.step}>
             <StepList trace={trace} currentStep={step} onSelectStep={goTo} dict={dict} />
