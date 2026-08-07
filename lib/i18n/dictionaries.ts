@@ -104,6 +104,11 @@ export type Dictionary = {
     | 'waitBody'
     | 'playhead'
     | 'playheadBody'
+    | 'snapshotLabel'
+    | 'span'
+    | 'spanBody'
+    | 'unseen'
+    | 'unseenBody'
     | 'mark'
     | 'markBody'
     | 'notation'
@@ -406,6 +411,13 @@ const en: Dictionary = {
       'The statement could not proceed and blocked on a lock. The arc lands on the step that finally released it.',
     playhead: 'Solid line with a triangle — where you are',
     playheadBody: 'The step currently shown in the panels below. Stepping moves it.',
+    snapshotLabel: 'snapshot',
+    span: 'Bracket under a stave — how long a view is frozen',
+    spanBody:
+      'The span of that transaction’s snapshot: taken once, at the step it starts on, and used for every read until the transaction ends. Levels that take a fresh snapshot for each statement have no span to draw, which is the difference between REPEATABLE READ and READ COMMITTED in one picture.',
+    unseen: 'Dashed ring on the bracket — a commit you cannot see',
+    unseenBody:
+      'Another transaction committed inside your span. It succeeded and it is in the table, and this transaction keeps reading the older version anyway — not a bug, but the promise the level made.',
     mark: 'Red bracket — the moment it went wrong',
     markBody:
       'It sits above the step where the anomaly became unavoidable. Red is used for nothing else on this site.',
@@ -762,6 +774,13 @@ const id: Dictionary = {
       'Statement tidak bisa lanjut dan terhalang oleh lock. Ujung busurnya jatuh pada langkah yang akhirnya melepaskannya.',
     playhead: 'Garis tegas dengan segitiga — posisi Anda',
     playheadBody: 'Langkah yang sedang ditampilkan pada panel di bawah. Menelusuri langkah menggeserkannya.',
+    snapshotLabel: 'snapshot',
+    span: 'Kurung di bawah paranada — berapa lama pandangan dibekukan',
+    spanBody:
+      'Rentang snapshot transaksi itu: diambil sekali, pada langkah tempat ia dimulai, lalu dipakai untuk semua pembacaan sampai transaksinya berakhir. Level yang mengambil snapshot baru pada tiap statement tidak punya rentang untuk digambar, dan justru itulah perbedaan REPEATABLE READ dan READ COMMITTED dalam satu gambar.',
+    unseen: 'Lingkaran putus-putus pada kurung — commit yang tak terlihat',
+    unseenBody:
+      'Transaksi lain commit di dalam rentang Anda. Ia berhasil dan datanya sudah ada di tabel, dan transaksi ini tetap membaca versi yang lama — bukan bug, melainkan janji yang dibuat level tersebut.',
     mark: 'Kurung merah — saat semuanya menjadi salah',
     markBody:
       'Letaknya di atas langkah ketika anomali menjadi tak terhindarkan. Merah tidak dipakai untuk hal lain di situs ini.',

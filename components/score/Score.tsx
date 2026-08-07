@@ -53,7 +53,12 @@ type Props = {
   readonly onSelectStep: (step: number) => void
   /** Omitted when the score is read-only. */
   readonly onMoveStep?: (from: number, to: number) => void
-  readonly labels: { readonly conductorMark: string; readonly region: string }
+  readonly labels: {
+    readonly conductorMark: string
+    readonly region: string
+    /** Marks the start of a transaction-scoped snapshot's span. */
+    readonly snapshot: string
+  }
   /** Written description of the whole score, for anyone not looking at it. */
   readonly summary: string
 }
@@ -104,6 +109,49 @@ export function Score({
 
   const causeSteps = [...new Set(anomalies.map((found) => found.causeStep))].sort((a, b) => a - b)
   const involved = new Set(anomalies.flatMap((found) => found.steps))
+
+  /**
+   * How long each transaction's view is frozen for, and which commits fell
+   * inside it that the transaction cannot see.
+   *
+   * The score drew every operation and never drew the one thing this project is
+   * about. A snapshot is an extent, not an event: at a transaction-scoped level
+   * it is taken once and covers everything that follows, so any commit landing
+   * inside that extent is invisible to the reader however recent it is. That is
+   * the whole mechanism, and it was only ever available by reading a step number
+   * out of a panel and holding it in your head while looking at a mark.
+   *
+   * A statement-scoped snapshot has no span to draw — it is retaken for every
+   * statement — and the absence is the contrast that teaches the difference.
+   */
+  const world = trace.steps[currentStep]?.state
+  const spans = (world?.transactions ?? []).flatMap((state) => {
+    const snapshot = state.snapshot
+    if (!snapshot || snapshot.scope !== 'transaction') return []
+    const txnIndex = schedule.transactions.indexOf(state.txn)
+    if (txnIndex < 0) return []
+    const visible = new Set(snapshot.visibleXids)
+    const ends = state.endedAtStep ?? currentStep
+    return [{
+      txnIndex,
+      from: snapshot.takenAtStep,
+      to: ends,
+      // Committed by someone else, *inside* this span, and not in the snapshot.
+      // Both bounds matter: a commit before the snapshot is visible, and one
+      // after this transaction ended never had the chance to be hidden from it.
+      unseen: (world?.transactions ?? [])
+        .filter(
+          (other) =>
+            other.xid !== state.xid &&
+            other.status === 'committed' &&
+            other.endedAtStep !== null &&
+            other.endedAtStep > snapshot.takenAtStep &&
+            other.endedAtStep <= ends &&
+            !visible.has(other.xid),
+        )
+        .map((other) => other.endedAtStep as number),
+    }]
+  })
 
   return (
     /*
@@ -174,6 +222,40 @@ export function Score({
               >
                 {result?.outcome ?? 'open'}
               </text>
+            </g>
+          )
+        })}
+
+        {/*
+          The snapshot's extent, under its own stave. Drawn in staff grey and
+          thin: it is the ground a transaction reads against, not an event, and
+          conductor's red stays reserved for anomalies and aborts.
+        */}
+        {spans.map((span) => {
+          const y = staveY(span.txnIndex) + 44
+          const x1 = columnX(span.from)
+          const x2 = columnX(span.to)
+          return (
+            <g key={`span-${span.txnIndex}`} className="text-staff">
+              <line x1={x1} x2={x2} y1={y} y2={y} className="stroke-current" strokeWidth={1} />
+              <line x1={x1} x2={x1} y1={y - 4} y2={y + 4} className="stroke-current" strokeWidth={1} />
+              <line x1={x2} x2={x2} y1={y - 4} y2={y + 4} className="stroke-current" strokeWidth={1} />
+              <text x={x1 + 5} y={y - 6} className="fill-ink-soft font-control" fontSize={9}>
+                {labels.snapshot}
+              </text>
+
+              {/* A commit that landed inside the span and stayed invisible. */}
+              {span.unseen.map((step) => (
+                <circle
+                  key={`unseen-${span.txnIndex}-${step}`}
+                  cx={columnX(step)}
+                  cy={y}
+                  r={4}
+                  className="fill-manuscript-raised stroke-current"
+                  strokeWidth={1.25}
+                  strokeDasharray="2 2"
+                />
+              ))}
             </g>
           )
         })}

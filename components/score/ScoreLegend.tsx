@@ -136,6 +136,37 @@ export function ScoreLegend({ dict }: { readonly dict: Dictionary }) {
       ),
     },
     {
+      term: dict.legend.span,
+      body: dict.legend.spanBody,
+      glyph: (
+        <Glyph label={dict.legend.span}>
+          <line x1="2" y1="10" x2="42" y2="10" className="stroke-staff" strokeWidth={1.25} />
+          <line x1="10" y1="20" x2="36" y2="20" className="stroke-staff" strokeWidth={1} />
+          <line x1="10" y1="16" x2="10" y2="24" className="stroke-staff" strokeWidth={1} />
+          <line x1="36" y1="16" x2="36" y2="24" className="stroke-staff" strokeWidth={1} />
+        </Glyph>
+      ),
+    },
+    {
+      term: dict.legend.unseen,
+      body: dict.legend.unseenBody,
+      glyph: (
+        <Glyph label={dict.legend.unseen}>
+          <line x1="4" y1="14" x2="40" y2="14" className="stroke-staff" strokeWidth={1} />
+          <line x1="4" y1="10" x2="4" y2="18" className="stroke-staff" strokeWidth={1} />
+          <line x1="40" y1="10" x2="40" y2="18" className="stroke-staff" strokeWidth={1} />
+          <circle
+            cx="22"
+            cy="14"
+            r="4"
+            className="fill-manuscript-raised stroke-staff"
+            strokeWidth={1.25}
+            strokeDasharray="2 2"
+          />
+        </Glyph>
+      ),
+    },
+    {
       term: dict.legend.playhead,
       body: dict.legend.playheadBody,
       glyph: (

@@ -382,7 +382,11 @@ export function Workbench({
               const next = moveStep(schedule, from, to)
               if (next !== schedule) change({ schedule: next, scenarioId: null, step: to })
             }}
-            labels={{ conductorMark: dict.anomaly.found.toLowerCase(), region: dict.a11y.scoreRegion }}
+            labels={{
+              conductorMark: dict.anomaly.found.toLowerCase(),
+              region: dict.a11y.scoreRegion,
+              snapshot: dict.legend.snapshotLabel,
+            }}
             summary={summary}
           />
 
