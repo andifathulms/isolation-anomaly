@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { SiteChrome } from '@/components/SiteChrome'
 import { HeroFigure } from '@/components/score/HeroFigure'
+import { WorkedExample } from '@/components/WorkedExample'
 import { dictionary } from '@/lib/i18n/dictionaries'
 import { isLocale } from '@/lib/i18n/locales'
 import { ANOMALIES, ANOMALY_IDS } from '@/lib/detect'
@@ -111,6 +112,9 @@ export default function HomePage({ params }: { params: { locale: string } }) {
           {dict.home.storyPunchline}
         </p>
       </section>
+
+      {/* The mechanism, worked through, before the reader is asked to drive. */}
+      <WorkedExample locale={locale} dict={dict} />
 
       <section className="mt-16">
         <h2 className="font-prose text-title">{dict.home.howHeading}</h2>

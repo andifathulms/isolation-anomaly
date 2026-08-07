@@ -275,6 +275,11 @@ export type Dictionary = {
     | 'source',
     string
   >
+  /** The end-to-end walkthrough on the landing page, generated from a real run. */
+  readonly worked: Record<
+    'heading' | 'intro' | 'outcome' | 'close' | 'contrastHeading' | 'contrastBody' | 'contrastOutcome',
+    string
+  >
   readonly a11y: Record<
     'scoreRegion' | 'figureRegion' | 'matrixRegion' | 'theme' | 'updated' | 'stateColumn' | 'matrixCaption',
     string
@@ -604,6 +609,18 @@ const en: Dictionary = {
     modelNote:
       'This derivation is the model’s. The recorded fixtures show this model returns the same values, error codes and waits as the real engine — they do not show that the engine reasons this way inside.',
     source: 'The rule, in the vendor’s words',
+  },
+  worked: {
+    heading: 'One run, all the way through',
+    intro:
+      'Here is the whole thing, step by step, with the real numbers — produced by running this schedule through the same simulator the rest of the site uses. Nothing here needs you to press anything. Watch for the moment where nothing at all goes wrong: every statement below succeeds.',
+    outcome: 'The table is left as',
+    close:
+      'Neither transaction saw uncommitted data, neither wrote a row the other wrote, no lock was contended and no error was raised. Each read was correct as of the moment its snapshot was taken. The two snapshots were taken before either write, and that is the whole bug.',
+    contrastHeading: 'The same eight steps, one level higher',
+    contrastBody:
+      'Nothing about the schedule changes — same statements, same order, same data. Only the isolation level is different, and the run below is produced the same way as the one above.',
+    contrastOutcome: 'One doctor is still on call, because the database refused the second commit rather than allowing it.',
   },
   a11y: {
     scoreRegion: 'The score, as a scrolling region. Use the arrow keys to reach later steps.',
@@ -942,6 +959,18 @@ const id: Dictionary = {
     modelNote:
       'Penjelasan ini berasal dari model. Fixture yang direkam menunjukkan model ini menghasilkan nilai, kode error dan waktu tunggu yang sama dengan mesin sungguhan — bukan menunjukkan bahwa mesinnya bernalar seperti ini di dalam.',
     source: 'Aturannya, dalam kata-kata vendor',
+  },
+  worked: {
+    heading: 'Satu eksekusi, dari awal sampai akhir',
+    intro:
+      'Ini keseluruhannya, langkah demi langkah, dengan angka yang sebenarnya — dihasilkan dengan menjalankan schedule ini melalui simulator yang sama dengan yang dipakai seluruh situs. Tidak ada yang perlu Anda tekan di sini. Perhatikan bahwa tidak ada satu pun yang gagal: setiap statement di bawah ini berhasil.',
+    outcome: 'Tabelnya berakhir menjadi',
+    close:
+      'Tidak ada transaksi yang membaca data yang belum commit, tidak ada yang menulis baris yang ditulis transaksi lain, tidak ada lock yang berebut dan tidak ada error yang muncul. Setiap pembacaan benar per saat snapshot-nya diambil. Kedua snapshot itu diambil sebelum kedua penulisan terjadi, dan itulah seluruh bug-nya.',
+    contrastHeading: 'Delapan langkah yang sama, satu level lebih tinggi',
+    contrastBody:
+      'Tidak ada yang berubah pada schedule-nya — statement yang sama, urutan yang sama, data yang sama. Hanya isolation level-nya yang berbeda, dan eksekusi di bawah ini dihasilkan dengan cara yang sama seperti yang di atas.',
+    contrastOutcome: 'Satu dokter tetap berjaga, karena basis data menolak commit yang kedua alih-alih mengizinkannya.',
   },
   a11y: {
     scoreRegion: 'Skor, sebagai area yang bisa digulir. Gunakan tombol panah untuk mencapai langkah berikutnya.',
