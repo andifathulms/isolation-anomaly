@@ -65,8 +65,16 @@ function blankOperation(type: OperationType, previous: Operation): Operation {
   }
 }
 
-const control = 'rounded-md border border-staff bg-manuscript-raised px-2 py-1 font-mono text-caption'
-const button = 'rounded-md border border-staff px-2 py-1 font-control text-micro transition-colors hover:bg-manuscript-sunk'
+/*
+ * These are the app's controls, so they use the app's control tokens. The local
+ * copies had their own `border-staff`, which never picked up `--edge` and left
+ * every field in the editor at 2.76:1 against the page.
+ */
+const control = 'control font-mono'
+/** The row controls: icon-only, so they carry the 44px target. */
+const button = 'control-icon'
+/** Same family, but these have words in them and need room for them. */
+const textButton = 'control'
 
 export function Editor({
   schedule,
@@ -145,7 +153,7 @@ export function Editor({
           ))}
           <button
             type="button"
-            className={button}
+            className={textButton}
             onClick={() =>
               setInitial([
                 ...schedule.initial,
@@ -161,7 +169,7 @@ export function Editor({
       <section>
         <div className="flex flex-wrap items-baseline gap-3">
           <h3 className="font-prose text-section">{dict.controls.step}s</h3>
-          <button type="button" className={button} onClick={addTransaction}>
+          <button type="button" className={textButton} onClick={addTransaction}>
             + transaction
           </button>
         </div>

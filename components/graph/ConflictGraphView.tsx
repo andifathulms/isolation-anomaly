@@ -174,7 +174,7 @@ export function ConflictGraphView({
           </svg>
 
           <div className="space-y-4">
-            <h2 className={`font-prose text-xl ${data.cycle ? 'text-conductor' : ''}`}>
+            <h2 className={`font-prose text-section ${data.cycle ? 'text-conductor' : ''}`}>
               {data.cycle ? dict.graph.cycle : dict.graph.noCycle}
             </h2>
             <p className="max-w-reading text-body">

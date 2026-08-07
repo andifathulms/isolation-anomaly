@@ -60,6 +60,15 @@
     --shadow-edge: 230 224 208;
     --shadow-cast: 29 27 23;
 
+    /*
+     * The sticky header's height, in one place. The workbench's control bar
+     * sticks directly beneath it and used to hardcode 5.1rem of its own, so the
+     * two drifted apart whenever the header's nav row wrapped — in Indonesian,
+     * or at 200% zoom. The header also takes this as a `min-height`, so the seam
+     * can never open even if the two are read at different moments.
+     */
+    --header-height: 5.1rem;
+
     color-scheme: light;
   }
 
@@ -132,6 +141,19 @@
     @apply outline-none ring-2 ring-voiceA ring-offset-2 ring-offset-manuscript;
   }
 
+  /*
+   * Tailwind's ring is a box-shadow, and Windows High Contrast throws box
+   * shadows away — which left the focus indicator invisible for exactly the
+   * readers most likely to be navigating by keyboard. `outline` survives
+   * forced-colors, and `Highlight` is the system's own focus colour.
+   */
+  @media (forced-colors: active) {
+    :focus-visible {
+      outline: 3px solid Highlight;
+      outline-offset: 2px;
+    }
+  }
+
   /* Native controls inherit the manuscript rather than the operating system. */
   select,
   input,
@@ -182,6 +204,32 @@
 
   .control-strong:hover:not(:disabled) {
     @apply border-ink bg-ink-muted text-manuscript-raised;
+  }
+
+  /*
+   * An icon-only control. Everything here exists to hold the 24×24 CSS pixel
+   * floor of WCAG 2.5.8 — the editor's row buttons and the locale switcher were
+   * about 24×24 and 30×20 respectively, and both sit in tight rows where the
+   * spacing exception does not rescue them. 44px is the comfortable target;
+   * 2.75rem keeps it on the same scale as everything else.
+   */
+  .control-icon {
+    @apply inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-edge
+      bg-manuscript-raised font-control text-caption text-ink transition-colors;
+  }
+
+  .control-icon:hover:not(:disabled) {
+    @apply border-ink-muted bg-manuscript-sunk;
+  }
+
+  /*
+   * A region that scrolls sideways because its contents cannot reflow — a score,
+   * a wide table. Focusable so a keyboard can reach the scrollbar: without a tab
+   * stop there is no way to see the right-hand end of a score at all, since the
+   * marks inside are not focusable by design.
+   */
+  .scroll-region {
+    @apply overflow-x-auto;
   }
 
   /* An eyebrow label. Uppercase, tracked, and never a whole sentence. */

@@ -153,12 +153,12 @@ export function Matrix({ dict, locale }: { readonly dict: Dictionary; readonly l
                           <span className="font-control text-micro text-ink-muted">{dict.matrix.clean}</span>
                         )}
                         {anomalous ? (
-                          <span className="mt-1 block font-mono text-[11px]">
+                          <span className="mt-1 block font-mono text-micro">
                             {cell.anomalies.join(', ')}
                           </span>
                         ) : null}
                         {cell.errorCodes.length > 0 ? (
-                          <span className="mt-1 block font-mono text-[11px] text-ink-soft">
+                          <span className="mt-1 block font-mono text-micro text-ink-soft">
                             {cell.errorCodes.join(', ')}
                           </span>
                         ) : null}
