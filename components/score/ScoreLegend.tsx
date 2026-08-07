@@ -14,9 +14,15 @@ import type { Dictionary } from '@/lib/i18n/dictionaries'
  * again, and the score is the thing that should own the space.
  */
 
-function Glyph({ children, label }: { children: React.ReactNode; label: string }) {
+/*
+ * Decorative. The glyph draws what the `<dt>` immediately beside it already
+ * names, so labelling it made every screen reader say each of the nine terms
+ * twice. The `label` prop stays because it documents the drawing at the call
+ * site, where it is genuinely useful to a reader of the code.
+ */
+function Glyph({ children }: { children: React.ReactNode; label: string }) {
   return (
-    <svg viewBox="0 0 44 28" width={44} height={28} role="img" aria-label={label} className="shrink-0">
+    <svg viewBox="0 0 44 28" width={44} height={28} aria-hidden="true" className="shrink-0">
       {children}
     </svg>
   )

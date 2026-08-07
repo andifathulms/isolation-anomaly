@@ -29,9 +29,19 @@ export function ThemeToggle({ dict }: { readonly dict: Dictionary }) {
     setTheme(next)
   }
 
-  // Until the effect has run the button would have to guess at its own label,
-  // so it reserves its space and says nothing.
-  const label = theme === null ? '' : theme === 'dark' ? dict.site.themeToLight : dict.site.themeToDark
+  /*
+   * Before the effect runs, the button cannot know which way it toggles — but
+   * it can always say what it is. It used to render `aria-label=""` in the
+   * static HTML and stay nameless until hydration, and permanently nameless
+   * without JavaScript, which is a button announced as "button". Naming the
+   * control first and the direction second means it is never unnamed.
+   */
+  const label =
+    theme === null
+      ? dict.a11y.theme
+      : theme === 'dark'
+        ? dict.site.themeToLight
+        : dict.site.themeToDark
 
   return (
     <button
@@ -39,7 +49,7 @@ export function ThemeToggle({ dict }: { readonly dict: Dictionary }) {
       onClick={toggle}
       aria-label={label}
       title={label}
-      className="rounded-md border border-staff-faint p-1.5 text-ink-muted transition-colors hover:border-staff hover:text-ink"
+      className="control-icon border-staff-faint text-ink-muted hover:border-staff hover:text-ink"
     >
       {theme === 'dark' ? (
         // A sun: switching away from dark.

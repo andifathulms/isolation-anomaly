@@ -44,7 +44,11 @@ export function VersionChains({
                     <th scope="col" className="px-3 py-1 text-left font-normal">{dict.panels.value}</th>
                     <th scope="col" className="px-3 py-1 text-left font-normal">{dict.panels.createdBy}</th>
                     <th scope="col" className="px-3 py-1 text-left font-normal">{dict.panels.deletedBy}</th>
-                    <th scope="col" className="px-3 py-1 text-left font-normal" />
+                    {/* Named, not blank: an empty header cell is announced as "blank"
+                        against every cell in the column. */}
+                    <th scope="col" className="px-3 py-1 text-left font-normal">
+                      <span className="sr-only">{dict.a11y.stateColumn}</span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="font-mono">

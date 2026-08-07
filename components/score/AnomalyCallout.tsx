@@ -9,6 +9,12 @@ import type { Locale } from '@/lib/i18n/locales'
  * Names the anomaly, cites its definition, and explains the mechanism in one
  * sentence generated from the trace rather than written prose — PRD §5.3.
  *
+ * The verdict is announced from a persistent live region in the workbench, not
+ * from here: these two branches return different elements, so a live region on
+ * them would be replaced rather than updated at exactly the moment it mattered,
+ * and a region inserted with its content is not reliably announced. It would
+ * also have read out every article, definition and source link on each change.
+ *
  * This is the answer to the question the reader actually came with, so it is
  * the loudest thing under the score rather than one panel among several. The
  * order inside is deliberate: the plain-language verdict, then the name of the
@@ -30,7 +36,7 @@ export function AnomalyCallout({
 }) {
   if (anomalies.length === 0) {
     return (
-      <section aria-live="polite" className="leaf px-5 py-4">
+      <section className="leaf px-5 py-4">
         <div className="flex flex-wrap items-baseline gap-x-3">
           <h2 className="font-prose text-title">{dict.anomaly.noneHeadline}</h2>
           <span className="font-mono text-micro text-ink-soft">{context}</span>
@@ -41,7 +47,7 @@ export function AnomalyCallout({
   }
 
   return (
-    <section aria-live="polite" className="space-y-4">
+    <section className="space-y-4">
       <div className="flex flex-wrap items-baseline gap-x-3">
         <h2 className="font-prose text-title text-conductor">{dict.anomaly.foundHeadline}</h2>
         <span className="font-mono text-micro text-ink-soft">{context}</span>

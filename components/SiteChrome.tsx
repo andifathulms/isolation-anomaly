@@ -54,7 +54,9 @@ export function SiteChrome({
 
       {/* Opaque rather than translucent: at 90% the page's ruled ground and the
           score's own marks ghosted through the header as it scrolled past. */}
-      <header className="sticky top-0 z-30 border-b border-staff-faint bg-manuscript">
+      {/* `min-h` is the same `--header-height` the workbench's control bar
+          sticks beneath, so the two cannot drift apart when this wraps. */}
+      <header className="sticky top-0 z-30 min-h-[var(--header-height)] border-b border-staff-faint bg-manuscript">
         <div className="mx-auto flex max-w-6xl items-center gap-x-4 px-4 pt-3 sm:px-6">
           <Link
             href={`${base}/`}
@@ -65,8 +67,11 @@ export function SiteChrome({
           </Link>
 
           <div className="ml-auto flex items-center gap-3">
-            <div className="flex items-baseline gap-1.5">
-              <span className="sr-only">{dict.site.language}</span>
+            {/*
+              A real group with a real name, rather than a loose `sr-only`
+              string that labelled nothing and simply read out before the links.
+            */}
+            <div role="group" aria-label={dict.site.language} className="flex items-center gap-1">
               {LOCALES.map((candidate) => (
                 <Link
                   key={candidate}
@@ -74,8 +79,8 @@ export function SiteChrome({
                   hrefLang={candidate}
                   aria-label={LOCALE_LABELS[candidate]}
                   aria-current={candidate === locale ? 'true' : undefined}
-                  className={`whitespace-nowrap rounded px-1.5 py-0.5 font-control text-micro uppercase tracking-wider
-                    transition-colors ${
+                  className={`inline-flex min-h-11 items-center whitespace-nowrap rounded px-2 font-control text-micro
+                    uppercase tracking-wider transition-colors ${
                       candidate === locale
                         ? 'bg-manuscript-sunk text-ink'
                         : 'text-ink-soft hover:text-ink'

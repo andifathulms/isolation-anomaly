@@ -93,8 +93,17 @@ export function Matrix({ dict, locale }: { readonly dict: Dictionary; readonly l
         {scenarioText(locale, scenario).framing}
       </p>
 
-      <div className="leaf overflow-x-auto">
+      {/* The select rebuilds the whole grid with no other signal that it did. */}
+      <p aria-live="polite" className="sr-only">
+        {dict.a11y.updated}: {scenarioText(locale, scenario).title}
+      </p>
+
+      <div className="leaf scroll-region" tabIndex={0} role="group" aria-label={dict.a11y.matrixRegion}>
         <table className="w-full text-caption">
+          {/* Named, so the grid is not just "table" when it is reached. */}
+          <caption className="sr-only">
+            {scenarioText(locale, scenario).title} — {dict.a11y.matrixCaption}
+          </caption>
           <thead className="bg-manuscript-sunk">
             <tr className="border-b border-staff-faint">
               <th className="px-3 py-2 text-left eyebrow font-normal">
@@ -136,6 +145,19 @@ export function Matrix({ dict, locale }: { readonly dict: Dictionary; readonly l
                     <td key={level} className="p-1">
                       <Link
                         href={`/${locale}/schedule/#s=${scenario.id}&p=${pack.id}&l=${LEVEL_ABBREVIATIONS[level]}&i=0`}
+                        /*
+                         * A link cannot inherit its table headers the way a data
+                         * cell does, so 25 of these all announced as "anomaly,
+                         * write-skew" with nothing to tell them apart. The row
+                         * and column go into the name.
+                         */
+                        aria-label={`${pack.engine} ${pack.version}, ${level}: ${
+                          anomalous
+                            ? `${dict.matrix.anomalyAt} ${cell.anomalies.join(', ')}`
+                            : cell.aborted.length > 0
+                              ? `${dict.matrix.abortedAt} ${cell.aborted.join(', ')}`
+                              : dict.matrix.clean
+                        }`}
                         className="block rounded-md px-2 py-2 transition-colors hover:bg-manuscript-sunk"
                       >
                         {/* An anomaly or an abort is exactly what conductor's

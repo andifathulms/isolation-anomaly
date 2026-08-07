@@ -118,17 +118,28 @@ export function ConflictGraphView({
         </label>
       </div>
 
+      {/* Three selects rebuild the graph with nothing else to say they did. */}
+      <p aria-live="polite" className="sr-only">
+        {dict.a11y.updated}: {scenario ? scenarioText(locale, scenario).title : ''} — {pack.engine}{' '}
+        {pack.version} — {level}
+      </p>
+
       {!data ? (
         <p className="text-caption text-ink-muted">{dict.matrix.refused}</p>
       ) : (
         <div className="grid gap-8 md:grid-cols-[320px_1fr]">
+          {/*
+            `width={SIZE}` with no ceiling overflowed a 320px viewport by the
+            width of the page gutters and took the whole document into
+            horizontal scrolling. The viewBox already makes it scale.
+          */}
           <svg
-            width={SIZE}
-            height={SIZE}
             viewBox={`0 0 ${SIZE} ${SIZE}`}
-            className="leaf"
+            className="leaf h-auto w-full max-w-[20rem]"
             role="img"
-            aria-label="Conflict graph"
+            aria-label={`${dict.graph.heading}: ${
+              data.cycle ? dict.graph.cycle : dict.graph.noCycle
+            }`}
           >
             <defs>
               <marker id="arrow" viewBox="0 0 10 10" refX={9} refY={5} markerWidth={6} markerHeight={6} orient="auto">
