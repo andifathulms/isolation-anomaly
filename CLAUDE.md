@@ -1,4 +1,6 @@
-# CLAUDE.md — Sekat
+# CLAUDE.md — Isolation Anomaly
+
+*(`PRD.md` calls the project **Sekat**, which was the working name. The repo, the slug and the deployed site are `isolation-anomaly`; the PRD is otherwise still binding.)*
 
 Isolation level anomaly explorer. Hand-built transaction schedules executed against modelled database engines, with anomalies named and the same schedule compared across engines and levels. Static site, GitHub Pages, no backend.
 
@@ -44,38 +46,44 @@ pnpm lint
 
 ## Layout
 
+Routes are English in both locales; the URL is `/{en,id}/<section>/`.
+
 ```
 app/
-  [locale]/                 # id (default), en
-    jadwal/                 # schedule editor + score + stepping
-    matriks/                # cross-engine comparison
-    graf/                   # conflict graph
-    skenario/               # scenario library
-    mesin/                  # engine packs + citations
+  [locale]/                 # en (default), id
+    schedule/               # the tool: score, stepping, panels, editor
+    scenarios/              # scenario library
+    matrix/                 # cross-engine comparison + level classes
+    graph/                  # conflict graph
+    engines/                # engine packs + every citation
+  robots.ts  sitemap.ts     # generated from the locale and section lists
 components/
-  score/                    # staves, bar lines, operation marks, conductor's mark
-  versions/                 # version chain panel
-  locks/                    # lock table panel
-  matrix/
-  graph/
+  score/                    # staves, marks, snapshot spans, panels, editor
+  versions/  locks/         # version chain and lock table panels
+  matrix/  graph/
 lib/
-  schedule/                 # schedule model, operation vocabulary
+  schedule/                 # schedule model, operation vocabulary, interleavings
   engine/                   # THE CORE. Pure. No React, no DOM, no clock.
     execute.ts              # the ONE executor, parameterised by pack
-    mvcc.ts                 # version chains, visibility
+    mvcc.ts                 # version chains, visibility, and its explanation
     locks.ts                # lock manager, conflict matrix
-    trace.ts                # ExecutionTrace types
+    trace.ts                # ExecutionTrace types, including ReadReasoning
+    project.ts              # trace → the shape the oracle records
     refuse.ts               # structured refusals for unmodelled cases
   detect/                   # INDEPENDENT anomaly detector. No imports from lib/engine.
   serial/                   # conflict graph, cycle detection, brute-force checker
   packs/                    # schema, loader, validator
+  precompute/               # BUILD TIME ONLY. Never import from a client component.
+    shape.ts                # types + key helpers, safe to import anywhere
+    index.ts                # matrix, graph, level classes — imports the engine
+    recordings.ts           # reads tests/oracle off disk with node:fs
+  scenarios/  i18n/  oracle/  share.ts
 data/
-  packs/                    # postgres.json, mysql.json, sqlserver.json
+  packs/                    # five: postgres, mysql, sqlserver, sqlserver-rcsi, oracle
   scenarios/                # schedules + documented anomaly + permitting levels
 tests/
-  oracle/                   # recorded real-database fixtures
-  anomalies/
-  serial/
+  oracle/                   # recorded real-database fixtures, one dir per pack
+  anomalies/  serial/  reasoning/  schedule/  packs/  i18n/  narrate/  share/
 ```
 
 ## Invariants
@@ -96,7 +104,7 @@ tests/
 
 8. **Anomaly detection is tested in both directions.** Each scenario must produce its anomaly at permitting levels and *not* at preventing levels. One-directional tests pass a detector that always fires.
 
-9. **The oracle harness is development-only.** Docker, containers, and database drivers never appear in `package.json` dependencies for the browser build, never in CI, never in the bundle.
+9. **The oracle harness is development-only.** Docker, containers, and database drivers never appear in `package.json` dependencies for the browser build, never in CI, never in the bundle. The *fixtures* are committed evidence and may be read — `lib/precompute/recordings.ts` loads them with `node:fs` during static generation, which ships their contents and none of the machinery that produced them.
 
 10. **Oracle fixtures record the engine version and the date.** Vendor behaviour changes across versions; a fixture without a version is not evidence.
 
@@ -105,6 +113,14 @@ tests/
 12. **Transaction identity is never colour alone.** Voices carry a pattern or marker as well as a hue.
 
 13. **Nothing is computed in a component.** Components render an `ExecutionTrace`, a matrix result, or a graph.
+
+14. **An explanation must agree with the value it explains.** `explainVisibleVersion` walks the chain a second time to record its working, so two pieces of code now decide what a read returns. `tests/reasoning` asserts they agree for every scenario at every pack and level. A derivation that does not produce the number printed beside it is worse than no derivation, because it is wrong with the appearance of rigour.
+
+15. **A page that cannot change what the executor is asked must not ship the executor.** The matrix, the graph and the level classes are fixed lists of scenarios, packs and levels, so every answer is knowable at build. Only the schedule page ships `lib/engine`, because only there does the reader edit a schedule. `lib/precompute/shape.ts` exists so a client component can import a type or a key without dragging the engine behind it — types are erased, a value is not.
+
+16. **A count over orderings is never a rate.** The interleaving space says "36 of 70", never "24% likely". Real interleavings are not uniformly distributed and this is not a performance model (PRD §3).
+
+17. **An equivalence claim is scoped to the evidence and says so.** Level classes are "indistinguishable by these 11 schedules", never "equivalent". The caveat sits above the result, and the number of schedules appears in the same sentence as the grouping.
 
 ## Working style
 
@@ -137,6 +153,8 @@ tests/
 - New scenario → documented anomaly, permitting levels, oracle fixture per pack.
 - Conflict-graph changes → brute-force serializability cross-check on the small-schedule corpus.
 - Trace well-formedness asserted on every test: consistent version chains, no visibility of post-snapshot versions, every lock released at commit or rollback.
+- New read path in the executor → `tests/reasoning` must still pass; the recorded derivation is a second implementation of visibility and drifts silently otherwise.
+- New enumeration or count shown to a reader → assert it is exhaustive, not merely non-empty. `tests/schedule/interleavings` checks the count against the multinomial and that every transaction's own statement order survives.
 - Bug fix → failing test first.
 
 ## Upgrading an engine pack
@@ -149,7 +167,7 @@ Bump the image tag and the pack's `version`/`verifiedOn`, re-read the docs for a
 
 ## Framing
 
-The site states plainly that this models documented behaviour for a fixed operation set at specific engine versions, that it is not a database, and that unmodelled cases are refused rather than approximated. Every engine claim links to the vendor documentation behind it.
+The site states plainly that this models documented behaviour for a fixed operation set at specific engine versions, that it is not a database, and that unmodelled cases are refused rather than approximated. Every engine claim links to the vendor documentation behind it, at the point the rule is applied rather than in a footnote — and the recording the model was built to match is on the page beside it, so "verified against the real engine" is something a reader can look at rather than take on trust.
 
 ## Current state
 
@@ -157,11 +175,21 @@ The site states plainly that this models documented behaviour for a fixed operat
 
 M0–M6 built. Five engine packs shipping: PostgreSQL 16, MySQL 8.4 InnoDB, SQL Server 2022, SQL Server 2022 with RCSI, Oracle 23ai. (PRD §3 caps v1 at three; Oracle is the M6 pack the milestone table calls for, and it is the one that makes the naming lesson undeniable.)
 
-- Oracle harness records against PostgreSQL 16.14, MySQL 8.4.11, SQL Server 16.0.4265.3 and Oracle 23.26.2.0.0 in containers. 150 fixtures under `tests/oracle/`. Waits are read from `pg_stat_activity`, `performance_schema.data_lock_waits` `sys.dm_exec_requests` and `v$session.blocking_session` rather than inferred from a slow statement. Re-recording produces byte-identical fixtures.
+- Oracle harness records against PostgreSQL 16.14, MySQL 8.4.11, SQL Server 16.0.4265.3 and Oracle 23.26.2.0.0 in containers. **220 fixtures** under `tests/oracle/`. Waits are read from `pg_stat_activity`, `performance_schema.data_lock_waits`, `sys.dm_exec_requests` and `v$session.blocking_session` rather than inferred from a slow statement. Re-recording produces byte-identical fixtures.
 - SQL Server runs under x86 emulation on Apple Silicon (there is no arm64 image). Same binary, same semantics; the recorded version string identifies the server that answered.
 - Executor matches every fixture: values read, error codes and their steps, where execution waited and until when, transaction outcomes, rows affected, final table.
-- Detector, scenario library (10 scenarios), conflict graph with brute-force cross-check, and the full UI in English and Indonesian.
-- 622 tests. `pnpm test:run` covers the oracle comparison, both-direction detection and the serializability cross-check.
+- Detector, **11 scenarios**, conflict graph with brute-force cross-check, and the full UI in English and Indonesian.
+- **1589 tests.** `pnpm test:run` covers the oracle comparison, both-direction detection, the serializability cross-check, the read-derivation agreement and the interleaving enumeration.
+
+What the reader gets beyond the trace, all generated rather than written:
+
+- **Why a read returned what it did.** The trace records the visibility decision — versions considered, the one taken, and why each other was passed over — with the pack rule's citation at the point the rule was applied. Shown under the score, with an inline note that the derivation is the model's: the fixtures show it returns what the engine returns, not that the engine reasons this way inside.
+- **The snapshot as a span**, drawn on the score, with a dashed ring on every commit that landed inside it and stayed invisible. A statement-scoped level has no span, which is the difference between READ COMMITTED and REPEATABLE READ in one picture.
+- **Every legal interleaving**, run at every level of the current engine. The library runs 20 to 252 orderings; above 4096 it reports the total and enumerates nothing rather than counting some and presenting it as all.
+- **Which level names cannot be told apart**, grouped by what the application saw across all 11 schedules — values, waits, outcomes, final table — ignoring only the error code, since 40001 and ORA-08177 are one event in two dialects.
+- **The recording beside the claim.** The fixture for the run on screen, with the engine version the server reported and the date, and the model's answer in the next column. It shows for refused runs too; that pairing is what a declared boundary looks like from outside.
+- **A worked example on the landing page**, generated by executing the model at build time, plus the same eight steps one level up.
+- **Per-route metadata, robots.txt and sitemap.xml**, all derived from the same dictionary and route lists the pages render, so a description cannot drift from its page.
 
 Open modelling boundaries, all declared as pack rules with citations rather than assumed in the executor:
 
