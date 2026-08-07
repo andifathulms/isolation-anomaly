@@ -22,6 +22,10 @@ export const deadlock: Scenario = {
   lesson:
     'Neither transaction did anything unusual, and no isolation level prevents this — locking in a consistent order is the application’s job. What differs is the engine’s answer. PostgreSQL and MySQL InnoDB roll a transaction back and name it, so the other proceeds. SQL Server chooses its victim by internal cost estimate and Oracle says plainly that either session could get the error, so for those three this model refuses to say who loses rather than inventing it — and Oracle would roll back only the statement in any case, leaving the transaction open.',
   anomaly: null,
+  legend: {
+    keys: { '1': 'account 1 balance', '2': 'account 2 balance' },
+    values: {},
+  },
   schedule: {
     id: 'deadlock',
     title: 'Deadlock',

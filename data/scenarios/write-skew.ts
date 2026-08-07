@@ -18,6 +18,10 @@ export const writeSkew: Scenario = {
   lesson:
     'This is the anomaly that is not in the ANSI list. PostgreSQL’s REPEATABLE READ is snapshot isolation, and permits it: both transactions commit and nobody is on call. Only SERIALIZABLE catches it, and it does so by aborting the second transaction to commit with a read/write dependency failure — not by blocking. MySQL InnoDB permits it at REPEATABLE READ as well, and at SERIALIZABLE it does not detect anything — it deadlocks, and one transaction is rolled back with 1213. SQL Server permits it at SNAPSHOT, which is the same anomaly under a name that at least admits what the level is; at REPEATABLE READ and SERIALIZABLE its shared locks turn the schedule into a deadlock, and because SQL Server picks its victim by cost estimate this model refuses to say which transaction loses. And Oracle settles the argument: it permits this at the level called SERIALIZABLE, because Oracle’s SERIALIZABLE is snapshot isolation. Both doctors go off call, both commit, and no error is raised — at the strongest level name the standard has.',
   anomaly: 'write-skew',
+  legend: {
+    keys: { '1': 'Dr A', '2': 'Dr B' },
+    values: { '1': 'on call', '0': 'off call' },
+  },
   schedule: {
     id: 'write-skew',
     title: 'Write skew',
@@ -54,6 +58,10 @@ export const writeSkewLocked: Scenario = {
   lesson:
     'The locks serialize the two transactions. The second doctor’s locking read waits and then returns a roster in which the first doctor is already off call, so this schedule is equivalent to running T1 and then T2 — there is no anomaly left for the database to permit. The roster still empties, because this schedule writes without re-checking what the locking read returned; that remaining bug is the application’s, and it is now visible in the value read rather than hidden. At REPEATABLE READ the locking read aborts with 40001 instead.',
   anomaly: 'write-skew',
+  legend: {
+    keys: { '1': 'Dr A', '2': 'Dr B' },
+    values: { '1': 'on call', '0': 'off call' },
+  },
   schedule: {
     id: 'write-skew-locked',
     title: 'Write skew, prevented by locking reads',

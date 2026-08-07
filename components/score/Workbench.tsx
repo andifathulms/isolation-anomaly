@@ -9,7 +9,7 @@ import { detect } from '@/lib/detect'
 import { buildConflictGraph, explainCycle, findCycle } from '@/lib/serial'
 import { decodeShareState, encodeShareState, type ShareState } from '@/lib/share'
 import type { Dictionary } from '@/lib/i18n/dictionaries'
-import { anomalyText, scenarioText } from '@/lib/i18n/content'
+import { anomalyText, scenarioLegend, scenarioText } from '@/lib/i18n/content'
 import type { Locale } from '@/lib/i18n/locales'
 import { Editor } from './Editor'
 import { Score } from './Score'
@@ -17,6 +17,8 @@ import { ScoreLegend } from './ScoreLegend'
 import { StepList } from './StepList'
 import { Tour } from './Tour'
 import { AnomalyCallout } from './AnomalyCallout'
+import { WhyRead } from './WhyRead'
+import { KeyLegend } from './KeyLegend'
 import { SnapshotPanel } from './SnapshotPanel'
 import { VersionChains } from '@/components/versions/VersionChains'
 import { LockTable } from '@/components/locks/LockTable'
@@ -176,6 +178,19 @@ export function Workbench({
   const world = trace?.steps[step]?.state
   const current = trace?.steps[step]
   const context = `${pack.engine} ${pack.version} · ${state.level}`
+  const legend = scenario ? scenarioLegend(locale, scenario) : null
+
+  /**
+   * Anomalies whose cause step the run has actually reached.
+   *
+   * The verdict used to be computed from the whole trace and rendered at step 0,
+   * so a reader arriving from the landing page met "the database gave a wrong
+   * answer" before a single statement had run — the conclusion above the
+   * evidence, and a lesson that the anomaly is a property of the schedule rather
+   * than something that becomes true at a particular moment.
+   */
+  const revealed = anomalies.filter((found) => found.causeStep <= step)
+  const atEnd = step >= maxStep
 
   /**
    * The verdict, as one sentence, in a region that is always mounted.
@@ -187,11 +202,13 @@ export function Workbench({
    * on the page was silent. Here it is one persistent node whose text changes.
    */
   const verdict = trace
-    ? anomalies.length > 0
-      ? `${dict.anomaly.foundHeadline} — ${anomalies
+    ? revealed.length > 0
+      ? `${dict.anomaly.foundHeadline} — ${revealed
           .map((found) => anomalyText(locale, found.id).name)
           .join(', ')} — ${context}`
-      : `${dict.anomaly.noneHeadline} — ${context}`
+      : atEnd
+        ? `${dict.anomaly.noneHeadline} — ${context}`
+        : ''
     : result?.type === 'refused'
       ? `${dict.refusal.heading} — ${context}`
       : ''
@@ -365,6 +382,8 @@ export function Workbench({
             summary={summary}
           />
 
+          {legend ? <KeyLegend legend={legend} dict={dict} /> : null}
+
           {/* Stepping is the one thing that changes without the page changing,
               so it is announced rather than left to be noticed. */}
           <p aria-live="polite" className="sr-only">
@@ -441,6 +460,16 @@ export function Workbench({
             </span>
           </div>
 
+          {/* The derivation, next to the value it produced. */}
+          {current.outcome.type === 'ok' && current.outcome.reasoning ? (
+            <WhyRead
+              reasoning={current.outcome.reasoning}
+              transactions={world.transactions}
+              legend={legend}
+              dict={dict}
+            />
+          ) : null}
+
           {current.note ? (
             <p className="max-w-reading border-l-2 border-staff pl-3 text-body text-ink-muted">
               {current.note}
@@ -448,7 +477,13 @@ export function Workbench({
           ) : null}
 
           {/* The answer to the question the reader arrived with. */}
-          <AnomalyCallout anomalies={anomalies} dict={dict} locale={locale} context={context} />
+          <AnomalyCallout
+            anomalies={revealed}
+            settled={atEnd}
+            dict={dict}
+            locale={locale}
+            context={context}
+          />
 
           <ScoreLegend dict={dict} />
 

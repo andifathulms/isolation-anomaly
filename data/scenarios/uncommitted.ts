@@ -14,6 +14,10 @@ export const dirtyRead: Scenario = {
   lesson:
     'ANSI defines READ UNCOMMITTED as the level that permits this. PostgreSQL accepts the name and gives you READ COMMITTED, so the reporting query sees 100 at every level — the balance that was actually committed. MySQL InnoDB is the contrast: its READ UNCOMMITTED is real, and the reporting query there reads 0 — a balance that never existed. SQL Server’s READ UNCOMMITTED is real too, and it reads 0 for the same reason. Oracle refuses the level name outright: it has no READ UNCOMMITTED and never permits a dirty read at all.',
   anomaly: 'dirty-read',
+  legend: {
+    keys: { '1': 'the account balance' },
+    values: {},
+  },
   schedule: {
     id: 'dirty-read',
     title: 'Dirty read',
@@ -46,6 +50,10 @@ export const dirtyWrite: Scenario = {
   lesson:
     'The second write waits for the first transaction to end rather than overwriting an uncommitted value — first updater wins. Because the first transaction rolls back, the second proceeds from the original row.',
   anomaly: 'dirty-write',
+  legend: {
+    keys: { '1': 'the setting’s value' },
+    values: {},
+  },
   schedule: {
     id: 'dirty-write',
     title: 'Dirty write',

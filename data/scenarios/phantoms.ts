@@ -15,6 +15,10 @@ export const phantomRead: Scenario = {
   lesson:
     'At READ COMMITTED the second count returns three rows where the first returned two. PostgreSQL’s REPEATABLE READ prevents this — which the SQL standard does not require of that level, and which is exactly why the level name cannot be trusted across engines. SQL Server settles the argument about what the level name means: its REPEATABLE READ holds shared locks on the rows it read but cannot lock a row that does not exist yet, so the phantom appears there and not on PostgreSQL — the same level name, opposite answers, and ANSI permits both.',
   anomaly: 'phantom-read',
+  legend: {
+    keys: { '1': 'slot 1', '2': 'slot 2', '3': 'slot 3', '4': 'slot 4', '5': 'slot 5' },
+    values: { '1': 'booked' },
+  },
   schedule: {
     id: 'phantom-read',
     title: 'Phantom read',
@@ -50,6 +54,10 @@ export const phantomInsertRace: Scenario = {
   lesson:
     'Both range reads return nothing, and both inserts succeed, so the calendar ends with two bookings where each booker believed there would be one. No row was written twice, so nothing conflicts — this is write skew wearing a phantom’s clothes, and only SERIALIZABLE stops it.',
   anomaly: 'write-skew',
+  legend: {
+    keys: { '1': 'slot 1', '2': 'slot 2', '3': 'slot 3', '4': 'slot 4', '5': 'slot 5' },
+    values: { '1': 'booked' },
+  },
   schedule: {
     id: 'phantom-insert-race',
     title: 'Phantom insert race',

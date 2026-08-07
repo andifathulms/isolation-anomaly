@@ -15,6 +15,10 @@ export const nonRepeatableRead: Scenario = {
   lesson:
     'At READ COMMITTED every statement takes a fresh snapshot, so the two reads legitimately disagree. REPEATABLE READ takes one snapshot for the transaction and both reads return 100.',
   anomaly: 'non-repeatable-read',
+  legend: {
+    keys: { '1': 'the item’s price' },
+    values: {},
+  },
   schedule: {
     id: 'non-repeatable-read',
     title: 'Non-repeatable read',
@@ -47,6 +51,10 @@ export const readSkew: Scenario = {
   lesson:
     'The audit reads 100 and then 150 and reports a total of 250. Neither read saw uncommitted data and both values were committed — but not at the same time. This is why a report needs one snapshot, not two correct reads.',
   anomaly: 'read-skew',
+  legend: {
+    keys: { '1': 'account 1 balance', '2': 'account 2 balance' },
+    values: {},
+  },
   schedule: {
     id: 'read-skew',
     title: 'Read skew',

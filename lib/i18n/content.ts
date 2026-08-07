@@ -1,6 +1,6 @@
 import type { AnomalyId } from '@/lib/detect/catalog'
 import { ANOMALIES } from '@/lib/detect/catalog'
-import type { Scenario } from '@/lib/scenarios/types'
+import type { Scenario, ScenarioLegend } from '@/lib/scenarios/types'
 import type { Locale } from './locales'
 
 /**
@@ -180,6 +180,54 @@ export function scenarioText(locale: Locale, scenario: Scenario): ScenarioText {
   }
 }
 
+/**
+ * The key and value vocabulary, in Indonesian.
+ *
+ * Kept separate from the framings because a legend is a lookup, not prose, and
+ * an id missing here falls back to the scenario's own English rather than
+ * showing a reader nothing at all.
+ */
+const LEGENDS_ID: Readonly<Record<string, ScenarioLegend>> = {
+  'write-skew': {
+    keys: { '1': 'Dr. A', '2': 'Dr. B' },
+    values: { '1': 'sedang berjaga', '0': 'berhenti berjaga' },
+  },
+  'write-skew-locked': {
+    keys: { '1': 'Dr. A', '2': 'Dr. B' },
+    values: { '1': 'sedang berjaga', '0': 'berhenti berjaga' },
+  },
+  'lost-update': { keys: { '1': 'unit stok' }, values: {} },
+  'lost-update-locked': { keys: { '1': 'unit stok' }, values: {} },
+  'non-repeatable-read': { keys: { '1': 'harga barang' }, values: {} },
+  'read-skew': { keys: { '1': 'saldo rekening 1', '2': 'saldo rekening 2' }, values: {} },
+  'dirty-read': { keys: { '1': 'saldo rekening' }, values: {} },
+  'dirty-write': { keys: { '1': 'nilai pengaturan' }, values: {} },
+  'phantom-read': {
+    keys: { '1': 'slot 1', '2': 'slot 2', '3': 'slot 3', '4': 'slot 4', '5': 'slot 5' },
+    values: { '1': 'sudah dipesan' },
+  },
+  'phantom-insert-race': {
+    keys: { '1': 'slot 1', '2': 'slot 2', '3': 'slot 3', '4': 'slot 4', '5': 'slot 5' },
+    values: { '1': 'sudah dipesan' },
+  },
+  deadlock: { keys: { '1': 'saldo rekening 1', '2': 'saldo rekening 2' }, values: {} },
+}
+
+/**
+ * What the keys and values mean, or null where the scenario does not say.
+ *
+ * The schedule reads `{1,2}` and writes `w1[1=0]` while the story beside it is
+ * about two doctors going off call. Without this the reader has to guess that
+ * key 1 is a doctor and that 0 means off call, and the framing that carries the
+ * stakes never connects to the notation that carries the mechanism.
+ */
+export function scenarioLegend(locale: Locale, scenario: Scenario): ScenarioLegend | null {
+  if (!scenario.legend) return null
+  const translated = locale === 'id' ? LEGENDS_ID[scenario.id] : undefined
+  return translated ?? scenario.legend
+}
+
 /** Ids that have Indonesian text, so a test can prove none was forgotten. */
 export const TRANSLATED_ANOMALY_IDS = Object.keys(ANOMALIES_ID) as readonly AnomalyId[]
 export const TRANSLATED_SCENARIO_IDS = Object.keys(SCENARIOS_ID) as readonly string[]
+export const TRANSLATED_LEGEND_IDS = Object.keys(LEGENDS_ID) as readonly string[]

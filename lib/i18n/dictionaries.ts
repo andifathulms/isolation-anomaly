@@ -165,6 +165,8 @@ export type Dictionary = {
     | 'none'
     | 'noneBody'
     | 'noneHeadline'
+    | 'pendingHeadline'
+    | 'pendingBody'
     | 'foundHeadline'
     | 'permittedHere'
     | 'found'
@@ -235,6 +237,40 @@ export type Dictionary = {
    * rather than inline because they are content: a reader who cannot see the
    * score deserves the same second locale as one who can.
    */
+  /**
+   * Why a read returned what it did — the derivation, shown beside the value.
+   * The reasons match `VisibilityReason` in lib/engine/trace.ts one for one.
+   */
+  readonly why: Record<
+    | 'heading'
+    | 'noRead'
+    | 'ruleSnapshot'
+    | 'ruleSnapshotBody'
+    | 'ruleLatest'
+    | 'ruleLatestBody'
+    | 'ruleUncommitted'
+    | 'ruleUncommittedBody'
+    | 'sees'
+    | 'nobody'
+    | 'versions'
+    | 'noVersions'
+    | 'taken'
+    | 'passedOver'
+    | 'result'
+    | 'noRow'
+    | 'notInResult'
+    | 'ownWrite'
+    | 'initialRow'
+    | 'creatorCommitted'
+    | 'creatorNotYetCommitted'
+    | 'levelReadsUncommitted'
+    | 'creatorRolledBack'
+    | 'supersededByVisibleWrite'
+    | 'newerVersionTaken'
+    | 'modelNote'
+    | 'source',
+    string
+  >
   readonly a11y: Record<
     'scoreRegion' | 'figureRegion' | 'matrixRegion' | 'theme' | 'updated' | 'stateColumn' | 'matrixCaption',
     string
@@ -431,6 +467,9 @@ const en: Dictionary = {
     none: 'No anomaly',
     noneBody: 'Nothing in the published definitions occurred in this run.',
     noneHeadline: 'This run came out clean',
+    pendingHeadline: 'Nothing has gone wrong yet',
+    pendingBody:
+      'Nothing in the published definitions has happened up to this step. Keep stepping — an anomaly is something that becomes true at a particular moment, and the mark will appear on the step where it does.',
     foundHeadline: 'The database gave a wrong answer',
     permittedHere: 'permitted at this engine and level',
     found: 'Anomaly',
@@ -520,6 +559,39 @@ const en: Dictionary = {
     duplicate: 'Duplicate',
     remove: 'Remove',
     removeRow: 'Remove row',
+  },
+  why: {
+    heading: 'Why this read returned what it did',
+    noRead: 'This statement does not read anything, so there is no value to account for.',
+    ruleSnapshot: 'Rule: snapshot',
+    ruleSnapshotBody:
+      'This read is answered from a snapshot — a frozen list of which transactions had committed at the moment it was taken. Work committed after that moment is invisible to it, however recent.',
+    ruleLatest: 'Rule: latest committed row',
+    ruleLatestBody:
+      'This read ignores snapshots and takes whatever is committed at the moment it runs. It is why a locking read can see a row its own transaction’s snapshot cannot.',
+    ruleUncommitted: 'Rule: reads uncommitted',
+    ruleUncommittedBody:
+      'This level lets a read see work that has not committed yet. Only versions from a transaction that was rolled back are excluded — they are dead however permissive the reader is.',
+    sees: 'Can see the work of',
+    nobody: 'nobody but itself',
+    versions: 'Versions of this row, newest first',
+    noVersions: 'This row does not exist in any version.',
+    taken: 'taken',
+    passedOver: 'passed over',
+    result: 'Result',
+    noRow: 'no row',
+    notInResult: 'not in the result',
+    ownWrite: 'written by this transaction itself',
+    initialRow: 'part of the table before the run started',
+    creatorCommitted: '{txn} had committed when this read’s snapshot was taken',
+    creatorNotYetCommitted: '{txn} had not committed when this read’s snapshot was taken',
+    levelReadsUncommitted: '{txn} has not committed, but this level reads uncommitted work',
+    creatorRolledBack: '{txn} was rolled back, so this version is dead',
+    supersededByVisibleWrite: 'replaced or deleted by {txn}, whose work this read can see',
+    newerVersionTaken: 'a newer version had already been taken, so the walk stopped above this',
+    modelNote:
+      'This derivation is the model’s. The recorded fixtures show this model returns the same values, error codes and waits as the real engine — they do not show that the engine reasons this way inside.',
+    source: 'The rule, in the vendor’s words',
   },
   a11y: {
     scoreRegion: 'The score, as a scrolling region. Use the arrow keys to reach later steps.',
@@ -723,6 +795,9 @@ const id: Dictionary = {
     none: 'Tidak ada anomali',
     noneBody: 'Tidak ada satu pun definisi terbitan yang terjadi pada eksekusi ini.',
     noneHeadline: 'Eksekusi ini bersih',
+    pendingHeadline: 'Belum ada yang salah',
+    pendingBody:
+      'Sampai langkah ini belum ada satu pun definisi terbitan yang terpenuhi. Lanjutkan melangkah — sebuah anomali menjadi benar pada satu momen tertentu, dan tandanya akan muncul di langkah tempat itu terjadi.',
     foundHeadline: 'Basis data memberi jawaban yang salah',
     permittedHere: 'diizinkan pada mesin dan level ini',
     found: 'Anomali',
@@ -814,6 +889,39 @@ const id: Dictionary = {
     duplicate: 'Gandakan',
     remove: 'Hapus',
     removeRow: 'Hapus baris',
+  },
+  why: {
+    heading: 'Mengapa pembacaan ini menghasilkan nilai tersebut',
+    noRead: 'Statement ini tidak membaca apa pun, jadi tidak ada nilai yang perlu dijelaskan.',
+    ruleSnapshot: 'Aturan: snapshot',
+    ruleSnapshotBody:
+      'Pembacaan ini dijawab dari sebuah snapshot — daftar beku tentang transaksi mana saja yang sudah commit pada saat snapshot itu diambil. Pekerjaan yang commit setelah saat itu tidak terlihat, sebaru apa pun.',
+    ruleLatest: 'Aturan: baris commit terbaru',
+    ruleLatestBody:
+      'Pembacaan ini mengabaikan snapshot dan mengambil apa pun yang sudah commit pada saat ia berjalan. Inilah sebabnya sebuah locking read bisa melihat baris yang tidak bisa dilihat snapshot transaksinya sendiri.',
+    ruleUncommitted: 'Aturan: membaca yang belum commit',
+    ruleUncommittedBody:
+      'Level ini membiarkan sebuah pembacaan melihat pekerjaan yang belum commit. Hanya versi dari transaksi yang sudah di-rollback yang dikecualikan — versi itu mati sepermisif apa pun pembacanya.',
+    sees: 'Bisa melihat pekerjaan dari',
+    nobody: 'tidak ada selain dirinya sendiri',
+    versions: 'Versi baris ini, terbaru dahulu',
+    noVersions: 'Baris ini tidak ada dalam versi mana pun.',
+    taken: 'diambil',
+    passedOver: 'dilewati',
+    result: 'Hasil',
+    noRow: 'tidak ada baris',
+    notInResult: 'tidak masuk hasil',
+    ownWrite: 'ditulis oleh transaksi ini sendiri',
+    initialRow: 'bagian dari tabel sebelum run dimulai',
+    creatorCommitted: '{txn} sudah commit ketika snapshot pembacaan ini diambil',
+    creatorNotYetCommitted: '{txn} belum commit ketika snapshot pembacaan ini diambil',
+    levelReadsUncommitted: '{txn} belum commit, tetapi level ini membaca pekerjaan yang belum commit',
+    creatorRolledBack: '{txn} sudah di-rollback, jadi versi ini mati',
+    supersededByVisibleWrite: 'diganti atau dihapus oleh {txn}, yang pekerjaannya bisa dilihat pembacaan ini',
+    newerVersionTaken: 'versi yang lebih baru sudah diambil, jadi penelusuran berhenti di atas versi ini',
+    modelNote:
+      'Penjelasan ini berasal dari model. Fixture yang direkam menunjukkan model ini menghasilkan nilai, kode error dan waktu tunggu yang sama dengan mesin sungguhan — bukan menunjukkan bahwa mesinnya bernalar seperti ini di dalam.',
+    source: 'Aturannya, dalam kata-kata vendor',
   },
   a11y: {
     scoreRegion: 'Skor, sebagai area yang bisa digulir. Gunakan tombol panah untuk mencapai langkah berikutnya.',

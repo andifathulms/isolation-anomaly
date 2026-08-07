@@ -13,6 +13,24 @@ import type { IsolationLevel, Schedule } from '@/lib/schedule'
  * They are also a claim about a real database, so every one of them is checked
  * against a recorded fixture from the running engine.
  */
+/**
+ * What the keys and values mean in the scenario's own terms.
+ *
+ * The write-skew schedule reads `{1,2}` and writes `w1[1=0]`, and the story
+ * beside it is about two doctors going off call. Nothing connected the two:
+ * "rows 1 and 2 are two doctors, v = 1 means on call" lived in a source comment
+ * and never reached a reader. A framing the notation is never reconciled with
+ * is not a framing, it is decoration.
+ *
+ * Keyed by the string form of the number so the record is plain JSON.
+ */
+export type ScenarioLegend = {
+  /** What each key is: `{ '1': 'Dr A' }`. */
+  readonly keys: Readonly<Record<string, string>>
+  /** What each value means: `{ '1': 'on call', '0': 'off call' }`. */
+  readonly values: Readonly<Record<string, string>>
+}
+
 export type Scenario = {
   readonly id: string
   readonly title: string
@@ -26,6 +44,8 @@ export type Scenario = {
    * not a phenomenon in the catalogue.
    */
   readonly anomaly: AnomalyId | null
+  /** The key and value vocabulary, where the scenario has one worth naming. */
+  readonly legend?: ScenarioLegend
   readonly schedule: Schedule
   readonly expectedAt: Readonly<Record<string, readonly IsolationLevel[]>>
 }

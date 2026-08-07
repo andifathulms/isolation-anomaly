@@ -24,11 +24,19 @@ import type { Locale } from '@/lib/i18n/locales'
  */
 export function AnomalyCallout({
   anomalies,
+  settled,
   dict,
   locale,
   context,
 }: {
   readonly anomalies: readonly DetectedAnomaly[]
+  /**
+   * Whether the run has reached its last step. Before that, "no anomaly" is a
+   * statement about how far the reader has got, not about the schedule — and
+   * saying "this run came out clean" at step 0 would be a claim the evidence
+   * does not yet support.
+   */
+  readonly settled: boolean
   readonly dict: Dictionary
   readonly locale: Locale
   /** Engine and level this verdict belongs to — a verdict without one is a claim about databases in general. */
@@ -38,10 +46,14 @@ export function AnomalyCallout({
     return (
       <section className="leaf px-5 py-4">
         <div className="flex flex-wrap items-baseline gap-x-3">
-          <h2 className="font-prose text-title">{dict.anomaly.noneHeadline}</h2>
+          <h2 className="font-prose text-title">
+            {settled ? dict.anomaly.noneHeadline : dict.anomaly.pendingHeadline}
+          </h2>
           <span className="font-mono text-micro text-ink-soft">{context}</span>
         </div>
-        <p className="mt-2 max-w-reading text-body text-ink-muted">{dict.anomaly.noneBody}</p>
+        <p className="mt-2 max-w-reading text-body text-ink-muted">
+          {settled ? dict.anomaly.noneBody : dict.anomaly.pendingBody}
+        </p>
       </section>
     )
   }
