@@ -130,6 +130,10 @@ export type Dictionary = {
     | 'headingHint'
     | 'versions'
     | 'versionsHint'
+    | 'visibilityRule'
+    | 'visibilityRuleUncommitted'
+    | 'conflictRuleBlocks'
+    | 'conflictRuleNoBlock'
     | 'locks'
     | 'locksHint'
     | 'locksEmpty'
@@ -425,6 +429,14 @@ const en: Dictionary = {
     versions: 'Version chains',
     versionsHint:
       'Every write creates a version rather than replacing one. xmin is the transaction that created it, xmax the transaction that superseded or deleted it.',
+    visibilityRule:
+      'The test: you see a version if the transaction in xmin had committed when your snapshot was taken, and xmax is either empty or names a transaction that had not. Walk the versions newest first and take the first one that passes.',
+    visibilityRuleUncommitted:
+      'The test at this level: you see a version if the transaction in xmin has not been rolled back — committed or not. Walk the versions newest first and take the first one that passes.',
+    conflictRuleBlocks:
+      'Two transactions cannot hold conflicting locks on the same row, so the second statement waits until the first transaction ends. Waiting is not an error: the statement completes later, against whatever the row has become.',
+    conflictRuleNoBlock:
+      'Writes at this level do not wait on each other’s locks. Conflict is resolved when the write lands, by re-applying it or by refusing it — not by making the second statement queue.',
     locks: 'Locks held',
     locksHint:
       'A record lock is on a row. A gap lock is on the space between rows, and it exists to stop an insert appearing where a reader has already looked.',
@@ -753,6 +765,14 @@ const id: Dictionary = {
     versions: 'Rantai versi',
     versionsHint:
       'Setiap penulisan membuat versi baru, bukan menggantikan yang lama. xmin adalah transaksi yang membuatnya, xmax transaksi yang menggantikan atau menghapusnya.',
+    visibilityRule:
+      'Aturannya: Anda melihat sebuah versi jika transaksi pada xmin sudah commit ketika snapshot Anda diambil, dan xmax kosong atau berisi transaksi yang belum commit saat itu. Telusuri versi dari yang terbaru dan ambil yang pertama lolos.',
+    visibilityRuleUncommitted:
+      'Aturannya pada level ini: Anda melihat sebuah versi jika transaksi pada xmin belum di-rollback — sudah commit atau belum. Telusuri versi dari yang terbaru dan ambil yang pertama lolos.',
+    conflictRuleBlocks:
+      'Dua transaksi tidak bisa memegang lock yang berbenturan pada baris yang sama, jadi statement kedua menunggu sampai transaksi pertama berakhir. Menunggu bukan error: statement itu selesai belakangan, terhadap baris apa pun yang sudah jadi saat itu.',
+    conflictRuleNoBlock:
+      'Penulisan pada level ini tidak saling menunggu lock. Benturan diselesaikan ketika penulisan mendarat — dengan menerapkannya ulang atau menolaknya — bukan dengan membuat statement kedua antre.',
     locks: 'Lock yang dipegang',
     locksHint:
       'Record lock mengunci sebuah baris. Gap lock mengunci ruang antar baris, dan gunanya mencegah sebuah insert muncul di tempat yang sudah dilihat pembaca.',

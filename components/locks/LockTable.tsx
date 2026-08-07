@@ -2,6 +2,8 @@
 
 import type { Dictionary } from '@/lib/i18n/dictionaries'
 import type { Lock, LockResource, WaitState } from '@/lib/engine'
+import type { Conflicts, Rule } from '@/lib/packs/types'
+import { RuleNote } from '@/components/RuleNote'
 
 function describeResource(resource: LockResource): string {
   return resource.type === 'record'
@@ -20,10 +22,13 @@ function describeResource(resource: LockResource): string {
 export function LockTable({
   locks,
   waits,
+  conflicts,
   dict,
 }: {
   readonly locks: readonly Lock[]
   readonly waits: readonly WaitState[]
+  /** What this level does when two statements want the same row. */
+  readonly conflicts: Rule<Conflicts>
   readonly dict: Dictionary
 }) {
   return (
@@ -32,6 +37,21 @@ export function LockTable({
         {dict.panels.locks}
       </h3>
       <p className="mt-1.5 text-body text-ink-muted">{dict.panels.locksHint}</p>
+
+      {/*
+        A lock is only interesting because of what it stops, and what it stops
+        was stated nowhere in the app — the conflict rule lived in the pack and
+        surfaced only as raw field syntax on the engines page.
+      */}
+      <RuleNote
+        body={
+          conflicts.value.writeWriteBlocks
+            ? dict.panels.conflictRuleBlocks
+            : dict.panels.conflictRuleNoBlock
+        }
+        citation={conflicts.citation}
+        dict={dict}
+      />
 
       {locks.length === 0 ? (
         <p className="mt-3 font-mono text-caption text-ink-soft">{dict.panels.locksEmpty}</p>

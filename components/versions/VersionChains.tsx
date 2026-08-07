@@ -3,15 +3,20 @@
 import type { Dictionary } from '@/lib/i18n/dictionaries'
 import type { TransactionState, VersionChain, Xid } from '@/lib/engine'
 import { BOOTSTRAP_XID } from '@/lib/engine'
+import type { Rule, Visibility } from '@/lib/packs/types'
+import { RuleNote } from '@/components/RuleNote'
 
 /** MVCC made concrete — PRD §5.2. One row per version, in creation order. */
 export function VersionChains({
   chains,
   transactions,
+  visibility,
   dict,
 }: {
   readonly chains: readonly VersionChain[]
   readonly transactions: readonly TransactionState[]
+  /** This level's visibility rule, so the panel can state the test it shows. */
+  readonly visibility: Rule<Visibility>
   readonly dict: Dictionary
 }) {
   const nameOf = (xid: Xid | null): string => {
@@ -26,6 +31,21 @@ export function VersionChains({
         {dict.panels.versions}
       </h3>
       <p className="mt-1.5 text-body text-ink-muted">{dict.panels.versionsHint}</p>
+
+      {/*
+        The hint above defines the columns; this states the test. A reader was
+        being given both operands — xmin, and the snapshot — and the answer, and
+        never the rule that turns one into the other.
+      */}
+      <RuleNote
+        body={
+          visibility.value.readsUncommitted
+            ? dict.panels.visibilityRuleUncommitted
+            : dict.panels.visibilityRule
+        }
+        citation={visibility.citation}
+        dict={dict}
+      />
       {chains.length === 0 ? (
         <p className="mt-3 font-mono text-caption text-ink-soft">{dict.panels.empty}</p>
       ) : (

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { LEVELS, moveStep, validateSchedule, type IsolationLevel, type Schedule } from '@/lib/schedule'
 import { PACKS, requirePack } from '@/lib/packs'
+import { resolveLevel } from '@/lib/packs/load'
 import { SCENARIOS, getScenario } from '@/lib/scenarios'
 import { execute, narrateStep, narrateTrace, refusalHeadline } from '@/lib/engine'
 import { detect } from '@/lib/detect'
@@ -179,6 +180,8 @@ export function Workbench({
   const current = trace?.steps[step]
   const context = `${pack.engine} ${pack.version} · ${state.level}`
   const legend = scenario ? scenarioLegend(locale, scenario) : null
+  // The rules this level actually runs, so the panels can state the test they show.
+  const semantics = resolveLevel(pack, state.level)?.semantics ?? null
 
   /**
    * Anomalies whose cause step the run has actually reached.
@@ -361,7 +364,7 @@ export function Workbench({
         </p>
       ) : null}
 
-      {trace && world && current ? (
+      {trace && world && current && semantics ? (
         <>
           <Score
             schedule={schedule}
@@ -500,8 +503,18 @@ export function Workbench({
             </p>
 
             <div className="mt-6 grid gap-8 lg:grid-cols-3">
-              <VersionChains chains={world.chains} transactions={world.transactions} dict={dict} />
-              <LockTable locks={world.locks} waits={world.waits} dict={dict} />
+              <VersionChains
+                chains={world.chains}
+                transactions={world.transactions}
+                visibility={semantics.visibility}
+                dict={dict}
+              />
+              <LockTable
+                locks={world.locks}
+                waits={world.waits}
+                conflicts={semantics.conflicts}
+                dict={dict}
+              />
               <SnapshotPanel
                 transactions={world.transactions}
                 committedRows={world.committedRows}
