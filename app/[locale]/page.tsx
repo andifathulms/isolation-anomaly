@@ -17,10 +17,21 @@ export function generateMetadata({ params }: { params: { locale: string } }) {
 
 /**
  * The overview. A reader arriving here has usually never heard the phrase
- * "write skew" and may not know what an isolation level is, so the page earns
- * the vocabulary in this order: what goes wrong, one failure told as a story
- * with no jargon in it at all, what to do on the site, and only then the
- * three claims that make this project worth trusting.
+ * "write skew" and may not know what an isolation level is, so the page never
+ * asks for vocabulary it has not already earned:
+ *
+ *   see it      the score, as a picture, before a word about it
+ *   watch it    the two doctors, told with no jargon in it at all
+ *   name it     what a transaction and an isolation level are, applied to
+ *               something the reader has now watched happen
+ *   follow it   one whole run with real values, and the same run one level up
+ *   do it       how to drive the tool, and a way in right there
+ *   trust it    the three claims, and then the catalogue as reference
+ *
+ * The order matters more than any single section. Naming used to come before
+ * the story, so the definitions arrived before the thing they define; and the
+ * only way into the tool was at the very top, furthest from the reader most
+ * ready to use it.
  */
 export default function HomePage({ params }: { params: { locale: string } }) {
   if (!isLocale(params.locale)) notFound()
@@ -76,11 +87,6 @@ export default function HomePage({ params }: { params: { locale: string } }) {
         </figcaption>
       </figure>
 
-      <section className="mt-16 max-w-reading">
-        <h2 className="font-prose text-title">{dict.home.plainHeading}</h2>
-        <p className="mt-4 text-pretty leading-relaxed text-ink-muted">{dict.home.plainBody}</p>
-      </section>
-
       <section className="mt-16">
         <h2 className="font-prose text-title">{dict.home.storyHeading}</h2>
         <p className="mt-4 max-w-reading text-pretty leading-relaxed text-ink-muted">
@@ -120,6 +126,18 @@ export default function HomePage({ params }: { params: { locale: string } }) {
         </p>
       </section>
 
+      {/*
+        The naming, after the thing being named. This used to sit above the
+        story, so a reader met "transaction" and "isolation level" as
+        definitions and only then met the two doctors they describe. The figure
+        directly above already introduces the roster; the story finishes it, and
+        this puts the vocabulary on something the reader has now watched happen.
+      */}
+      <section className="mt-16 max-w-reading">
+        <h2 className="font-prose text-title">{dict.home.plainHeading}</h2>
+        <p className="mt-4 text-pretty leading-relaxed text-ink-muted">{dict.home.plainBody}</p>
+      </section>
+
       {/* The mechanism, worked through, before the reader is asked to drive. */}
       <WorkedExample locale={locale} dict={dict} />
 
@@ -138,6 +156,18 @@ export default function HomePage({ params }: { params: { locale: string } }) {
             </li>
           ))}
         </ol>
+
+        {/*
+          The only way in used to be at the very top of the page, some two
+          thousand pixels above the reader who has just finished a worked example
+          and been told how to drive. Same action, same words — a reader ready to
+          go should not have to scroll back to leave.
+        */}
+        <div className="mt-8">
+          <Link href={`/${locale}/schedule/`} className="control control-strong">
+            {dict.home.ctaSchedule}
+          </Link>
+        </div>
       </section>
 
       <section className="mt-16 border-t border-staff-faint pt-10">
