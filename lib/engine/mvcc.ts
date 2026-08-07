@@ -1,5 +1,12 @@
 import type { InitialRow, Key, Value } from '@/lib/schedule'
-import type { RowVersion, VersionChain, Xid } from './trace'
+import type {
+  KeyDecision,
+  RowVersion,
+  VersionChain,
+  VersionDecision,
+  VisibilityReason,
+  Xid,
+} from './trace'
 
 /**
  * Version chains and visibility. One core, parameterised by the pack — engines
@@ -87,6 +94,84 @@ export function visibleVersion(store: VersionStore, key: Key, view: View): RowVe
 
 export function visibleValue(store: VersionStore, key: Key, view: View): Value | null {
   return visibleVersion(store, key, view)?.value ?? null
+}
+
+/**
+ * Why `accepts` said what it said. Same test, stated rather than reduced to a
+ * boolean — the reason is the lesson, and it was being thrown away.
+ */
+function acceptReason(xid: Xid, view: View): VisibilityReason {
+  if (xid === BOOTSTRAP_XID) return 'initialRow'
+  if (xid === view.self) return 'ownWrite'
+  if (view.readsUncommitted) {
+    return view.aborted.has(xid) ? 'creatorRolledBack' : 'levelReadsUncommitted'
+  }
+  return view.committed.has(xid) ? 'creatorCommitted' : 'creatorNotYetCommitted'
+}
+
+/**
+ * `visibleVersion`, with its working shown.
+ *
+ * Walks the same chain in the same direction and applies the same test, and
+ * records for every version whether it was accepted and on what grounds — plus
+ * the ones after the winner, which the engine never reaches and which a reader
+ * still has to be told were not silently ignored.
+ *
+ * Kept beside `visibleVersion` rather than replacing it so that the executor's
+ * hot path stays exactly what it was, and so a divergence between the two is a
+ * test failure rather than a wrong explanation.
+ */
+export function explainVisibleVersion(store: VersionStore, key: Key, view: View): KeyDecision {
+  const chain = store.chains.get(key) ?? []
+  const considered: VersionDecision[] = []
+  let chosen: RowVersion | null = null
+
+  for (let index = chain.length - 1; index >= 0; index -= 1) {
+    const version = chain[index]
+    if (!version) continue
+
+    if (chosen !== null) {
+      considered.push({ ...summarise(version), visible: false, because: 'newerVersionTaken' })
+      continue
+    }
+
+    const creator = acceptReason(version.xmin, view)
+    const creatorAccepted = creator === 'initialRow' || creator === 'ownWrite' ||
+      creator === 'creatorCommitted' || creator === 'levelReadsUncommitted'
+
+    if (!creatorAccepted) {
+      considered.push({ ...summarise(version), visible: false, because: creator })
+      continue
+    }
+
+    // Created by someone we can see. It survives only if whoever deleted it is
+    // someone we cannot — otherwise the deletion is as visible as the creation.
+    if (version.xmax !== null) {
+      const deleter = acceptReason(version.xmax, view)
+      const deleterAccepted = deleter === 'initialRow' || deleter === 'ownWrite' ||
+        deleter === 'creatorCommitted' || deleter === 'levelReadsUncommitted'
+      if (deleterAccepted) {
+        considered.push({ ...summarise(version), visible: false, because: 'supersededByVisibleWrite' })
+        continue
+      }
+    }
+
+    considered.push({ ...summarise(version), visible: true, because: creator })
+    chosen = version
+  }
+
+  // A tombstone can win: it is visible, and it means there is no live row.
+  const live = chosen && chosen.value !== null ? chosen : null
+  return {
+    key,
+    considered,
+    chosenSeq: live?.seq ?? null,
+    value: live?.value ?? null,
+  }
+}
+
+function summarise(version: RowVersion): Pick<VersionDecision, 'seq' | 'value' | 'xmin' | 'xmax'> {
+  return { seq: version.seq, value: version.value, xmin: version.xmin, xmax: version.xmax }
 }
 
 /** Keys with a live row under this view, in key order. */

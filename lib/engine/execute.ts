@@ -18,6 +18,7 @@ import {
   createStore,
   newestVersion,
   toChains,
+  explainVisibleVersion,
   visibleKeys,
   visibleValue,
   type View,
@@ -29,6 +30,7 @@ import type {
   ExecutionResult,
   ExecutionTrace,
   Lock,
+  ReadReasoning,
   ReadResult,
   RowVersion,
   RwEdge,
@@ -195,6 +197,45 @@ export function execute(
     aborted: abortedXids(),
   })
 
+
+  /**
+   * The read's working, recorded alongside its answer.
+   *
+   * Built from the same store and the same view the read itself used, so the
+   * explanation cannot drift from the value — and carrying the pack rule's own
+   * citation, so the reason can be shown where the rule was applied rather than
+   * on a page the reader has to go and find.
+   */
+  const explain = (
+    rule: ReadReasoning['rule'],
+    view: View,
+    keys: readonly Key[],
+    snapshotTakenAtStep: number | null,
+  ): ReadReasoning => ({
+    rule,
+    snapshotTakenAtStep,
+    visibleXids: [...view.committed].sort((a, b) => a - b),
+    keys: keys.map((key) => explainVisibleVersion(store, key, view)),
+    citation: semantics.visibility.citation,
+  })
+
+  /**
+   * The same, for a read that ignores snapshots and takes the newest committed
+   * row. There is no chain walk to show: the rule is "whatever is committed
+   * now", so the decision is which version that is.
+   */
+  const explainLatest = (runtime: Runtime, keys: readonly Key[]): ReadReasoning => {
+    const committed = committedXids()
+    const view: View = { self: runtime.xid, committed, readsUncommitted: false, aborted: abortedXids() }
+    return {
+      rule: 'latestCommitted',
+      snapshotTakenAtStep: null,
+      visibleXids: [...committed].sort((a, b) => a - b),
+      keys: keys.map((key) => explainVisibleVersion(store, key, view)),
+      citation: semantics.visibility.citation,
+    }
+  }
+
   /** The newest version of a key whose creator has committed, tombstone included. */
   const newestCommitted = (key: Key, runtime: Runtime): RowVersion | null => {
     const chain = store.chains.get(key)
@@ -334,28 +375,37 @@ export function execute(
     switch (op.type) {
       case 'read':
       case 'selectForUpdate':
-        return { type: 'ok', read: { type: 'row', value: visibleValue(store, op.key, view) }, rowsAffected: null }
+        return {
+          type: 'ok',
+          read: { type: 'row', value: visibleValue(store, op.key, view) },
+          rowsAffected: null,
+          reasoning: explain('latestCommitted', view, [op.key], null),
+        }
       case 'readRange': {
-        const rows = visibleKeys(store, view)
-          .filter((key) => predicateContains(op.predicate, key))
-          .map((key) => ({ key, value: visibleValue(store, key, view) as number }))
-        return { type: 'ok', read: { type: 'rows', rows }, rowsAffected: null }
+        const keys = visibleKeys(store, view).filter((key) => predicateContains(op.predicate, key))
+        const rows = keys.map((key) => ({ key, value: visibleValue(store, key, view) as number }))
+        return {
+          type: 'ok',
+          read: { type: 'rows', rows },
+          rowsAffected: null,
+          reasoning: explain('latestCommitted', view, keys, null),
+        }
       }
       case 'write':
       case 'delete': {
         const live = visibleValue(store, op.key, view) !== null
-        if (!live) return { type: 'ok', read: null, rowsAffected: 0 }
+        if (!live) return { type: 'ok', read: null, rowsAffected: 0, reasoning: null }
         appendVersion(store, op.key, op.type === 'write' ? op.value : null, xid, step)
         recordAntidependencies(runtime, op.key, step)
-        return { type: 'ok', read: null, rowsAffected: 1 }
+        return { type: 'ok', read: null, rowsAffected: 1, reasoning: null }
       }
       case 'insert': {
         appendVersion(store, op.key, op.value, xid, step)
         recordAntidependencies(runtime, op.key, step)
-        return { type: 'ok', read: null, rowsAffected: 1 }
+        return { type: 'ok', read: null, rowsAffected: 1, reasoning: null }
       }
       default:
-        return { type: 'ok', read: null, rowsAffected: null }
+        return { type: 'ok', read: null, rowsAffected: null, reasoning: null }
     }
   }
 
@@ -371,7 +421,7 @@ export function execute(
     if (op.type === 'begin') {
       runtime.status = 'running'
       runtime.beganAtStep = step
-      return { type: 'ok', read: null, rowsAffected: null }
+      return { type: 'ok', read: null, rowsAffected: null, reasoning: null }
     }
 
     // Once the engine has failed a transaction, what happens to the statements
@@ -426,12 +476,28 @@ export function execute(
             return abort(runtime, step, pack.errors.serializationFailure, 'staleLockingRead')
           }
           locks = releaseStatementLocks(locks, runtime.txn)
-          return { type: 'ok', read: { type: 'row', value: newest?.value ?? null }, rowsAffected: null }
+          return {
+            type: 'ok',
+            read: { type: 'row', value: newest?.value ?? null },
+            rowsAffected: null,
+            reasoning: explainLatest(runtime, [op.key]),
+          }
         }
 
-        const value = visibleValue(store, op.key, viewFor(runtime, step))
+        const view = viewFor(runtime, step)
+        const value = visibleValue(store, op.key, view)
         locks = releaseStatementLocks(locks, runtime.txn)
-        return { type: 'ok', read: { type: 'row', value }, rowsAffected: null }
+        return {
+          type: 'ok',
+          read: { type: 'row', value },
+          rowsAffected: null,
+          reasoning: explain(
+            semantics.visibility.value.readsUncommitted ? 'readsUncommitted' : 'snapshot',
+            view,
+            [op.key],
+            runtime.snapshot?.takenAtStep ?? null,
+          ),
+        }
       }
 
       case 'readRange': {
@@ -450,12 +516,29 @@ export function execute(
         const view = semantics.visibility.value.plainReadsAreLocking
           ? { self: runtime.xid, committed: committedXids(), readsUncommitted: false, aborted: abortedXids() }
           : viewFor(runtime, step)
-        const rows = visibleKeys(store, view)
-          .filter((key) => predicateContains(op.predicate, key))
-          .map((key) => ({ key, value: visibleValue(store, key, view) as number }))
+        const matched = visibleKeys(store, view).filter((key) => predicateContains(op.predicate, key))
+        const rows = matched.map((key) => ({ key, value: visibleValue(store, key, view) as number }))
         runtime.readPredicates.push(op.predicate)
         locks = releaseStatementLocks(locks, runtime.txn)
-        return { type: 'ok', read: { type: 'rows', rows }, rowsAffected: null }
+        // Every key in range is explained, not only the ones that came back:
+        // a key that is in the predicate and absent from the result is exactly
+        // what a phantom is, and the reason it was excluded is the lesson.
+        const inRange = [...store.chains.keys()]
+          .filter((key) => predicateContains(op.predicate, key))
+          .sort((a, b) => a - b)
+        return {
+          type: 'ok',
+          read: { type: 'rows', rows },
+          rowsAffected: null,
+          reasoning: semantics.visibility.value.plainReadsAreLocking
+            ? explainLatest(runtime, inRange)
+            : explain(
+                semantics.visibility.value.readsUncommitted ? 'readsUncommitted' : 'snapshot',
+                view,
+                inRange,
+                runtime.snapshot?.takenAtStep ?? null,
+              ),
+        }
       }
 
       case 'selectForUpdate': {
@@ -471,12 +554,20 @@ export function execute(
             type: 'ok',
             read: { type: 'row', value: newest?.value ?? null },
             rowsAffected: null,
+            reasoning: explainLatest(runtime, [op.key]),
           }
         }
+        const view = viewFor(runtime, step)
         return {
           type: 'ok',
-          read: { type: 'row', value: visibleValue(store, op.key, viewFor(runtime, step)) },
+          read: { type: 'row', value: visibleValue(store, op.key, view) },
           rowsAffected: null,
+          reasoning: explain(
+            semantics.visibility.value.readsUncommitted ? 'readsUncommitted' : 'snapshot',
+            view,
+            [op.key],
+            runtime.snapshot?.takenAtStep ?? null,
+          ),
         }
       }
 
@@ -492,12 +583,12 @@ export function execute(
         if (!live) {
           // Nothing to update: the engine reports zero rows rather than failing.
           locks = releaseStatementLocks(locks, runtime.txn)
-          return { type: 'ok', read: null, rowsAffected: 0 }
+          return { type: 'ok', read: null, rowsAffected: 0, reasoning: null }
         }
         appendVersion(store, op.key, op.type === 'write' ? op.value : null, runtime.xid, step)
         recordAntidependencies(runtime, op.key, step)
         locks = releaseStatementLocks(locks, runtime.txn)
-        return { type: 'ok', read: null, rowsAffected: 1 }
+        return { type: 'ok', read: null, rowsAffected: 1, reasoning: null }
       }
 
       case 'insert': {
@@ -518,7 +609,7 @@ export function execute(
         appendVersion(store, op.key, op.value, runtime.xid, step)
         recordAntidependencies(runtime, op.key, step)
         locks = releaseStatementLocks(locks, runtime.txn)
-        return { type: 'ok', read: null, rowsAffected: 1 }
+        return { type: 'ok', read: null, rowsAffected: 1, reasoning: null }
       }
 
       case 'commit': {
@@ -535,7 +626,7 @@ export function execute(
               cause: 'transactionAlreadyAborted',
             }
           }
-          return { type: 'ok', read: null, rowsAffected: null }
+          return { type: 'ok', read: null, rowsAffected: null, reasoning: null }
         }
         if (dangerousStructure(runtime)) {
           const shape = pack.errors.readWriteDependencies ?? pack.errors.serializationFailure
@@ -544,14 +635,14 @@ export function execute(
         runtime.status = 'committed'
         runtime.endedAtStep = step
         locks = releaseTransactionLocks(locks, runtime.txn)
-        return { type: 'ok', read: null, rowsAffected: null }
+        return { type: 'ok', read: null, rowsAffected: null, reasoning: null }
       }
 
       case 'rollback': {
         runtime.status = 'aborted'
         runtime.endedAtStep = step
         locks = releaseTransactionLocks(locks, runtime.txn)
-        return { type: 'ok', read: null, rowsAffected: null }
+        return { type: 'ok', read: null, rowsAffected: null, reasoning: null }
       }
 
       default: {

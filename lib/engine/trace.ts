@@ -1,5 +1,6 @@
 import type { IsolationLevel, InitialRow, Key, Operation, TxnId, Value } from '@/lib/schedule'
 import type { Refusal } from './refuse'
+import type { Citation } from '@/lib/packs/types'
 
 /**
  * The recorded execution — everything the UI renders and everything the
@@ -89,6 +90,67 @@ export type WorldState = {
   readonly committedRows: readonly InitialRow[]
 }
 
+/**
+ * Why one version of a row was taken and the others were not.
+ *
+ * The whole project exists to make visibility visible, and visibility was the
+ * one thing the trace did not record: `visibleVersion` walked the chain, tested
+ * each version, returned the first that passed, and discarded which ones it
+ * rejected and on what grounds. A reader was shown both operands — xmin, xmax,
+ * the snapshot — and the answer, and never the operator.
+ */
+export type VisibilityReason =
+  /** Written by the reader itself; a transaction always sees its own work. */
+  | 'ownWrite'
+  /** The initial load, which committed before all time. */
+  | 'initialRow'
+  /** The creator had committed when this reader's snapshot was taken. */
+  | 'creatorCommitted'
+  /** The creator had not committed by then — the ordinary invisible case. */
+  | 'creatorNotYetCommitted'
+  /** The level reads uncommitted work, so committing never came into it. */
+  | 'levelReadsUncommitted'
+  /** Uncommitted *and* rolled back: dead however permissive the reader is. */
+  | 'creatorRolledBack'
+  /** Visible in itself, but a transaction this reader can see deleted it. */
+  | 'supersededByVisibleWrite'
+  /** A newer version had already been accepted, so this was never reached. */
+  | 'newerVersionTaken'
+
+export type VersionDecision = {
+  readonly seq: number
+  readonly value: Value | null
+  readonly xmin: Xid
+  readonly xmax: Xid | null
+  readonly visible: boolean
+  readonly because: VisibilityReason
+}
+
+/** One key's chain, newest first, in the order the engine examined it. */
+export type KeyDecision = {
+  readonly key: Key
+  readonly considered: readonly VersionDecision[]
+  /** The version taken, or null when the reader sees no live row. */
+  readonly chosenSeq: number | null
+  readonly value: Value | null
+}
+
+/**
+ * How a read arrived at what it returned.
+ *
+ * `rule` is which of the pack's rules decided it, and `citation` is that rule's
+ * vendor source — carried here so it can be shown at the point the rule was
+ * applied rather than on a page the reader has to go and find.
+ */
+export type ReadReasoning = {
+  readonly rule: 'snapshot' | 'latestCommitted' | 'readsUncommitted'
+  /** Null for `latestCommitted`, which does not consult a snapshot at all. */
+  readonly snapshotTakenAtStep: number | null
+  readonly visibleXids: readonly Xid[]
+  readonly keys: readonly KeyDecision[]
+  readonly citation: Citation
+}
+
 export type AbortCause =
   | 'deadlock'
   | 'staleWrite'
@@ -101,6 +163,8 @@ export type StepOutcome =
       readonly type: 'ok'
       readonly read: ReadResult | null
       readonly rowsAffected: number | null
+      /** How this read reached its value. Null for statements that read nothing. */
+      readonly reasoning: ReadReasoning | null
     }
   | {
       readonly type: 'error'
