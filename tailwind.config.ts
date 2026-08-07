@@ -38,6 +38,12 @@ const config: Config = {
           /** A rule you are not: stave lines, bar lines, hairline dividers. */
           faint: token('--staff-faint'),
         },
+        /**
+         * The edge of an interactive control, held at or above the 3:1 WCAG
+         * minimum for a UI boundary. Distinct from `staff`, which is allowed to
+         * recede because a stave line is scaffolding rather than an affordance.
+         */
+        edge: token('--edge'),
         ink: {
           DEFAULT: token('--ink'),
           /** Secondary prose. Carries real body text, so it stays readable. */
@@ -77,6 +83,21 @@ const config: Config = {
         title: ['clamp(1.6rem, 1.25rem + 1.2vw, 2.2rem)', { lineHeight: '1.15', letterSpacing: '-0.012em' }],
         section: ['1.3rem', { lineHeight: '1.3', letterSpacing: '-0.006em' }],
         lead: ['1.125rem', { lineHeight: '1.65' }],
+        /**
+         * Body prose. 16px is the floor for anything a reader is expected to
+         * read a paragraph of — which previously fell through to Tailwind's
+         * `text-sm` at 14px, so the three claims that earn this project its
+         * credibility were the hardest text on the page to read.
+         */
+        body: ['1rem', { lineHeight: '1.65' }],
+        /**
+         * Dense non-prose: table cells, step lists, control labels. Same 14px
+         * those places already used — naming it is what stops it being reached
+         * for as a prose size.
+         */
+        caption: ['0.875rem', { lineHeight: '1.45' }],
+        /** Notation, version identifiers, operation marks. Never a sentence. */
+        micro: ['0.75rem', { lineHeight: '1.35' }],
         /** Uppercase eyebrow labels — sized up from 11px, with real tracking. */
         label: ['0.75rem', { lineHeight: '1.25', letterSpacing: '0.09em' }],
       },

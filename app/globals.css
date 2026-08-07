@@ -24,14 +24,30 @@
     --staff: 150 143 130;
     --staff-faint: 199 192 178;
 
-    /* Ink, in three weights. `muted` carries body text, so it clears 7:1. */
+    /*
+     * The edge of a control. `staff` reads correctly as a stave line — it is
+     * supposed to recede — but at 2.76:1 against the page it was below the 3:1
+     * WCAG minimum for a UI boundary, which left a secondary button with an
+     * edge you had to look for. Controls get their own token so the stave lines
+     * can stay exactly as recessive as they were. 3.11:1 on the page, 3.37:1
+     * on a leaf.
+     */
+    --edge: 141 134 122;
+
+    /*
+     * Ink, in three weights. `muted` carries body text, so it clears 7:1.
+     * `soft` carries the eyebrow labels and was 4.01:1 — under the 4.5:1 floor
+     * for the most-repeated micro-copy in the app. Now 5.31 / 5.75 / 4.67
+     * against page, leaf and sunk respectively.
+     */
     --ink: 29 27 23;
     --ink-muted: 82 77 67;
-    --ink-soft: 122 116 102;
+    --ink-soft: 102 97 86;
 
     --voice-a: 40 74 124;
     --voice-a-wash: 221 228 239;
-    --voice-b: 128 97 40;
+    /* Nudged one step darker: at 128 97 40 it was 4.36:1 on sunk paper. */
+    --voice-b: 125 95 39;
     --voice-b-wash: 239 230 210;
     --voice-c: 55 90 70;
     --voice-c-wash: 222 231 224;
@@ -59,9 +75,13 @@
     --staff: 122 114 100;
     --staff-faint: 64 59 51;
 
+    /* Dark `staff` already clears 3:1, so the edge is the same value here. */
+    --edge: 122 114 100;
+
     --ink: 238 233 222;
     --ink-muted: 176 168 153;
-    --ink-soft: 135 128 114;
+    /* Was 135 128 114 — 4.14:1 on a raised leaf. Now 5.03 / 4.61 / 5.39. */
+    --ink-soft: 143 136 121;
 
     --voice-a: 148 180 226;
     --voice-a-wash: 34 47 68;
@@ -143,8 +163,8 @@
    * up with things all shouting at the same volume.
    */
   .control {
-    @apply inline-flex items-center gap-1.5 rounded-md border border-staff bg-manuscript-raised px-3 py-1.5
-      font-control text-sm text-ink transition-colors;
+    @apply inline-flex items-center gap-1.5 rounded-md border border-edge bg-manuscript-raised px-3 py-1.5
+      font-control text-caption text-ink transition-colors;
   }
 
   .control:hover:not(:disabled) {
