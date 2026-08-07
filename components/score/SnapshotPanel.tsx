@@ -22,10 +22,10 @@ export function SnapshotPanel({
       <h3 id="snapshots-heading" className="font-prose text-section">
         {dict.panels.snapshots}
       </h3>
-      <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">{dict.panels.snapshotsHint}</p>
+      <p className="mt-1.5 text-body text-ink-muted">{dict.panels.snapshotsHint}</p>
 
       {withSnapshots.length === 0 ? (
-        <p className="mt-3 font-mono text-sm text-ink-soft">{dict.panels.snapshotsEmpty}</p>
+        <p className="mt-3 font-mono text-caption text-ink-soft">{dict.panels.snapshotsEmpty}</p>
       ) : (
         <ul className="mt-4 space-y-2">
           {withSnapshots.map((txn) => {
@@ -34,22 +34,22 @@ export function SnapshotPanel({
             return (
               <li
                 key={txn.txn}
-                className="leaf px-3 py-2 font-mono text-sm"
+                className="leaf px-3 py-2 font-mono text-caption"
               >
                 <div className="flex flex-wrap items-baseline gap-x-2">
                   <span>{txn.txn}</span>
-                  <span className="text-xs text-ink-muted">
+                  <span className="text-micro text-ink-muted">
                     {snapshot.scope} · {dict.panels.takenAtStep} {snapshot.takenAtStep}
                   </span>
                 </div>
-                <div className="mt-1 text-xs">
+                <div className="mt-1 text-micro">
                   <span className="text-ink-muted">{dict.panels.sees}: </span>
                   {snapshot.visibleXids.length === 0
                     ? '—'
                     : snapshot.visibleXids.map(nameOf).join(', ')}
                 </div>
                 {snapshot.inProgressXids.length > 0 ? (
-                  <div className="text-xs">
+                  <div className="text-micro">
                     <span className="text-ink-muted">{dict.panels.stillRunning}: </span>
                     {snapshot.inProgressXids.map(nameOf).join(', ')}
                   </div>
@@ -64,7 +64,7 @@ export function SnapshotPanel({
         <h4 className="eyebrow">
           {dict.panels.committedTable}
         </h4>
-        <p className="mt-1 font-mono text-sm">
+        <p className="mt-1 font-mono text-caption">
           {committedRows.length === 0
             ? dict.panels.empty
             : committedRows.map((row) => `${row.key}=${row.value}`).join('  ')}

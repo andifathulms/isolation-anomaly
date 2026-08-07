@@ -119,7 +119,7 @@ export function ConflictGraphView({
       </div>
 
       {!data ? (
-        <p className="text-sm text-ink-muted">{dict.matrix.refused}</p>
+        <p className="text-caption text-ink-muted">{dict.matrix.refused}</p>
       ) : (
         <div className="grid gap-8 md:grid-cols-[320px_1fr]">
           <svg
@@ -177,11 +177,11 @@ export function ConflictGraphView({
             <h2 className={`font-prose text-xl ${data.cycle ? 'text-conductor' : ''}`}>
               {data.cycle ? dict.graph.cycle : dict.graph.noCycle}
             </h2>
-            <p className="max-w-reading text-sm leading-relaxed">
+            <p className="max-w-reading text-body">
               {data.cycle ? explainCycle(data.cycle) : dict.graph.noCycleBody}
             </p>
             {!data.cycle && data.orders.length > 0 ? (
-              <ul className="space-y-0.5 font-mono text-sm">
+              <ul className="space-y-0.5 font-mono text-caption">
                 {data.orders.slice(0, 4).map((order) => (
                   <li key={order.join('>')}>{order.join(' → ')}</li>
                 ))}
@@ -193,9 +193,9 @@ export function ConflictGraphView({
                 {dict.graph.edges}
               </h3>
               {data.graph.edges.length === 0 ? (
-                <p className="mt-1 text-sm text-ink-muted">{dict.graph.noEdges}</p>
+                <p className="mt-1 text-caption text-ink-muted">{dict.graph.noEdges}</p>
               ) : (
-                <ul className="mt-1 space-y-1 text-sm">
+                <ul className="mt-1 space-y-1 text-caption">
                   {data.graph.edges.map((edge, index) => (
                     <li key={`${edge.from}-${edge.to}-${edge.kind}-${index}`} className="font-mono">
                       {edge.from} → {edge.to}
@@ -212,7 +212,7 @@ export function ConflictGraphView({
         </div>
       )}
 
-      <p className="max-w-reading text-sm leading-relaxed text-ink-muted">{dict.graph.lead}</p>
+      <p className="max-w-reading text-body text-ink-muted">{dict.graph.lead}</p>
     </div>
   )
 }

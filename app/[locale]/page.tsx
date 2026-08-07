@@ -68,13 +68,13 @@ export default function HomePage({ params }: { params: { locale: string } }) {
               >
                 <span
                   aria-hidden="true"
-                  className={`mt-1 shrink-0 text-xs leading-none ${isA ? 'text-voiceA' : 'text-voiceB'}`}
+                  className={`mt-1 shrink-0 text-micro leading-none ${isA ? 'text-voiceA' : 'text-voiceB'}`}
                 >
                   {isA ? '●' : '■'}
                 </span>
                 <span className="min-w-0">
                   <span
-                    className={`font-mono text-xs ${isA ? 'text-voiceA' : 'text-voiceB'}`}
+                    className={`font-mono text-micro ${isA ? 'text-voiceA' : 'text-voiceB'}`}
                   >
                     {isA ? 'Dr A' : 'Dr B'}
                   </span>
@@ -100,9 +100,9 @@ export default function HomePage({ params }: { params: { locale: string } }) {
             { heading: dict.home.how3Heading, body: dict.home.how3Body },
           ].map((item, index) => (
             <li key={item.heading}>
-              <span className="font-mono text-sm text-ink-soft">{index + 1}</span>
+              <span className="font-mono text-caption text-ink-soft">{index + 1}</span>
               <h3 className="mt-1 font-prose text-section">{item.heading}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-ink-muted">{item.body}</p>
+              <p className="mt-2 text-body text-ink-muted">{item.body}</p>
             </li>
           ))}
         </ol>
@@ -112,22 +112,22 @@ export default function HomePage({ params }: { params: { locale: string } }) {
         <div className="grid gap-10 md:grid-cols-3">
           <div>
             <h2 className="font-prose text-section text-conductor">{dict.home.skewHeading}</h2>
-            <p className="mt-2 text-sm leading-relaxed text-ink-muted">{dict.home.skewBody}</p>
+            <p className="mt-2 text-body text-ink-muted">{dict.home.skewBody}</p>
           </div>
           <div>
             <h2 className="font-prose text-section">{dict.home.namesHeading}</h2>
-            <p className="mt-2 text-sm leading-relaxed text-ink-muted">{dict.home.namesBody}</p>
+            <p className="mt-2 text-body text-ink-muted">{dict.home.namesBody}</p>
           </div>
           <div>
             <h2 className="font-prose text-section">{dict.home.oracleHeading}</h2>
-            <p className="mt-2 text-sm leading-relaxed text-ink-muted">{dict.home.oracleBody}</p>
+            <p className="mt-2 text-body text-ink-muted">{dict.home.oracleBody}</p>
           </div>
         </div>
       </section>
 
       <section className="mt-16 border-t border-staff-faint pt-10">
         <h2 className="font-prose text-title">{dict.home.anomalyListHeading}</h2>
-        <p className="mt-3 max-w-reading text-sm leading-relaxed text-ink-muted">{dict.home.notationHint}</p>
+        <p className="mt-3 max-w-reading text-body text-ink-muted">{dict.home.notationHint}</p>
 
         <ul className="mt-6 grid gap-3 sm:grid-cols-2">
           {ANOMALY_IDS.map((id) => {
@@ -136,9 +136,9 @@ export default function HomePage({ params }: { params: { locale: string } }) {
               <li key={id} className="leaf px-4 py-3">
                 <div className="flex flex-wrap items-baseline gap-x-2">
                   <span className="font-prose text-section">{anomalyText(locale, id).name}</span>
-                  <code className="font-mono text-xs text-ink-soft">{definition.label}</code>
+                  <code className="font-mono text-micro text-ink-soft">{definition.label}</code>
                 </div>
-                <p className="mt-1.5 font-mono text-xs text-ink-muted">{definition.formal}</p>
+                <p className="mt-1.5 font-mono text-micro text-ink-muted">{definition.formal}</p>
                 <p className="mt-1.5 eyebrow">
                   {definition.inAnsiList ? dict.anomaly.inAnsi : dict.anomaly.notInAnsi}
                 </p>

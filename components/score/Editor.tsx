@@ -65,8 +65,8 @@ function blankOperation(type: OperationType, previous: Operation): Operation {
   }
 }
 
-const control = 'rounded-md border border-staff bg-manuscript-raised px-2 py-1 font-mono text-sm'
-const button = 'rounded-md border border-staff px-2 py-1 font-control text-xs transition-colors hover:bg-manuscript-sunk'
+const control = 'rounded-md border border-staff bg-manuscript-raised px-2 py-1 font-mono text-caption'
+const button = 'rounded-md border border-staff px-2 py-1 font-control text-micro transition-colors hover:bg-manuscript-sunk'
 
 export function Editor({
   schedule,
@@ -120,7 +120,7 @@ export function Editor({
                 }
                 className={`${control} w-16`}
               />
-              <span className="font-mono text-sm">=</span>
+              <span className="font-mono text-caption">=</span>
               <input
                 type="number"
                 value={row.value}
@@ -182,7 +182,7 @@ export function Editor({
                 dragFrom === index ? 'opacity-50' : ''
               } ${canMove(schedule, index) ? 'cursor-grab' : ''}`}
             >
-              <span className="w-6 font-mono text-xs text-ink-muted">{index}</span>
+              <span className="w-6 font-mono text-micro text-ink-muted">{index}</span>
 
               <select
                 value={step.txn}
@@ -258,7 +258,7 @@ export function Editor({
                     }
                     className={`${control} w-16`}
                   />
-                  <span className="font-mono text-sm">..</span>
+                  <span className="font-mono text-caption">..</span>
                   <input
                     type="number"
                     value={step.op.predicate.to}
@@ -280,7 +280,7 @@ export function Editor({
                 </span>
               ) : null}
 
-              <span className="text-xs text-ink-muted">{describe(step.op)}</span>
+              <span className="text-micro text-ink-muted">{describe(step.op)}</span>
 
               <span className="ml-auto flex gap-1">
                 <button type="button" className={button} onClick={() => move(index, -1)} aria-label="Move earlier">
@@ -320,7 +320,7 @@ export function Editor({
       {issues.length > 0 ? (
         <ul className="space-y-1 border-l-2 border-conductor pl-3">
           {issues.map((issue, index) => (
-            <li key={index} className="text-sm text-conductor">
+            <li key={index} className="text-caption text-conductor">
               {issue.step === null ? '' : `step ${issue.step}: `}
               {issue.message}
             </li>

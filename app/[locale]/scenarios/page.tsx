@@ -37,33 +37,33 @@ export default function ScenariosPage({ params }: { params: { locale: string } }
             <li key={scenario.id} className="leaf px-5 py-5 sm:px-6 sm:py-6">
               <div className="flex flex-wrap items-baseline gap-x-3">
                 <h2 className="font-prose text-section">{text.title}</h2>
-                <code className="font-mono text-xs text-ink-soft">{scenario.id}</code>
+                <code className="font-mono text-micro text-ink-soft">{scenario.id}</code>
               </div>
 
               {definition && scenario.anomaly ? (
-                <p className="mt-1.5 font-control text-sm text-ink-muted">
+                <p className="mt-1.5 font-control text-caption text-ink-muted">
                   {dict.scenarios.documents}:{' '}
                   {/* The anomaly this scenario exists to produce — named in
                       conductor's red, which is what red is for. */}
                   <span className="font-prose text-conductor">
                     {anomalyText(locale, scenario.anomaly).name}
                   </span>{' '}
-                  <code className="font-mono text-xs">{definition.label}</code>{' '}
+                  <code className="font-mono text-micro">{definition.label}</code>{' '}
                   {definition.inAnsiList ? dict.anomaly.inAnsi : dict.anomaly.notInAnsi}
                 </p>
               ) : (
-                <p className="mt-1.5 font-control text-sm text-ink-muted">{dict.scenarios.noAnomaly}</p>
+                <p className="mt-1.5 font-control text-caption text-ink-muted">{dict.scenarios.noAnomaly}</p>
               )}
 
               <div className="mt-5 grid gap-6 lg:grid-cols-2">
                 <div className="space-y-3">
-                  <p className="text-sm leading-relaxed">
+                  <p className="text-body">
                     <span className="eyebrow">
                       {dict.scenarios.framing}:{' '}
                     </span>
                     {text.framing}
                   </p>
-                  <p className="text-sm leading-relaxed">
+                  <p className="text-body">
                     <span className="eyebrow">
                       {dict.scenarios.lesson}:{' '}
                     </span>
@@ -80,7 +80,7 @@ export default function ScenariosPage({ params }: { params: { locale: string } }
                 </div>
 
                 <div className="space-y-3">
-                  <pre className="overflow-x-auto rounded-md border border-staff-faint bg-manuscript-sunk px-3 py-2 font-mono text-xs leading-relaxed">
+                  <pre className="overflow-x-auto rounded-md border border-staff-faint bg-manuscript-sunk px-3 py-2 font-mono text-micro leading-relaxed">
                     {scenario.schedule.steps
                       .map(
                         (step, index) =>
@@ -100,22 +100,22 @@ export default function ScenariosPage({ params }: { params: { locale: string } }
                       the opposite of itself.
                     */}
                     <h3 className="eyebrow">{dict.scenarios.permittedAt}</h3>
-                    <dl className="mt-2 space-y-1 text-sm">
+                    <dl className="mt-2 space-y-1 text-caption">
                       {PACKS.map((pack) => {
                         const permitted = scenario.expectedAt[pack.id]
                         if (!permitted) return null
                         return (
                           <div key={pack.id} className="flex flex-wrap items-baseline gap-x-2">
-                            <dt className="font-control text-xs text-ink-muted">
+                            <dt className="font-control text-micro text-ink-muted">
                               {pack.engine} {pack.version}
                             </dt>
                             <dd>
                               {permitted.length === 0 ? (
-                                <span className="text-xs text-ink-soft">{dict.scenarios.never}</span>
+                                <span className="text-micro text-ink-soft">{dict.scenarios.never}</span>
                               ) : (
                                 // Not conductor's red: a level name is neither
                                 // an anomaly nor an abort (PRD §8).
-                                <span className="font-mono text-xs text-ink">
+                                <span className="font-mono text-micro text-ink">
                                   {permitted.map((level) => LEVEL_ABBREVIATIONS[level]).join(', ')}
                                 </span>
                               )}

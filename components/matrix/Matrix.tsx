@@ -85,7 +85,7 @@ export function Matrix({ dict, locale }: { readonly dict: Dictionary; readonly l
         </select>
       </label>
 
-      <p className="max-w-reading text-sm leading-relaxed">
+      <p className="max-w-reading text-body">
         <span className="eyebrow">
           {dict.scenarios.documents}:{' '}
         </span>
@@ -94,14 +94,14 @@ export function Matrix({ dict, locale }: { readonly dict: Dictionary; readonly l
       </p>
 
       <div className="leaf overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-caption">
           <thead className="bg-manuscript-sunk">
             <tr className="border-b border-staff-faint">
               <th className="px-3 py-2 text-left eyebrow font-normal">
                 {dict.matrix.engine}
               </th>
               {LEVELS.map((level) => (
-                <th key={level} className="px-3 py-2 text-left font-mono text-xs font-normal">
+                <th key={level} className="px-3 py-2 text-left font-mono text-micro font-normal">
                   <abbr title={level} className="no-underline">
                     {LEVEL_ABBREVIATIONS[level]}
                   </abbr>
@@ -120,14 +120,14 @@ export function Matrix({ dict, locale }: { readonly dict: Dictionary; readonly l
                     summary explains the difference on hover. */}
                 <th scope="row" className="px-3 py-3 text-left font-prose font-normal" title={pack.summary}>
                   {pack.engine} {pack.version}
-                  <span className="block font-mono text-xs text-ink-soft">{pack.id}</span>
+                  <span className="block font-mono text-micro text-ink-soft">{pack.id}</span>
                 </th>
                 {cells.map((cell, index) => {
                   const level = LEVELS[index] ?? 'READ COMMITTED'
                   if (cell.kind === 'refused') {
                     return (
                       <td key={level} className="px-3 py-3">
-                        <span className="font-control text-xs text-ink-soft">{dict.matrix.refused}</span>
+                        <span className="font-control text-micro text-ink-soft">{dict.matrix.refused}</span>
                       </td>
                     )
                   }
@@ -142,15 +142,15 @@ export function Matrix({ dict, locale }: { readonly dict: Dictionary; readonly l
                             red is for; a clean run must stay quiet, or the grid
                             stops being scannable. */}
                         {anomalous ? (
-                          <span className="font-control text-xs font-medium text-conductor">
+                          <span className="font-control text-micro font-medium text-conductor">
                             {dict.matrix.anomalyAt}
                           </span>
                         ) : cell.aborted.length > 0 ? (
-                          <span className="font-control text-xs font-medium text-conductor">
+                          <span className="font-control text-micro font-medium text-conductor">
                             {dict.matrix.abortedAt} {cell.aborted.join(', ')}
                           </span>
                         ) : (
-                          <span className="font-control text-xs text-ink-muted">{dict.matrix.clean}</span>
+                          <span className="font-control text-micro text-ink-muted">{dict.matrix.clean}</span>
                         )}
                         {anomalous ? (
                           <span className="mt-1 block font-mono text-[11px]">
@@ -181,10 +181,10 @@ export function Matrix({ dict, locale }: { readonly dict: Dictionary; readonly l
           `dict.matrix.lead`, so repeating it under the grid said nothing. */}
       <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
         <span className="eyebrow">{dict.matrix.legend}</span>
-        <span className="font-control text-xs text-ink-muted">{dict.matrix.clean}</span>
-        <span className="font-control text-xs font-medium text-conductor">{dict.matrix.anomalyAt}</span>
-        <span className="font-control text-xs font-medium text-conductor">{dict.matrix.abortedAt}</span>
-        <span className="font-control text-xs text-ink-soft">{dict.matrix.refused}</span>
+        <span className="font-control text-micro text-ink-muted">{dict.matrix.clean}</span>
+        <span className="font-control text-micro font-medium text-conductor">{dict.matrix.anomalyAt}</span>
+        <span className="font-control text-micro font-medium text-conductor">{dict.matrix.abortedAt}</span>
+        <span className="font-control text-micro text-ink-soft">{dict.matrix.refused}</span>
       </div>
     </div>
   )

@@ -12,7 +12,7 @@ export function generateStaticParams() {
 
 function Quote({ citation }: { readonly citation: Citation }) {
   return (
-    <blockquote className="mt-1 border-l border-staff pl-3 text-sm italic text-ink-muted">
+    <blockquote className="mt-1 border-l border-staff pl-3 text-body italic text-ink-muted">
       “{citation.quote}”
       <footer className="mt-1 not-italic">
         <a
@@ -42,7 +42,7 @@ function Rules({
     <div className="mt-3 space-y-4">
       <div>
         <h4 className="eyebrow">{labels.reads}</h4>
-        <p className="font-mono text-sm">
+        <p className="font-mono text-caption">
           snapshot: {visibility.snapshot} · readsUncommitted: {String(visibility.readsUncommitted)} ·
           lockingReadsSeeLatestCommitted: {String(visibility.lockingReadsSeeLatestCommitted)}
         </p>
@@ -51,7 +51,7 @@ function Rules({
 
       <div>
         <h4 className="eyebrow">{labels.conflicts}</h4>
-        <p className="font-mono text-sm">
+        <p className="font-mono text-caption">
           writeOnStaleRow: {conflicts.writeOnStaleRow} · lockingReadOnStaleRow:{' '}
           {conflicts.lockingReadOnStaleRow} · writeWriteBlocks: {String(conflicts.writeWriteBlocks)}
         </p>
@@ -63,7 +63,7 @@ function Rules({
         <ul className="mt-1 space-y-2">
           {Object.entries(semantics.locks).map(([name, rule]) => (
             <li key={name}>
-              <p className="font-mono text-sm">
+              <p className="font-mono text-caption">
                 {name}: record {rule.value.record}, gap {rule.value.gap}, held for {rule.value.duration}
               </p>
               <Quote citation={rule.citation} />
@@ -76,7 +76,7 @@ function Rules({
         <h4 className="eyebrow">
           {labels.serializationCheck}
         </h4>
-        <p className="font-mono text-sm">{semantics.serializationCheck.value}</p>
+        <p className="font-mono text-caption">{semantics.serializationCheck.value}</p>
         <Quote citation={semantics.serializationCheck.citation} />
       </div>
     </div>
@@ -103,10 +103,10 @@ export default function EnginesPage({ params }: { params: { locale: string } }) 
               <h2 className="font-prose text-title">
                 {pack.engine} {pack.version}
               </h2>
-              <code className="font-mono text-xs text-ink-muted">{pack.id}</code>
+              <code className="font-mono text-micro text-ink-muted">{pack.id}</code>
             </div>
-            <p className="mt-2 max-w-reading text-sm leading-relaxed">{pack.summary}</p>
-            <p className="mt-2 font-mono text-xs text-ink-muted">
+            <p className="mt-2 max-w-reading text-body">{pack.summary}</p>
+            <p className="mt-2 font-mono text-micro text-ink-muted">
               {dict.engines.verified} {pack.verifiedOn} · {dict.engines.defaultLevel} {pack.defaultLevel} ·{' '}
               <a
                 href={pack.docsUrl}
@@ -133,8 +133,8 @@ export default function EnginesPage({ params }: { params: { locale: string } }) 
                             : dict.engines.unsupported}
                       </span>
                     </div>
-                    <p className="mt-1 font-prose text-sm">{entry.displayName}</p>
-                    <p className="mt-1 max-w-reading text-sm leading-relaxed text-ink-muted">{entry.summary}</p>
+                    <p className="mt-1 font-prose text-caption">{entry.displayName}</p>
+                    <p className="mt-1 max-w-reading text-body text-ink-muted">{entry.summary}</p>
 
                     {entry.kind === 'modelled' ? (
                       <Rules semantics={entry.semantics} labels={dict.engines} />
@@ -152,7 +152,7 @@ export default function EnginesPage({ params }: { params: { locale: string } }) 
                 {Object.entries(pack.errors).map(([name, shape]) =>
                   shape ? (
                     <li key={name}>
-                      <p className="font-mono text-sm">
+                      <p className="font-mono text-caption">
                         {name}: {shape.code} — {shape.message}
                       </p>
                       <Quote citation={shape.citation} />

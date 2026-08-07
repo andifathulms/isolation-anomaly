@@ -248,7 +248,7 @@ export function Workbench({
       </div>
 
       {levelEntry.kind === 'alias' ? (
-        <p className="max-w-reading rounded-r-md border-l-2 border-voiceB bg-voiceB-wash/40 px-4 py-3 text-sm leading-relaxed">
+        <p className="max-w-reading rounded-r-md border-l-2 border-voiceB bg-voiceB-wash/40 px-4 py-3 text-body">
           <span className="font-mono">{state.level}</span> — {dict.controls.aliasNote}{' '}
           <span className="font-mono">{levelEntry.of}</span>. {levelEntry.summary}
         </p>
@@ -257,11 +257,11 @@ export function Workbench({
       {result?.type === 'refused' ? (
         <section className="max-w-reading rounded-lg border border-conductor/30 border-l-2 border-l-conductor bg-conductor-wash/40 px-5 py-4">
           <h2 className="font-prose text-section text-conductor">{dict.refusal.heading}</h2>
-          <p className="mt-1 font-mono text-sm">{refusalHeadline(result.refusal)}</p>
-          <p className="mt-2 text-sm leading-relaxed">{result.refusal.gap}</p>
-          <p className="mt-2 text-sm leading-relaxed text-ink-muted">{dict.refusal.body}</p>
+          <p className="mt-1 font-mono text-caption">{refusalHeadline(result.refusal)}</p>
+          <p className="mt-2 text-body">{result.refusal.gap}</p>
+          <p className="mt-2 text-body text-ink-muted">{dict.refusal.body}</p>
           {'citation' in result.refusal ? (
-            <blockquote className="mt-3 border-l border-staff pl-3 text-sm italic leading-relaxed text-ink-muted">
+            <blockquote className="mt-3 border-l border-staff pl-3 text-body italic text-ink-muted">
               “{result.refusal.citation.quote}”
               <footer className="mt-1 not-italic">
                 <a
@@ -287,7 +287,7 @@ export function Workbench({
       ) : null}
 
       {issues.length > 0 ? (
-        <p className="max-w-reading border-l-2 border-conductor pl-3 text-sm leading-relaxed">
+        <p className="max-w-reading border-l-2 border-conductor pl-3 text-body">
           {dict.editor.invalid}
         </p>
       ) : null}
@@ -382,13 +382,13 @@ export function Workbench({
               ⏭
             </button>
 
-            <span className="font-mono text-sm text-ink-muted">
+            <span className="font-mono text-caption text-ink-muted">
               {dict.controls.step} {step} {dict.controls.ofSteps} {maxStep}
             </span>
           </div>
 
           {current.note ? (
-            <p className="max-w-reading border-l-2 border-staff pl-3 text-sm leading-relaxed text-ink-muted">
+            <p className="max-w-reading border-l-2 border-staff pl-3 text-body text-ink-muted">
               {current.note}
             </p>
           ) : null}
@@ -398,7 +398,7 @@ export function Workbench({
 
           <ScoreLegend dict={dict} />
 
-          <p className="max-w-reading text-sm leading-relaxed text-ink-muted">
+          <p className="max-w-reading text-body text-ink-muted">
             {dict.editor.dragHint} {dict.controls.keyboardHint}
           </p>
 
@@ -406,7 +406,7 @@ export function Workbench({
             <h2 id="panels-heading" className="font-prose text-title">
               {dict.panels.heading}
             </h2>
-            <p className="mt-2 max-w-reading text-sm leading-relaxed text-ink-muted">
+            <p className="mt-2 max-w-reading text-body text-ink-muted">
               {dict.panels.headingHint}
             </p>
 
@@ -430,11 +430,11 @@ export function Workbench({
               <h3 id="serial-heading" className="font-prose text-section">
                 {cycle ? dict.graph.cycle : dict.graph.noCycle}
               </h3>
-              <p className="mt-1 text-sm leading-relaxed text-ink-muted">
+              <p className="mt-1 text-body text-ink-muted">
                 {cycle ? explainCycle(cycle) : dict.graph.noCycleBody}
               </p>
               {!cycle && graph.nodes.length > 0 ? (
-                <p className="mt-1 font-mono text-sm">{graph.nodes.join(' → ')}</p>
+                <p className="mt-1 font-mono text-caption">{graph.nodes.join(' → ')}</p>
               ) : null}
             </section>
           ) : null}
@@ -442,11 +442,11 @@ export function Workbench({
           {scenario ? (
             <section className="max-w-reading space-y-3 border-t border-staff-faint pt-8">
               <h3 className="font-prose text-section">{scenarioText(locale, scenario).title}</h3>
-              <p className="text-sm leading-relaxed">
+              <p className="text-body">
                 <span className="eyebrow">{dict.scenarios.framing}: </span>
                 {scenarioText(locale, scenario).framing}
               </p>
-              <p className="text-sm leading-relaxed">
+              <p className="text-body">
                 <span className="eyebrow">{dict.scenarios.lesson}: </span>
                 {scenarioText(locale, scenario).lesson}
               </p>

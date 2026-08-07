@@ -69,7 +69,7 @@ export function Tour({ dict }: { readonly dict: Dictionary }) {
       </div>
 
       <h2 className="mt-2 font-prose text-section">{current.heading}</h2>
-      <p className="mt-2 max-w-reading text-sm leading-relaxed text-ink-muted">{current.body}</p>
+      <p className="mt-2 max-w-reading text-body text-ink-muted">{current.body}</p>
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
         {last ? (
@@ -89,7 +89,7 @@ export function Tour({ dict }: { readonly dict: Dictionary }) {
         <button
           type="button"
           onClick={dismiss}
-          className="ml-auto font-control text-sm text-ink-soft underline decoration-staff underline-offset-4 hover:text-ink"
+          className="ml-auto font-control text-caption text-ink-soft underline decoration-staff underline-offset-4 hover:text-ink"
         >
           {dict.tour.skip}
         </button>

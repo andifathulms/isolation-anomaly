@@ -25,9 +25,9 @@ export function VersionChains({
       <h3 id="versions-heading" className="font-prose text-section">
         {dict.panels.versions}
       </h3>
-      <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">{dict.panels.versionsHint}</p>
+      <p className="mt-1.5 text-body text-ink-muted">{dict.panels.versionsHint}</p>
       {chains.length === 0 ? (
-        <p className="mt-3 font-mono text-sm text-ink-soft">{dict.panels.empty}</p>
+        <p className="mt-3 font-mono text-caption text-ink-soft">{dict.panels.empty}</p>
       ) : (
         <div className="mt-4 space-y-3">
           {chains.map((chain) => (
@@ -36,9 +36,9 @@ export function VersionChains({
                 <span className="eyebrow">
                   {dict.panels.key}
                 </span>
-                <span className="font-mono text-sm">{chain.key}</span>
+                <span className="font-mono text-caption">{chain.key}</span>
               </div>
-              <table className="w-full text-sm">
+              <table className="w-full text-caption">
                 <thead>
                   <tr className="eyebrow">
                     <th scope="col" className="px-3 py-1 text-left font-normal">{dict.panels.value}</th>
@@ -63,7 +63,7 @@ export function VersionChains({
                         <td className="px-3 py-1">
                           {nameOf(version.xmin)}
                           {version.createdAtStep !== null ? (
-                            <span className="ml-1 text-xs text-ink-muted">
+                            <span className="ml-1 text-micro text-ink-muted">
                               {dict.panels.atStep} {version.createdAtStep}
                             </span>
                           ) : null}
@@ -71,7 +71,7 @@ export function VersionChains({
                         <td className="px-3 py-1">
                           {nameOf(version.xmax)}
                           {version.deletedAtStep !== null ? (
-                            <span className="ml-1 text-xs text-ink-muted">
+                            <span className="ml-1 text-micro text-ink-muted">
                               {dict.panels.atStep} {version.deletedAtStep}
                             </span>
                           ) : null}

@@ -41,7 +41,7 @@ export function SiteChrome({
         href="#content"
         className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:left-4 focus-visible:top-4
           focus-visible:z-50 focus-visible:rounded-md focus-visible:bg-manuscript-raised focus-visible:px-4
-          focus-visible:py-2 focus-visible:font-control focus-visible:text-sm"
+          focus-visible:py-2 focus-visible:font-control focus-visible:text-caption"
       >
         {dict.site.skipToContent}
       </a>
@@ -68,7 +68,7 @@ export function SiteChrome({
                   hrefLang={candidate}
                   aria-label={LOCALE_LABELS[candidate]}
                   aria-current={candidate === locale ? 'true' : undefined}
-                  className={`whitespace-nowrap rounded px-1.5 py-0.5 font-control text-xs uppercase tracking-wider
+                  className={`whitespace-nowrap rounded px-1.5 py-0.5 font-control text-micro uppercase tracking-wider
                     transition-colors ${
                       candidate === locale
                         ? 'bg-manuscript-sunk text-ink'
@@ -94,7 +94,7 @@ export function SiteChrome({
                 <Link
                   href={link.href}
                   aria-current={link.key === active ? 'page' : undefined}
-                  className={`block border-b-2 pb-1.5 font-control text-sm transition-colors ${
+                  className={`block border-b-2 pb-1.5 font-control text-caption transition-colors ${
                     link.key === active
                       ? 'border-conductor text-ink'
                       : 'border-transparent text-ink-muted hover:border-staff hover:text-ink'
@@ -122,7 +122,7 @@ export function SiteChrome({
         <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6 md:flex-row md:items-end md:justify-between md:gap-12">
           <div>
             <h2 className="eyebrow">{dict.site.disclaimerHeading}</h2>
-            <p className="mt-2 max-w-reading text-sm leading-relaxed text-ink-muted">
+            <p className="mt-2 max-w-reading text-body text-ink-muted">
               {dict.site.disclaimer}
             </p>
           </div>

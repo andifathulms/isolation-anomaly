@@ -34,13 +34,13 @@ export function StepList({
                     : 'border-l-transparent hover:bg-manuscript-sunk/50'
                 }`}
             >
-              <span className="w-6 font-mono text-xs text-ink-soft">{step.index}</span>
-              <span className="w-10 font-mono text-sm">{step.txn}</span>
-              <span className="font-mono text-sm">{step.notation}</span>
-              <span className="text-sm text-ink-muted">{describe(step.op)}</span>
+              <span className="w-6 font-mono text-micro text-ink-soft">{step.index}</span>
+              <span className="w-10 font-mono text-caption">{step.txn}</span>
+              <span className="font-mono text-caption">{step.notation}</span>
+              <span className="text-caption text-ink-muted">{describe(step.op)}</span>
 
               {step.outcome.type === 'ok' && step.outcome.read ? (
-                <span className="font-mono text-sm">
+                <span className="font-mono text-caption">
                   → {step.outcome.read.type === 'row'
                     ? (step.outcome.read.value ?? dict.outcome.noRow)
                     : `{${step.outcome.read.rows.map((row) => `${row.key}=${row.value}`).join(', ') || '∅'}}`}
@@ -48,13 +48,13 @@ export function StepList({
               ) : null}
 
               {step.outcome.type === 'ok' && step.outcome.rowsAffected !== null ? (
-                <span className="font-mono text-xs text-ink-muted">
+                <span className="font-mono text-micro text-ink-muted">
                   {step.outcome.rowsAffected} {dict.outcome.rowsAffected}
                 </span>
               ) : null}
 
               {failed ? (
-                <span className="font-mono text-sm text-conductor">
+                <span className="font-mono text-caption text-conductor">
                   {step.outcome.type === 'error'
                     ? `${step.outcome.code} ${step.outcome.message}`
                     : dict.outcome.blocked}
@@ -62,13 +62,13 @@ export function StepList({
               ) : null}
 
               {step.outcome.type === 'refused' ? (
-                <span className="font-mono text-sm text-conductor">
+                <span className="font-mono text-caption text-conductor">
                   {dict.outcome.refused}: {step.outcome.refusal.gap}
                 </span>
               ) : null}
 
               {step.blockedUntilStep !== null ? (
-                <span className="font-control text-xs text-ink-muted">
+                <span className="font-control text-micro text-ink-muted">
                   {dict.outcome.waited} {step.blockedUntilStep}
                 </span>
               ) : null}

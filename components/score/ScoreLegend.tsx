@@ -153,7 +153,7 @@ export function ScoreLegend({ dict }: { readonly dict: Dictionary }) {
   return (
     <details className="group leaf overflow-hidden">
       <summary
-        className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 font-control text-sm
+        className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 font-control text-caption
           transition-colors hover:bg-manuscript-sunk [&::-webkit-details-marker]:hidden"
       >
         <svg
@@ -171,15 +171,15 @@ export function ScoreLegend({ dict }: { readonly dict: Dictionary }) {
 
       <div className="border-t border-staff-faint px-4 py-4">
         <h3 className="sr-only">{dict.legend.heading}</h3>
-        <p className="max-w-reading text-sm leading-relaxed text-ink-muted">{dict.legend.intro}</p>
+        <p className="max-w-reading text-body text-ink-muted">{dict.legend.intro}</p>
 
         <dl className="mt-5 grid gap-x-8 gap-y-4 sm:grid-cols-2 xl:grid-cols-3">
           {entries.map((entry) => (
             <div key={entry.term} className="flex items-start gap-3">
               <div className="mt-0.5">{entry.glyph}</div>
               <div className="min-w-0">
-                <dt className="font-control text-sm text-ink">{entry.term}</dt>
-                <dd className="mt-0.5 text-sm leading-relaxed text-ink-muted">{entry.body}</dd>
+                <dt className="font-control text-caption text-ink">{entry.term}</dt>
+                <dd className="mt-0.5 text-caption leading-relaxed text-ink-muted">{entry.body}</dd>
               </div>
             </div>
           ))}

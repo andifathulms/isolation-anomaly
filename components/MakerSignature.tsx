@@ -84,7 +84,7 @@ export function MakerSignature() {
 
   return (
     <div className="md:text-right">
-      <p className="text-sm text-ink-muted">
+      <p className="text-caption text-ink-muted">
         Designed &amp; built by{' '}
         <a
           href={MAKER.portfolio}

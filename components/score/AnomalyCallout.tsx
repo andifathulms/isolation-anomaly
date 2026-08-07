@@ -33,9 +33,9 @@ export function AnomalyCallout({
       <section aria-live="polite" className="leaf px-5 py-4">
         <div className="flex flex-wrap items-baseline gap-x-3">
           <h2 className="font-prose text-title">{dict.anomaly.noneHeadline}</h2>
-          <span className="font-mono text-xs text-ink-soft">{context}</span>
+          <span className="font-mono text-micro text-ink-soft">{context}</span>
         </div>
-        <p className="mt-2 max-w-reading text-sm leading-relaxed text-ink-muted">{dict.anomaly.noneBody}</p>
+        <p className="mt-2 max-w-reading text-body text-ink-muted">{dict.anomaly.noneBody}</p>
       </section>
     )
   }
@@ -44,7 +44,7 @@ export function AnomalyCallout({
     <section aria-live="polite" className="space-y-4">
       <div className="flex flex-wrap items-baseline gap-x-3">
         <h2 className="font-prose text-title text-conductor">{dict.anomaly.foundHeadline}</h2>
-        <span className="font-mono text-xs text-ink-soft">{context}</span>
+        <span className="font-mono text-micro text-ink-soft">{context}</span>
       </div>
 
       {anomalies.map((found, index) => {
@@ -57,7 +57,7 @@ export function AnomalyCallout({
           >
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <h3 className="font-prose text-section text-conductor">{text.name}</h3>
-              <code className="font-mono text-xs text-ink-muted">{definition.label}</code>
+              <code className="font-mono text-micro text-ink-muted">{definition.label}</code>
               <span className="eyebrow">
                 {definition.inAnsiList ? dict.anomaly.inAnsi : dict.anomaly.notInAnsi}
               </span>
@@ -66,29 +66,29 @@ export function AnomalyCallout({
             {/* What happened in this run, in this engine, at this level. */}
             <p className="mt-3 max-w-reading text-pretty leading-relaxed">{found.mechanism}</p>
 
-            <p className="mt-3 max-w-reading text-sm leading-relaxed text-ink-muted">{text.stakes}</p>
+            <p className="mt-3 max-w-reading text-body text-ink-muted">{text.stakes}</p>
 
             <details className="group mt-3">
               <summary
-                className="cursor-pointer list-none font-control text-sm text-ink-muted underline
+                className="cursor-pointer list-none font-control text-caption text-ink-muted underline
                   decoration-staff underline-offset-4 hover:text-ink [&::-webkit-details-marker]:hidden"
               >
                 <span className="group-open:hidden">{dict.anomaly.definition}</span>
                 <span className="hidden group-open:inline">{dict.anomaly.sources}</span>
               </summary>
 
-              <dl className="mt-3 space-y-3 border-t border-conductor/20 pt-3 text-sm">
+              <dl className="mt-3 space-y-3 border-t border-conductor/20 pt-3 text-caption">
                 <div>
                   <dt className="eyebrow">{dict.anomaly.definition}</dt>
                   <dd className="mt-1 max-w-reading leading-relaxed text-ink-muted">{text.definition}</dd>
                 </div>
                 <div>
                   <dt className="eyebrow">{dict.anomaly.formal}</dt>
-                  <dd className="mt-1 font-mono text-xs text-ink-muted">{definition.formal}</dd>
+                  <dd className="mt-1 font-mono text-micro text-ink-muted">{definition.formal}</dd>
                 </div>
                 <div>
                   <dt className="eyebrow">{dict.anomaly.conductorMark}</dt>
-                  <dd className="mt-1 font-mono text-xs text-ink-muted">
+                  <dd className="mt-1 font-mono text-micro text-ink-muted">
                     {dict.controls.step} {found.causeStep}
                   </dd>
                 </div>
