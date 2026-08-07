@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import {
   canMove,
   describe,
@@ -87,8 +87,27 @@ export function Editor({
 }) {
   const issues = useMemo(() => validateSchedule(schedule), [schedule])
   const [dragFrom, setDragFrom] = useState<number | null>(null)
+  const stepsRef = useRef<HTMLOListElement>(null)
 
   const setSteps = (steps: readonly ScheduleStep[]) => onChange({ ...schedule, steps })
+
+  /**
+   * Removing a row destroys the button that was focused, which drops focus to
+   * the document and sends a keyboard user back to the top of the page. Move it
+   * to the same control on the row that takes its place — or, if the last row
+   * went, to the row now above it.
+   */
+  const removeStep = (index: number) => {
+    const remaining = schedule.steps.length - 1
+    setSteps(schedule.steps.filter((_, at) => at !== index))
+    if (remaining === 0) return
+    const target = Math.min(index, remaining - 1)
+    window.requestAnimationFrame(() => {
+      const rows = stepsRef.current?.querySelectorAll('li')
+      const row = rows?.[target]
+      row?.querySelector<HTMLButtonElement>('button[data-remove]')?.focus()
+    })
+  }
 
   const patchStep = (index: number, patch: Partial<ScheduleStep>) =>
     setSteps(schedule.steps.map((step, at) => (at === index ? { ...step, ...patch } : step)))
@@ -118,7 +137,7 @@ export function Editor({
               <input
                 type="number"
                 value={row.key}
-                aria-label={`${dict.panels.key} ${index}`}
+                aria-label={`${dict.editor.fieldKey} ${index}`}
                 onChange={(event) =>
                   setInitial(
                     schedule.initial.map((candidate, at) =>
@@ -132,7 +151,7 @@ export function Editor({
               <input
                 type="number"
                 value={row.value}
-                aria-label={`${dict.panels.value} ${index}`}
+                aria-label={`${dict.editor.fieldValue} ${index}`}
                 onChange={(event) =>
                   setInitial(
                     schedule.initial.map((candidate, at) =>
@@ -145,6 +164,7 @@ export function Editor({
               <button
                 type="button"
                 className={button}
+                aria-label={`${dict.editor.removeRow} ${index}`}
                 onClick={() => setInitial(schedule.initial.filter((_, at) => at !== index))}
               >
                 ×
@@ -174,7 +194,7 @@ export function Editor({
           </button>
         </div>
 
-        <ol className="mt-3 space-y-1">
+        <ol ref={stepsRef} className="mt-3 space-y-1">
           {schedule.steps.map((step, index) => (
             <li
               key={index}
@@ -194,7 +214,7 @@ export function Editor({
 
               <select
                 value={step.txn}
-                aria-label={`Transaction for step ${index}`}
+                aria-label={`${dict.editor.fieldTxn} — ${dict.controls.step} ${index}`}
                 onChange={(event) => patchStep(index, { txn: event.target.value as TxnId })}
                 className={control}
               >
@@ -207,7 +227,7 @@ export function Editor({
 
               <select
                 value={step.op.type}
-                aria-label={`Operation for step ${index}`}
+                aria-label={`${dict.editor.fieldOp} — ${dict.controls.step} ${index}`}
                 onChange={(event) =>
                   patchStep(index, {
                     op: blankOperation(event.target.value as OperationType, step.op),
@@ -226,7 +246,7 @@ export function Editor({
                 <input
                   type="number"
                   value={step.op.key}
-                  aria-label={`Key for step ${index}`}
+                  aria-label={`${dict.editor.fieldKey} — ${dict.controls.step} ${index}`}
                   onChange={(event) =>
                     patchStep(index, { op: { ...step.op, key: Number(event.target.value) } as Operation })
                   }
@@ -238,7 +258,7 @@ export function Editor({
                 <input
                   type="number"
                   value={step.op.value}
-                  aria-label={`Value for step ${index}`}
+                  aria-label={`${dict.editor.fieldValue} — ${dict.controls.step} ${index}`}
                   onChange={(event) =>
                     patchStep(index, { op: { ...step.op, value: Number(event.target.value) } as Operation })
                   }
@@ -251,7 +271,7 @@ export function Editor({
                   <input
                     type="number"
                     value={step.op.predicate.from}
-                    aria-label={`Range start for step ${index}`}
+                    aria-label={`${dict.editor.fieldRangeFrom} — ${dict.controls.step} ${index}`}
                     onChange={(event) =>
                       patchStep(index, {
                         op: {
@@ -270,7 +290,7 @@ export function Editor({
                   <input
                     type="number"
                     value={step.op.predicate.to}
-                    aria-label={`Range end for step ${index}`}
+                    aria-label={`${dict.editor.fieldRangeTo} — ${dict.controls.step} ${index}`}
                     onChange={(event) =>
                       patchStep(index, {
                         op: {
@@ -291,16 +311,16 @@ export function Editor({
               <span className="text-micro text-ink-muted">{describe(step.op)}</span>
 
               <span className="ml-auto flex gap-1">
-                <button type="button" className={button} onClick={() => move(index, -1)} aria-label="Move earlier">
+                <button type="button" className={button} onClick={() => move(index, -1)} aria-label={`${dict.editor.moveEarlier} — ${dict.controls.step} ${index}`}>
                   ↑
                 </button>
-                <button type="button" className={button} onClick={() => move(index, 1)} aria-label="Move later">
+                <button type="button" className={button} onClick={() => move(index, 1)} aria-label={`${dict.editor.moveLater} — ${dict.controls.step} ${index}`}>
                   ↓
                 </button>
                 <button
                   type="button"
                   className={button}
-                  aria-label="Duplicate step"
+                  aria-label={`${dict.editor.duplicate} — ${dict.controls.step} ${index}`}
                   onClick={() =>
                     setSteps([
                       ...schedule.steps.slice(0, index + 1),
@@ -314,8 +334,9 @@ export function Editor({
                 <button
                   type="button"
                   className={button}
-                  aria-label="Remove step"
-                  onClick={() => setSteps(schedule.steps.filter((_, at) => at !== index))}
+                  data-remove
+                  aria-label={`${dict.editor.remove} — ${dict.controls.step} ${index}`}
+                  onClick={() => removeStep(index)}
                 >
                   ×
                 </button>

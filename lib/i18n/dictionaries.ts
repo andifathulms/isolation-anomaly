@@ -209,7 +209,36 @@ export type Dictionary = {
     string
   >
   readonly refusal: Record<'heading' | 'body', string>
-  readonly editor: Record<'edit' | 'done' | 'invalid' | 'dragHint', string>
+  readonly editor: Record<
+    | 'edit'
+    | 'done'
+    | 'invalid'
+    | 'dragHint'
+    /* The row controls. These were hardcoded English, so a screen reader on the
+     * Indonesian site read them in the wrong language inside a `lang="id"`
+     * subtree — and no test could catch it, because they never reached here. */
+    | 'fieldTxn'
+    | 'fieldOp'
+    | 'fieldKey'
+    | 'fieldValue'
+    | 'fieldRangeFrom'
+    | 'fieldRangeTo'
+    | 'moveEarlier'
+    | 'moveLater'
+    | 'duplicate'
+    | 'remove'
+    | 'removeRow',
+    string
+  >
+  /**
+   * Names and messages that exist only for assistive technology. They are here
+   * rather than inline because they are content: a reader who cannot see the
+   * score deserves the same second locale as one who can.
+   */
+  readonly a11y: Record<
+    'scoreRegion' | 'figureRegion' | 'matrixRegion' | 'theme' | 'updated' | 'stateColumn' | 'matrixCaption',
+    string
+  >
 }
 
 const en: Dictionary = {
@@ -480,6 +509,26 @@ const en: Dictionary = {
     invalid: 'This schedule cannot be handed to a database as written. Fix the problems above to run it.',
     dragHint:
       'Drag a mark sideways to re-interleave and re-run. A mark can only move between its own transaction’s neighbouring operations — a session issues its statements in order, so the interleaving is the only thing you get to choose.',
+    fieldTxn: 'Transaction',
+    fieldOp: 'Operation',
+    fieldKey: 'Key',
+    fieldValue: 'Value',
+    fieldRangeFrom: 'Range start',
+    fieldRangeTo: 'Range end',
+    moveEarlier: 'Move earlier',
+    moveLater: 'Move later',
+    duplicate: 'Duplicate',
+    remove: 'Remove',
+    removeRow: 'Remove row',
+  },
+  a11y: {
+    scoreRegion: 'The score, as a scrolling region. Use the arrow keys to reach later steps.',
+    figureRegion: 'The example score, as a scrolling region.',
+    matrixRegion: 'The engine matrix, as a scrolling region.',
+    theme: 'Theme',
+    updated: 'Updated',
+    stateColumn: 'State of this version',
+    matrixCaption: 'One row per engine pack, one column per isolation level.',
   },
 }
 
@@ -754,6 +803,26 @@ const id: Dictionary = {
       'Jadwal ini tidak bisa diberikan ke basis data seperti apa adanya. Perbaiki masalah di atas untuk menjalankannya.',
     dragHint:
       'Geser sebuah tanda ke samping untuk mengubah urutan sisipan lalu menjalankannya ulang. Sebuah tanda hanya bisa bergerak di antara operasi tetangganya dalam transaksi yang sama — sebuah session mengirim statement-nya secara berurutan, jadi yang bisa Anda pilih hanyalah cara menyisipkannya.',
+    fieldTxn: 'Transaksi',
+    fieldOp: 'Operasi',
+    fieldKey: 'Key',
+    fieldValue: 'Nilai',
+    fieldRangeFrom: 'Awal rentang',
+    fieldRangeTo: 'Akhir rentang',
+    moveEarlier: 'Pindahkan lebih awal',
+    moveLater: 'Pindahkan lebih akhir',
+    duplicate: 'Gandakan',
+    remove: 'Hapus',
+    removeRow: 'Hapus baris',
+  },
+  a11y: {
+    scoreRegion: 'Skor, sebagai area yang bisa digulir. Gunakan tombol panah untuk mencapai langkah berikutnya.',
+    figureRegion: 'Contoh skor, sebagai area yang bisa digulir.',
+    matrixRegion: 'Matriks mesin, sebagai area yang bisa digulir.',
+    theme: 'Tampilan',
+    updated: 'Diperbarui',
+    stateColumn: 'Status versi ini',
+    matrixCaption: 'Satu baris per engine pack, satu kolom per isolation level.',
   },
 }
 
